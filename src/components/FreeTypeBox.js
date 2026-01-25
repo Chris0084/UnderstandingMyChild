@@ -13,6 +13,7 @@ const FreeTypeBox = ({ label, placeholder, numLines, value, onChange }) => {
   return (
     <View style={styles.container}>
         {label && <Text style={styles.label}>{label}</Text>}
+     <View style={styles.shadowWrapper}>
       <TextInput
         style={[
           styles.input, 
@@ -27,6 +28,7 @@ const FreeTypeBox = ({ label, placeholder, numLines, value, onChange }) => {
         numberOfLines={numLines}    // Sets initial height on Android
         textAlignVertical="top"     // Forces text to start at the top (Android)
       />
+      </View>
     </View>
   );
 };
@@ -34,22 +36,36 @@ const FreeTypeBox = ({ label, placeholder, numLines, value, onChange }) => {
 const styles = StyleSheet.create({
   container: {
     marginVertical: 10,
-    width: '90%',
+    width: '90%',    
   },
   label: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
-    color: '#333',     // Dark grey color
+    color: '#4a463f',     // Dark grey color
     marginBottom: 8,   // Space between label and input box
     alignSelf: 'flex-start', // Forces the label to the left even if parent is centered
+  },
+  shadowWrapper: {
+    // 1. Android Shadow
+    elevation: 4, 
+    
+    // 2. iOS Shadow
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+
+    // 3. Essential for shadows to show on some versions of Android
+    backgroundColor: '#f7f5f2', 
+    borderRadius: 12,
   },
   input: {
     borderWidth: 1,
     borderColor: '#ccc',
-    borderRadius: 8,
+    borderRadius: 12,
     padding: 12,
     fontSize: 16,
-    backgroundColor: '#fff',
+    backgroundColor: '#f7f5f2',
     color: '#000',
   },
 });

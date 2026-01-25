@@ -40,9 +40,9 @@ const styles = StyleSheet.create({
     width: '90%',
   },
   label: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: '#4a463f',
     marginBottom: 10,
     alignSelf: 'flex-start',
   },
@@ -62,11 +62,11 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
   },
   pillSelected: {
-    backgroundColor: '#007AFF', // Standard iOS Blue
+    backgroundColor: '#8fae9a',
     borderColor: '#007AFF',
   },
   tagText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
   },
   textUnselected: {
