@@ -7,9 +7,9 @@ import { TextInput, StyleSheet, View, Text } from 'react-native';
 * * @param {string} placeholder - The "template text" shown when empty.
  * @param {number} numLines - How many lines of text space to show.
  * @param {string} value - The current text (passed from the parent).
- * @param {function} onChange - The function to run when the user types.
+ * @param {function} onChangeText - The function to run when the user types.
  */
-const FreeTypeBox = ({ label, placeholder, numLines, value, onChange }) => {
+const FreeTypeBox = ({ label, placeholder, numLines, value, onChangeText }) => {
   return (
     <View style={styles.container}>
         {label && <Text style={styles.label}>{label}</Text>}
@@ -21,7 +21,7 @@ const FreeTypeBox = ({ label, placeholder, numLines, value, onChange }) => {
         ]}
         placeholder={placeholder}
         value={value}
-        onChangeText={onChange}
+        onChangeText={onChangeText}
         
         // Essential props for "Free Type" behavior:
         multiline={true}            // Allows text to wrap to new lines
