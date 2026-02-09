@@ -10,9 +10,9 @@ import { TouchableOpacity, Text, StyleSheet } from 'react-native';
  */
 const CustomButton = ({ label, color, onPress, style }) => {
   return (
-    <TouchableOpacity 
+    <TouchableOpacity
       // We combine a base style with the dynamic background color
-      style={[styles.button, { backgroundColor: color }, style]} 
+      style={[styles.button, { backgroundColor: color }, style]}
       onPress={onPress}
       activeOpacity={0.7} // Slight fade effect when pressed
     >
@@ -31,6 +31,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginVertical: 10,
     // Add a slight shadow for depth
+    alignSelf: 'center',
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
