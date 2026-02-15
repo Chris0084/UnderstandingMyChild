@@ -1,8 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
 const LogCard = ({ entry }) => {
-  // Format the date to be more readable
+  const navigation = useNavigation();
+
   const formattedDate = new Date(entry.logDate).toLocaleDateString('en-GB', {
     day: '2-digit',
     month: '2-digit',
@@ -13,25 +15,40 @@ const LogCard = ({ entry }) => {
     <View style={styles.card}>
       <View style={styles.header}>
         <Text style={styles.headerText}>{formattedDate}</Text>
-        <Text style={styles.headerText}>Where: {entry.where.slice(-25)}</Text>
+        <Text style={styles.headerText}>Where: {entry.where.slice(0, 15)}</Text>
       </View>
 
-      <Text style={styles.label}>WHAT HAPPENED:</Text>
-      <Text style={styles.value}>{entry.whatHappened}</Text>
+      {/* Row containing Label and Button */}
+      <View style={styles.labelRow}>
+        <Text style={styles.label}>WHAT HAPPENED</Text>
 
-      {entry.tags && entry.tags.length > 0 && (
+        <TouchableOpacity
+          style={styles.pillButton}
+          onPress={() =>
+            navigation.navigate('InputForm', { existingEntry: entry })
+          }>
+          <Text style={styles.pillButtonText}>View/Edit</Text>
+        </TouchableOpacity>
+      </View>
+
+      <Text style={styles.value} numberOfLines={2}>
+        {entry.whatHappened}
+      </Text>
+
+      {/* Bottom section for Tags and Impact */}
+      <View style={styles.footer}>
         <View style={styles.tagContainer}>
-          {entry.tags.map((tag, index) => (
+          {entry.tags?.slice(0, 6).map((tag, index) => (
             <Text key={index} style={styles.tag}>
               {tag}
             </Text>
           ))}
         </View>
-      )}
 
-      {entry.impactLevel && (
-        <Text style={styles.impactText}>Impact: {entry.impactLevel}</Text>
-      )}
+        {entry.impactLevel && (
+          <Text style={styles.impactText}>{entry.impactLevel}</Text>
+        )}
+      </View>
     </View>
   );
 };
@@ -44,7 +61,6 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     width: '95%',
     alignSelf: 'center',
-    // Shadow/Elevation
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -56,25 +72,63 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
-    paddingBottom: 5,
+    paddingBottom: 8,
     marginBottom: 10,
   },
-  headerText: { fontWeight: 'bold', color: '#333' },
-  idText: { fontSize: 10, color: '#999' },
-  label: { fontSize: 12, fontWeight: '700', color: '#757575', marginTop: 5 },
-  value: { fontSize: 15, color: '#333', marginBottom: 5 },
-  tagContainer: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 10 },
-  tag: {
-    backgroundColor: '#e1f5fe',
-    color: '#0288d1',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 20,
-    fontSize: 11,
-    marginRight: 5,
+  headerText: { fontWeight: 'bold', color: '#333', fontSize: 13 },
+
+  labelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 5,
   },
-  impactText: { marginTop: 10, fontWeight: '600', color: '#f44336' },
+
+  label: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#999',
+    letterSpacing: 0.5,
+  },
+  value: { fontSize: 14, color: '#444', marginBottom: 10 },
+
+  pillButton: {
+    backgroundColor: '#E3F2FD', // Light blue background
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: '#007AFF',
+  },
+  pillButtonText: {
+    color: '#007AFF',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 5,
+  },
+  tagContainer: { flexDirection: 'row', flexWrap: 'wrap', flex: 1 },
+  tag: {
+    backgroundColor: '#f0f0f0',
+    color: '#666',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginBottom: 4,
+    borderRadius: 8,
+    fontSize: 9,
+    marginRight: 4,
+  },
+  impactText: {
+    fontWeight: '700',
+    color: '#f44336',
+    fontSize: 10,
+    textTransform: 'uppercase',
+  },
 });
 
 export default LogCard;

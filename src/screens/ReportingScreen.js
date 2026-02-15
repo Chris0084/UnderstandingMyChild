@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, FlatList, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import SortButton from '../components/SortButton';
 
 // Component Imports
 import LogCard from '../components/LogCard';
@@ -16,6 +17,7 @@ const ReportingScreen = ({ navigation }) => {
   const [allLogs, setAllLogs] = useState([]); // Master data
   const [filteredLogs, setFilteredLogs] = useState([]); // Displayed data
   const [modalVisible, setModalVisible] = useState(false);
+  const [isAscending, setIsAscending] = useState(false); // false = Newest First
 
   // Filter states
   const [filterTags, setFilterTags] = useState([]);
@@ -49,8 +51,14 @@ const ReportingScreen = ({ navigation }) => {
       result = result.filter(log => log.impactLevel === filterMood);
     }
 
+    result.sort((a, b) => {
+      const dateA = new Date(a.logDate);
+      const dateB = new Date(b.logDate);
+      return isAscending ? dateA - dateB : dateB - dateA;
+    });
+
     setFilteredLogs(result);
-  }, [allLogs, filterTags, filterMood]);
+  }, [allLogs, filterTags, filterMood, isAscending]);
 
   const fetchLogs = async () => {
     try {
@@ -89,11 +97,16 @@ const ReportingScreen = ({ navigation }) => {
           onPress={() => navigation.goBack()}
           style={styles.halfButton}
         />
-
-        <FilterButton
-          onPress={() => setModalVisible(true)}
-          activeFiltersCount={filterTags.length + (filterMood ? 1 : 0)}
-        />
+        <View style={styles.actionButtons}>
+          <SortButton
+            ascending={isAscending}
+            onPress={() => setIsAscending(!isAscending)}
+          />
+          <FilterButton
+            onPress={() => setModalVisible(true)}
+            activeFiltersCount={filterTags.length + (filterMood ? 1 : 0)}
+          />
+        </View>
       </View>
 
       <FlatList
@@ -145,8 +158,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 10,
   },
+  actionButtons: {
+    flexDirection: 'row', // Put Sort and Filter side-by-side
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
   halfButton: {
-    width: '45%',
+    width: '35%', // Shrink the Back button slightly to make room
     marginVertical: 0,
   },
   listContent: {

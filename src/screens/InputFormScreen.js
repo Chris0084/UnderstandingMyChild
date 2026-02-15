@@ -9,16 +9,30 @@ import TagSelector from '../components/TagSelector';
 import MoodRadioGroup from '../components/MoodRadioGroup';
 import CustomButton from '../components/CustomButton';
 
-const InputFormScreen = ({ navigation }) => {
+const InputFormScreen = ({ route, navigation }) => {
   const insets = useSafeAreaInsets();
 
-  const [where, setWhere] = useState('');
-  const [leadUp, setLeadUp] = useState('');
-  const [whatHappened, setWhatHappened] = useState('');
-  const [after, setAfter] = useState('');
-  const [logDate, setLogDate] = useState(new Date());
-  const [selectedTags, setSelectedTags] = useState([]);
-  const [mood, setMood] = useState(null);
+  const existingEntry = route.params?.existingEntry;
+
+  const [where, setWhere] = useState(existingEntry ? existingEntry.where : '');
+  const [leadUp, setLeadUp] = useState(
+    existingEntry ? existingEntry.leadUp : '',
+  );
+  const [whatHappened, setWhatHappened] = useState(
+    existingEntry ? existingEntry.whatHappened : '',
+  );
+  const [after, setAfter] = useState(existingEntry ? existingEntry.after : '');
+  const [logDate, setLogDate] = useState(
+    existingEntry ? new Date(existingEntry.logDate) : new Date(),
+  );
+  const [selectedTags, setSelectedTags] = useState(
+    existingEntry ? existingEntry.tags : [],
+  );
+  const [mood, setMood] = useState(
+    existingEntry ? existingEntry.impactLevel : null,
+  );
+
+  const [isEditing, setIsEditing] = useState(!existingEntry);
 
   useEffect(() => {
     const displayData = async () => {
@@ -92,13 +106,20 @@ const InputFormScreen = ({ navigation }) => {
     <ScrollView
       style={[styles.scrollView, { paddingTop: insets.top }]}
       contentContainerStyle={styles.container}>
-      <Text style={styles.text}>This is the Log Form Screen</Text>
+      <Text style={styles.text}>
+        {existingEntry
+          ? isEditing
+            ? 'Edit Log'
+            : 'View Log'
+          : 'New Log Entry'}
+      </Text>
       <FreeTypeBox
         label="WHERE"
         placeholder="Location (e.g Playground, Kitchen)..."
         numLines={2}
         value={where}
         onChangeText={setWhere}
+        editable={isEditing}
       />
       <FreeTypeBox
         label="LEAD UP"
@@ -106,6 +127,7 @@ const InputFormScreen = ({ navigation }) => {
         numLines={3}
         value={leadUp}
         onChangeText={setLeadUp}
+        editable={isEditing}
       />
 
       <FreeTypeBox
@@ -114,6 +136,7 @@ const InputFormScreen = ({ navigation }) => {
         numLines={3}
         value={whatHappened}
         onChangeText={setWhatHappened}
+        editable={isEditing}
       />
 
       <FreeTypeBox
@@ -122,35 +145,52 @@ const InputFormScreen = ({ navigation }) => {
         numLines={3}
         value={after}
         onChangeText={setAfter}
+        editable={isEditing}
       />
-      <DateStamp label="DATE" date={logDate} onChange={setLogDate} />
+      <DateStamp
+        label="DATE"
+        date={logDate}
+        onChange={setLogDate}
+        editable={isEditing}
+      />
 
       <TagSelector
         label="TAGS"
         tags={availableTags}
         selectedTags={selectedTags}
         onToggle={handleTagToggle}
+        editable={isEditing}
       />
 
       <MoodRadioGroup
         label="IMPACT LEVEL"
         selectedValue={mood} // This tells the component which one to highlight
         onSelect={setMood}
+        editable={isEditing}
       />
 
       {/* --- CUSTOM SUBMIT BUTTON --- */}
 
       <View style={styles.buttonContainer}>
-        <CustomButton
-          label="Save Entry"
-          color="#4CAF50" // Green hex
-          onPress={handleSaveEntry}
-          style={styles.halfButton}
-        />
+        {isEditing ? (
+          <CustomButton
+            label="Save Changes"
+            color="#4CAF50"
+            onPress={handleSaveEntry} // We will update this logic next
+            style={styles.halfButton}
+          />
+        ) : (
+          <CustomButton
+            label="Edit"
+            color="#FFA000"
+            onPress={() => setIsEditing(true)}
+            style={styles.halfButton}
+          />
+        )}
 
         <CustomButton
           label="Go Back"
-          color="#757575" // Grey hex
+          color="#757575"
           onPress={() => navigation.goBack()}
           style={styles.halfButton}
         />

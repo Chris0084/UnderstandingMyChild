@@ -1,12 +1,10 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 
-const FilterButton = ({ onPress, activeFiltersCount }) => {
+const SortButton = ({ onPress, ascending }) => {
   return (
     <TouchableOpacity style={styles.button} onPress={onPress}>
-      <Text style={styles.text}>
-        Filter {activeFiltersCount > 0 ? `(${activeFiltersCount})` : ''}
-      </Text>
+      <Text style={styles.text}>Date {ascending ? '↑' : '↓'}</Text>
     </TouchableOpacity>
   );
 };
@@ -21,12 +19,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 20,
     borderWidth: 1,
+    marginRight: 10, // Add some space between Sort and Filter buttons
     borderColor: '#ccc',
     flexDirection: 'row', // Helps with vertical centering of text
     alignItems: 'center',
     justifyContent: 'center',
   },
-  text: { color: '#333', fontWeight: '600' },
+  text: { color: '#333', fontWeight: '600', fontSize: 13 },
 });
 
-export default FilterButton;
+export default SortButton;

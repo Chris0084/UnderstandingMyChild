@@ -1,40 +1,51 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 
-const MoodRadioGroup = ({ label, selectedValue, onSelect }) => {
+const MoodRadioGroup = ({
+  label,
+  selectedValue,
+  onSelect,
+  editable = true,
+}) => {
   // 1. Define the 4 options with their unique colors
   const options = [
-    { id: 'CALMING', color: '#B8E2C8', icon: '☁️' },      // Green
-    { id: 'NEUTRAL', color: '#94A684', icon: '⚖️' },      // Blue
-    { id: 'CHALLENGING', color: '#F9E897', icon: '⚡' },  // Orange
+    { id: 'CALMING', color: '#B8E2C8', icon: '☁️' }, // Green
+    { id: 'NEUTRAL', color: '#94A684', icon: '⚖️' }, // Blue
+    { id: 'CHALLENGING', color: '#F9E897', icon: '⚡' }, // Orange
     { id: 'OVERWHELMING', color: '#FFB3B3', icon: '💥' }, // Red
   ];
 
   return (
     <View style={styles.container}>
       {label && <Text style={styles.label}>{label}</Text>}
-      
+
       <View style={styles.grid}>
-        {options.map((option) => {
+        {options.map(option => {
           const isSelected = selectedValue === option.id;
 
           return (
             <TouchableOpacity
               key={option.id}
-              onPress={() => onSelect(option.id)}
+              onPress={() => {
+                if (editable) {
+                  onSelect(option.id);
+                }
+              }}
+              activeOpacity={editable ? 0.7 : 1}
               style={[
                 styles.square,
-                { 
-                  backgroundColor: isSelected ? option.color : option.color + '20', // Light background version
+                {
+                  backgroundColor: isSelected
+                    ? option.color
+                    : option.color + '20', // Light background version
                   borderColor: isSelected ? '#000000' : 'transparent',
 
                   borderWidth: isSelected ? 3 : 0, // Highlighted border
-                }
-              ]}
-            >
+                },
+              ]}>
               {/* Icon Placeholder */}
               <Text style={styles.iconText}>{option.icon}</Text>
-              
+
               <Text style={[styles.optionText, { color: '#000000' }]}>
                 {option.id}
               </Text>
@@ -63,12 +74,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   square: {
-    width: '23%',          // Fits two per row with a small gap
-    aspectRatio: 1,        // Keeps it a perfect square
+    width: '23%', // Fits two per row with a small gap
+    aspectRatio: 1, // Keeps it a perfect square
     borderRadius: 2,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: '2%',    // Vertical gap between rows
+    marginBottom: '2%', // Vertical gap between rows
     // Shadow for a "button" feel
     elevation: 1,
     shadowColor: '#000',
