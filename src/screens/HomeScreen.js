@@ -49,7 +49,7 @@ export default function HomeScreen({ navigation }) {
         <MainNavButton
           title="Reporting"
           onPress={() =>
-            navigation.navigateInputForm('MainApp', { screen: 'Reporting' })
+            navigation.navigate('MainApp', { screen: 'Reporting' })
           }
           color="#5856D6"
         />
