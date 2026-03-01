@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Video, ResizeMode } from 'expo-av';
 import {
   View,
   Text,
@@ -27,7 +28,7 @@ const MediaSelector = ({ label, mediaUri, onMediaSelected, editable }) => {
 
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images', 'videos'],
-      allowsEditing: true,
+      allowsEditing: false,
       quality: 0.7, // Slightly lower quality saves storage space
     });
 
@@ -118,12 +119,25 @@ const MediaSelector = ({ label, mediaUri, onMediaSelected, editable }) => {
             onPress={() => setFullscreen(false)}>
             <Ionicons name="close-circle" size={40} color="white" />
           </TouchableOpacity>
-
-          <Image
-            source={{ uri: mediaUri }}
-            style={styles.fullImage}
-            resizeMode="contain"
-          />
+          {/* Check if the URI is a video or an image */}
+          {mediaUri?.toLowerCase().endsWith('.mp4') ||
+          mediaUri?.toLowerCase().endsWith('.mov') ||
+          mediaUri?.toLowerCase().endsWith('.m4v') ? (
+            <Video
+              source={{ uri: mediaUri }}
+              style={styles.fullImage}
+              useNativeControls // Shows Play/Pause/Slider
+              resizeMode={ResizeMode.CONTAIN}
+              isLooping={false}
+              shouldPlay={true} // Autoplay when opened
+            />
+          ) : (
+            <Image
+              source={{ uri: mediaUri }}
+              style={styles.fullImage}
+              resizeMode="contain"
+            />
+          )}
         </View>
       </Modal>
     </View>
