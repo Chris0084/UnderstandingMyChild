@@ -38,7 +38,10 @@ const LogCard = ({ entry }) => {
         <TouchableOpacity
           style={styles.pillButton}
           onPress={() =>
-            navigation.navigate('InputForm', { existingEntry: entry })
+            navigation.navigate('MainApp', {
+              screen: 'InputForm',
+              params: { existingEntry: entry }, // 'params' is required for nested navigation
+            })
           }>
           <Text style={styles.pillButtonText}>View/Edit</Text>
         </TouchableOpacity>

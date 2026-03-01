@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScrollView, Text, StyleSheet, Alert, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -15,28 +16,46 @@ const InputFormScreen = ({ route, navigation }) => {
 
   const existingEntry = route.params?.existingEntry;
 
-  const [where, setWhere] = useState(existingEntry ? existingEntry.where : '');
-  const [leadUp, setLeadUp] = useState(
-    existingEntry ? existingEntry.leadUp : '',
-  );
-  const [whatHappened, setWhatHappened] = useState(
-    existingEntry ? existingEntry.whatHappened : '',
-  );
-  const [after, setAfter] = useState(existingEntry ? existingEntry.after : '');
-  const [logDate, setLogDate] = useState(
-    existingEntry ? new Date(existingEntry.logDate) : new Date(),
-  );
-  const [selectedTags, setSelectedTags] = useState(
-    existingEntry ? existingEntry.tags : [],
-  );
-  const [mood, setMood] = useState(
-    existingEntry ? existingEntry.impactLevel : null,
-  );
+  const [where, setWhere] = useState('');
+  const [leadUp, setLeadUp] = useState('');
+  const [whatHappened, setWhatHappened] = useState('');
+  const [after, setAfter] = useState('');
+  const [logDate, setLogDate] = useState(new Date());
+  const [selectedTags, setSelectedTags] = useState([]);
+  const [mood, setMood] = useState(null);
+  const [mediaUri, setMediaUri] = useState(null);
+  const [isEditing, setIsEditing] = useState(true);
 
-  const [isEditing, setIsEditing] = useState(!existingEntry);
+  useFocusEffect(
+    useCallback(() => {
+      const entry = route.params?.existingEntry;
 
-  const [mediaUri, setMediaUri] = useState(
-    existingEntry ? existingEntry.mediaUri : null,
+      if (entry) {
+        // If we arrived with an entry (from Reporting), fill the form
+        setWhere(entry.where);
+        setLeadUp(entry.leadUp);
+        setWhatHappened(entry.whatHappened);
+        setAfter(entry.after);
+        setLogDate(new Date(entry.logDate));
+        setSelectedTags(entry.tags || []);
+        setMood(entry.impactLevel);
+        setMediaUri(entry.mediaUri);
+        setIsEditing(false); // Start in View mode
+      } else {
+        // If we arrived via Tab or Home (no entry), clear the form
+        setWhere('');
+        setLeadUp('');
+        setWhatHappened('');
+        setAfter('');
+        setLogDate(new Date());
+        setSelectedTags([]);
+        setMood(null);
+        setMediaUri(null);
+        setIsEditing(true); // Start in New Log mode
+      }
+
+      return () => navigation.setParams({ existingEntry: undefined });
+    }, [route.params?.existingEntry]),
   );
 
   useEffect(() => {

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { View, FlatList, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -32,11 +33,12 @@ const ReportingScreen = ({ navigation }) => {
     'Executive Function',
   ];
 
-  // 1. Initial Load
-  useEffect(() => {
-    fetchLogs();
-  }, []);
-
+  // Refresh data every time the screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      fetchLogs();
+    }, []),
+  );
   // 2. Apply Filters whenever data or filter choices change
   useEffect(() => {
     let result = [...allLogs];
@@ -64,12 +66,7 @@ const ReportingScreen = ({ navigation }) => {
     try {
       const storedData = await AsyncStorage.getItem('@app_logs');
       if (storedData) {
-        const parsedData = JSON.parse(storedData);
-        // Sort newest first
-        const sortedData = parsedData.sort(
-          (a, b) => new Date(b.logDate) - new Date(a.logDate),
-        );
-        setAllLogs(sortedData);
+        setAllLogs(JSON.parse(storedData));
       }
     } catch (error) {
       console.error('Error loading logs:', error);
