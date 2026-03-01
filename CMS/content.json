@@ -1,0 +1,58 @@
+{ "infoSection":{
+  "title":"INFO PAGE",
+"infoPara1":"Gathering examples, understanding what to capture and then finding it again when you really need it can be stressful and time consuming. This app helps you understand your child while preparing for appointments by noting real-life examples. It does not diagnose or replace professional assessment. There are no scores or right answers.",
+ "infoPara2":"You don’t need to complete everything. Take this at your own pace."
+},
+  "modelSections": [
+    {
+      "id": "Communication",
+      "buttonLabel": "What will this app do for me?",
+      "modalTitle": "What will this app do for me?",
+      "para1": "This app helps you organise what you already see.",
+      "para2": "Clinicians don’t look for one behaviour or moment. They look for patterns over time across a small number of areas. These areas come from the DSM-5 criteria used in UK assessments. They help professionals understand how a child experiences the world. This app will help you understand the DSM –5 areas, identify what works for your child and gather examples easily for any assessments. By identifying patterns, we can start to understand what different behaviours are communicating. This understanding can help gather evidence for diagnosis, highlight support needs in school and decide on adjustments to help your child."
+    },
+     {
+      "id": "HowToUse",
+      "buttonLabel": "How to use this app",
+      "modalTitle": "How to use this app",
+      "para1": "You only need to notice what happens, where, and how it affects your child. The journaling section lets you make a record, in your own words. You can also chose to tag the journal entry under one of the following categories and the impact it had on your child.",
+      "para2": "When you want to look back for patterns or specific moments, just head to the Review page where you can sort and filter to make findings things easy."
+    },
+    {
+      "id": "Communication",
+      "buttonLabel": "Communication",
+      "modalTitle": "Communication",
+      "para1": "How does your child communicate such as sharing interests, responding to others, and taking turns in conversation. This section also includes nonverbal communication, incorporating how eye contact, facial expression, tone of voice, and gestures are used and understood."
+    },
+    {
+      "id": "ChangeRoutine",
+      "buttonLabel": "Change / Routine",
+      "modalTitle": "Change / Routine",
+      "para1": "Repetitive movements or speech. Repeated actions, sounds, phrases, or patterns of play that may be calming or regulating. Strong preferences for routines, predictability, or familiar ways of doing things. Intense interests that may be unusual in intensity or take up a lot of time and attention. These patterns often help a child feel safe and organised."
+    },
+    {
+      "id": "SocialInteraction",
+      "buttonLabel": "Social Interaction",
+      "modalTitle": "Social Interaction",
+      "para1": "How a child develops, understands, and maintains relationships with peers and adults. Differences here don’t mean a lack of care or empathy — they reflect different ways of connecting. This area also covers interacting with the wider social world including interaction with strangers and groups."
+    },
+    {
+      "id": "EmotionalRegulation",
+      "buttonLabel": "Emotional Regulation",
+      "modalTitle": "Emotional Regulation",
+      "para1": "This area allows you to capture when you child has either struggled to regulate or has coped well with a situation. Capturing meltdowns and avoided-meltdowns can be a powerful tool in understanding how to help you child."
+    },
+    {
+      "id": "SensoryInput",
+      "buttonLabel": "Sensory Input",
+      "modalTitle": "Sensory Input",
+      "para1": "Being more or less sensitive to sounds, lights, textures, movement, pain, temperature, or other sensory input. Sensory needs can change depending on stress, tiredness, or environment. Difficulty with toileting or other internal sensory processing."
+    },
+    {
+      "id": "ExecutiveFunctioning",
+      "buttonLabel": "Executive Functioning ",
+      "modalTitle": "Executive Functioning ",
+      "para1": "This area is about the thinking skills that help us plan, decide what to do, and follow things through including working memory, response inhibition (keeping things in), task initiation, sustained attention, planning and time management."
+    }
+  ]
+}

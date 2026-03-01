@@ -35,7 +35,7 @@ export default function HomeScreen({ navigation }) {
 
         <MainNavButton
           title="Information"
-          onPress={() => console.log('Nav to Information')}
+          onPress={() => navigation.navigate('Information')}
         />
         <MainNavButton
           title="Log Form"

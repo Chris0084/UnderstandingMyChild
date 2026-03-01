@@ -7,6 +7,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import HomeScreen from './src/screens/HomeScreen';
 import InputFormScreen from './src/screens/InputFormScreen';
 import ReportingScreen from './src/screens/ReportingScreen';
+import InformationScreen from './src/screens/InformationScreen';
 
 const Stack = createNativeStackNavigator();
 /**
@@ -26,6 +27,7 @@ export default function App() {
           <Stack.Screen name="Home" component={HomeScreen} />
           <Stack.Screen name="InputForm" component={InputFormScreen} />
           <Stack.Screen name="Reporting" component={ReportingScreen} />
+          <Stack.Screen name="Information" component={InformationScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>
