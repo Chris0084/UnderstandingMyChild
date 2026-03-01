@@ -8,6 +8,7 @@ import DateStamp from '../components/DateStamp';
 import TagSelector from '../components/TagSelector';
 import MoodRadioGroup from '../components/MoodRadioGroup';
 import CustomButton from '../components/CustomButton';
+import MediaSelector from '../components/MediaSelector';
 
 const InputFormScreen = ({ route, navigation }) => {
   const insets = useSafeAreaInsets();
@@ -33,6 +34,10 @@ const InputFormScreen = ({ route, navigation }) => {
   );
 
   const [isEditing, setIsEditing] = useState(!existingEntry);
+
+  const [mediaUri, setMediaUri] = useState(
+    existingEntry ? existingEntry.mediaUri : null,
+  );
 
   useEffect(() => {
     const displayData = async () => {
@@ -65,7 +70,6 @@ const InputFormScreen = ({ route, navigation }) => {
 
   // --- SUBMIT LOGIC ---
   const handleSaveEntry = async () => {
-    // Simple validation: Ensure at least 'WHERE' is filled
     if (!where.trim()) {
       Alert.alert('Missing Info', "Please fill in the 'WHERE' field.");
       return;
@@ -73,7 +77,8 @@ const InputFormScreen = ({ route, navigation }) => {
 
     try {
       const newEntry = {
-        id: Date.now().toString(), // Unique Ref Number
+        // Use the existing ID if editing, otherwise create a new one
+        id: existingEntry ? existingEntry.id : Date.now().toString(),
         where,
         leadUp,
         whatHappened,
@@ -81,16 +86,22 @@ const InputFormScreen = ({ route, navigation }) => {
         logDate: logDate.toISOString(),
         tags: selectedTags,
         impactLevel: mood,
+        mediaUri,
       };
 
-      // 1. Get existing data
       const existingData = await AsyncStorage.getItem('@app_logs');
-      const currentLogs = existingData ? JSON.parse(existingData) : [];
+      let currentLogs = existingData ? JSON.parse(existingData) : [];
 
-      // 2. Add new entry
-      currentLogs.push(newEntry);
+      if (existingEntry) {
+        // EDIT MODE: Find the old version by ID and replace it
+        currentLogs = currentLogs.map(item =>
+          item.id === existingEntry.id ? newEntry : item,
+        );
+      } else {
+        // NEW ENTRY MODE: Just add it to the list
+        currentLogs.push(newEntry);
+      }
 
-      // 3. Save back to AsyncStorage
       await AsyncStorage.setItem('@app_logs', JSON.stringify(currentLogs));
 
       Alert.alert('Saved', 'Your entry has been recorded!', [
@@ -159,6 +170,13 @@ const InputFormScreen = ({ route, navigation }) => {
         tags={availableTags}
         selectedTags={selectedTags}
         onToggle={handleTagToggle}
+        editable={isEditing}
+      />
+
+      <MediaSelector
+        label="ATTACHED MEDIA"
+        mediaUri={mediaUri}
+        onMediaSelected={setMediaUri}
         editable={isEditing}
       />
 

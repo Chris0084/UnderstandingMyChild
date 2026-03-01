@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 
 const LogCard = ({ entry }) => {
   const navigation = useNavigation();
@@ -14,8 +15,20 @@ const LogCard = ({ entry }) => {
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <Text style={styles.headerText}>{formattedDate}</Text>
-        <Text style={styles.headerText}>Where: {entry.where.slice(0, 15)}</Text>
+        <View style={styles.headerLeft}>
+          <Text style={styles.headerText}>{formattedDate}</Text>
+          <Text style={styles.headerText}>
+            Where: {entry.where.slice(0, 15)}
+          </Text>
+        </View>
+
+        {/* --- MEDIA INDICATOR --- */}
+        {entry.mediaUri && (
+          <View style={styles.mediaBadge}>
+            <Ionicons name="attach" size={14} color="#4CAF50" />
+            <Text style={styles.mediaText}>MEDIA</Text>
+          </View>
+        )}
       </View>
 
       {/* Row containing Label and Button */}
@@ -76,6 +89,21 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   headerText: { fontWeight: 'bold', color: '#333', fontSize: 13 },
+
+  mediaBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E8F5E9', // Light green background
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  mediaText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#4CAF50', // Green text
+    marginLeft: 2,
+  },
 
   labelRow: {
     flexDirection: 'row',
