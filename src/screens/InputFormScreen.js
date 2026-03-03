@@ -10,12 +10,20 @@ import TagSelector from '../components/TagSelector';
 import MoodRadioGroup from '../components/MoodRadioGroup';
 import CustomButton from '../components/CustomButton';
 import MediaSelector from '../components/MediaSelector';
+import StrategyMatrix from '../components/StrategyMatrix';
 
 const InputFormScreen = ({ route, navigation }) => {
   const insets = useSafeAreaInsets();
 
   const existingEntry = route.params?.existingEntry;
-
+  const defaultStrategies = {
+    'Calm down space': 'Not used',
+    'Ear defenders': 'Not used',
+    'Emotion Cards': 'Not used',
+    'Now and Next board': 'Not used',
+    'Visual timetables': 'Not used',
+    'Weighted blanket': 'Not used',
+  };
   const [where, setWhere] = useState('');
   const [leadUp, setLeadUp] = useState('');
   const [whatHappened, setWhatHappened] = useState('');
@@ -25,6 +33,12 @@ const InputFormScreen = ({ route, navigation }) => {
   const [mood, setMood] = useState(null);
   const [mediaUri, setMediaUri] = useState(null);
   const [isEditing, setIsEditing] = useState(true);
+  const [strategies, setStrategies] = useState({});
+
+  // Helper function to update just one strategy
+  const handleStrategyChange = (name, value) => {
+    setStrategies(prev => ({ ...prev, [name]: value }));
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -40,6 +54,7 @@ const InputFormScreen = ({ route, navigation }) => {
         setSelectedTags(entry.tags || []);
         setMood(entry.impactLevel);
         setMediaUri(entry.mediaUri);
+        setStrategies(entry.strategies || {});
         setIsEditing(false); // Start in View mode
       } else {
         // If we arrived via Tab or Home (no entry), clear the form
@@ -51,6 +66,7 @@ const InputFormScreen = ({ route, navigation }) => {
         setSelectedTags([]);
         setMood(null);
         setMediaUri(null);
+        setStrategies(defaultStrategies);
         setIsEditing(true); // Start in New Log mode
       }
 
@@ -106,6 +122,7 @@ const InputFormScreen = ({ route, navigation }) => {
         tags: selectedTags,
         impactLevel: mood,
         mediaUri,
+        strategies,
       };
 
       const existingData = await AsyncStorage.getItem('@app_logs');
@@ -206,6 +223,13 @@ const InputFormScreen = ({ route, navigation }) => {
         editable={isEditing}
       />
 
+      <StrategyMatrix
+        label="Support Strategies Used"
+        values={strategies}
+        onValueChange={handleStrategyChange}
+        editable={isEditing}
+      />
+
       {/* --- CUSTOM SUBMIT BUTTON --- */}
 
       <View style={styles.buttonContainer}>
@@ -249,14 +273,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#ffffff',
-    paddingBottom: 40,
+    paddingBottom: 70,
   },
   text: { fontSize: 20, marginBottom: 20 },
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '90%',
-    marginTop: 20,
+    marginTop: 0,
   },
   halfButton: {
     width: '48%',
