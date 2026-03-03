@@ -228,7 +228,15 @@ const InputFormScreen = ({ route, navigation }) => {
         <CustomButton
           label="Go Back"
           color="#757575"
-          onPress={() => navigation.goBack()}
+          onPress={() => {
+            if (existingEntry) {
+              // Always go back to Reporting if we were looking at a specific log
+              navigation.navigate('MainApp', { screen: 'Reporting' });
+            } else {
+              // If it's a new log, going back to Home is usually what's expected
+              navigation.navigate('Home');
+            }
+          }}
           style={styles.halfButton}
         />
       </View>

@@ -24,9 +24,34 @@ const LogCard = ({ entry }) => {
 
         {/* --- MEDIA INDICATOR --- */}
         {entry.mediaUri && (
-          <View style={styles.mediaBadge}>
-            <Ionicons name="attach" size={14} color="#4CAF50" />
-            <Text style={styles.mediaText}>MEDIA</Text>
+          <View
+            style={[
+              styles.mediaBadge,
+              // Subtly change background color if it's a video vs photo
+              {
+                backgroundColor:
+                  entry.mediaUri.toLowerCase().endsWith('.mp4') ||
+                  entry.mediaUri.toLowerCase().endsWith('.mov')
+                    ? '#E8F5E9'
+                    : '#FFF3E0',
+              },
+            ]}>
+            {entry.mediaUri.toLowerCase().endsWith('.mp4') ||
+            entry.mediaUri.toLowerCase().endsWith('.mov') ? (
+              <>
+                <Ionicons name="play-circle" size={14} color="#4CAF50" />
+                <Text style={[styles.mediaText, { color: '#4CAF50' }]}>
+                  VIDEO
+                </Text>
+              </>
+            ) : (
+              <>
+                <Ionicons name="image" size={14} color="#FF9800" />
+                <Text style={[styles.mediaText, { color: '#FF9800' }]}>
+                  PHOTO
+                </Text>
+              </>
+            )}
           </View>
         )}
       </View>
