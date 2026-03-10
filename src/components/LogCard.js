@@ -12,6 +12,15 @@ const LogCard = ({ entry }) => {
     year: 'numeric',
   });
 
+  // --- STRATEGY LOGIC ---
+  // Get all strategies that are NOT "Not used"
+  const activeStrategies = Object.entries(entry.strategies || {})
+    .filter(([_, value]) => value !== 'Not used')
+    .map(([name, value]) => ({ name, value })); // Return an object with both
+
+  const displayStrategies = activeStrategies.slice(0, 3);
+  const remainingCount = activeStrategies.length - 3;
+
   return (
     <View style={styles.card}>
       <View style={styles.header}>
@@ -86,9 +95,38 @@ const LogCard = ({ entry }) => {
           ))}
         </View>
 
-        {entry.impactLevel && (
-          <Text style={styles.impactText}>{entry.impactLevel}</Text>
-        )}
+        <View style={styles.strategyContainer}>
+          {displayStrategies.map((strat, index) => {
+            const isNotEffective = strat.value === 'Not effective';
+
+            return (
+              <View
+                key={index}
+                style={[
+                  styles.strategyPill,
+                  isNotEffective && styles.pillRed, // Apply red background if not effective
+                ]}>
+                <Ionicons
+                  name={
+                    isNotEffective ? 'thumbs-down-sharp' : 'thumbs-up-sharp'
+                  }
+                  size={10}
+                  color={isNotEffective ? '#D32F2F' : '#388E3C'}
+                />
+                <Text
+                  style={[
+                    styles.strategyText,
+                    isNotEffective && styles.textRed,
+                  ]}>
+                  {strat.name.split('/')[0].trim().slice(0, 10)}
+                </Text>
+              </View>
+            );
+          })}
+          {remainingCount > 0 && (
+            <Text style={styles.moreText}>+{remainingCount}</Text>
+          )}
+        </View>
       </View>
     </View>
   );
@@ -184,6 +222,34 @@ const styles = StyleSheet.create({
     color: '#f44336',
     fontSize: 10,
     textTransform: 'uppercase',
+  },
+  strategyContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    flex: 1.5, // Give strategies more room than tags
+  },
+  strategyPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E8F5E9',
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: 4,
+    marginLeft: 3,
+    maxWidth: 80,
+  },
+  strategyText: {
+    fontSize: 10,
+    color: '#2E7D32',
+    fontWeight: '600',
+    marginLeft: 2,
+  },
+  moreText: {
+    fontSize: 8,
+    color: '#999',
+    fontWeight: 'bold',
+    marginLeft: 4,
   },
 });
 

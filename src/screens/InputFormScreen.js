@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { TouchableOpacity } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScrollView, Text, StyleSheet, Alert, View } from 'react-native';
@@ -11,6 +12,8 @@ import MoodRadioGroup from '../components/MoodRadioGroup';
 import CustomButton from '../components/CustomButton';
 import MediaSelector from '../components/MediaSelector';
 import StrategyMatrix from '../components/StrategyMatrix';
+import StrategyModal from '../components/StrategyModal.js';
+import { Ionicons } from '@expo/vector-icons';
 
 const InputFormScreen = ({ route, navigation }) => {
   const insets = useSafeAreaInsets();
@@ -33,7 +36,8 @@ const InputFormScreen = ({ route, navigation }) => {
   const [mood, setMood] = useState(null);
   const [mediaUri, setMediaUri] = useState(null);
   const [isEditing, setIsEditing] = useState(true);
-  const [strategies, setStrategies] = useState({});
+  const [strategies, setStrategies] = useState(defaultStrategies);
+  const [modalVisible, setModalVisible] = useState(false);
 
   // Helper function to update just one strategy
   const handleStrategyChange = (name, value) => {
@@ -54,7 +58,7 @@ const InputFormScreen = ({ route, navigation }) => {
         setSelectedTags(entry.tags || []);
         setMood(entry.impactLevel);
         setMediaUri(entry.mediaUri);
-        setStrategies(entry.strategies || {});
+        setStrategies({ ...defaultStrategies, ...entry.strategies });
         setIsEditing(false); // Start in View mode
       } else {
         // If we arrived via Tab or Home (no entry), clear the form
@@ -90,6 +94,7 @@ const InputFormScreen = ({ route, navigation }) => {
     'Social Connection',
     'Self-Regulated',
     'Executive Function',
+    'Sleep',
   ];
 
   //   The logic to add/remove tags
@@ -216,19 +221,73 @@ const InputFormScreen = ({ route, navigation }) => {
         editable={isEditing}
       />
 
-      <MoodRadioGroup
+      {/* <MoodRadioGroup
         label="IMPACT LEVEL"
         selectedValue={mood} // This tells the component which one to highlight
         onSelect={setMood}
         editable={isEditing}
-      />
+      /> */}
 
-      <StrategyMatrix
+      {/* <StrategyMatrix
         label="Support Strategies Used"
         values={strategies}
         onValueChange={handleStrategyChange}
         editable={isEditing}
+      /> */}
+
+      <CustomButton
+        label="Add Support Strategies"
+        color="#2196F3"
+        onPress={() => setModalVisible(true)}
       />
+
+      <StrategyModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        strategies={strategies}
+        onUpdate={handleStrategyChange}
+      />
+
+      <View style={styles.summaryContainer}>
+        {Object.entries(strategies).map(([name, value]) => {
+          if (value !== 'Not used') {
+            return (
+              <View key={name} style={styles.strategyChip}>
+                {/* Effectiveness Indicator */}
+                <Ionicons
+                  name={
+                    value.includes('Effective')
+                      ? 'checkmark-circle'
+                      : 'close-circle'
+                  }
+                  size={16}
+                  color={value.includes('Effective') ? '#4CAF50' : '#F44336'}
+                />
+
+                <Text style={styles.chipText}>
+                  <Text style={{ fontWeight: 'bold' }}> {name}:</Text> {value}
+                </Text>
+
+                {/* THE BIN BUTTON (Delete/Reset) */}
+                {isEditing && (
+                  <TouchableOpacity
+                    onPress={() => handleStrategyChange(name, 'Not used')}
+                    style={styles.deleteIcon}>
+                    <Ionicons name="trash-outline" size={16} color="#999" />
+                  </TouchableOpacity>
+                )}
+              </View>
+            );
+          }
+          return null;
+        })}
+
+        {Object.values(strategies).every(v => v === 'Not used') && (
+          <Text style={styles.placeholderText}>
+            No strategies recorded for this log.
+          </Text>
+        )}
+      </View>
 
       {/* --- CUSTOM SUBMIT BUTTON --- */}
 
@@ -285,6 +344,41 @@ const styles = StyleSheet.create({
   halfButton: {
     width: '48%',
     marginVertical: 0,
+  },
+  summaryContainer: {
+    width: '90%',
+    flexDirection: 'row',
+    flexWrap: 'wrap', // This allows chips to wrap to the next line
+    marginTop: 10,
+    padding: 10,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 10,
+    minHeight: 50,
+  },
+  strategyChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 20,
+    paddingLeft: 10, // Room for the checkmark
+    paddingRight: 5, // Less room here because the bin has its own padding
+    paddingVertical: 6,
+    margin: 4,
+    elevation: 1,
+  },
+  deleteIcon: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    marginLeft: 5,
+    borderLeftWidth: 1,
+    borderLeftColor: '#eee', // Subtle divider line
+  },
+  chipText: {
+    fontSize: 12,
+    color: '#333',
+    marginLeft: 4,
   },
 });
 

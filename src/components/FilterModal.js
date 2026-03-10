@@ -28,11 +28,11 @@ const FilterModal = ({
               onToggle={onToggleTag}
             />
 
-            <MoodRadioGroup
+            {/* <MoodRadioGroup
               label="Filter by Impact"
               selectedValue={selectedMood}
               onSelect={onSelectMood}
-            />
+            /> */}
           </ScrollView>
 
           <View style={styles.buttonRow}>

@@ -31,6 +31,7 @@ const ReportingScreen = ({ navigation }) => {
     'Social Connection',
     'Self-Regulated',
     'Executive Function',
+    'Sleep',
   ];
 
   // Refresh data every time the screen comes into focus
