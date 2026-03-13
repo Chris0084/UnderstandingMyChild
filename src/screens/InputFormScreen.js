@@ -237,8 +237,10 @@ const InputFormScreen = ({ route, navigation }) => {
 
       <CustomButton
         label="Add Support Strategies"
-        color="#2196F3"
+        color={isEditing ? '#2196F3' : '#BDBDBD'} // Blue when editing, Grey when viewing
         onPress={() => setModalVisible(true)}
+        disabled={!isEditing} // This is the key line
+        style={{ opacity: isEditing ? 1 : 0.6 }} // Makes it look faded when disabled
       />
 
       <StrategyModal

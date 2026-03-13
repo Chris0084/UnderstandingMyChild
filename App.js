@@ -10,6 +10,7 @@ import HomeScreen from './src/screens/HomeScreen';
 import InputFormScreen from './src/screens/InputFormScreen';
 import ReportingScreen from './src/screens/ReportingScreen';
 import InformationScreen from './src/screens/InformationScreen';
+import InsightsScreen from './src/screens/InsightsScreen';
 
 // Initialize both navigators
 const Stack = createNativeStackNavigator();
@@ -34,6 +35,10 @@ function MainTabs() {
           else if (route.name === 'InputForm')
             iconName = focused ? 'add-circle' : 'add-circle-outline';
           else if (route.name === 'Reporting')
+            iconName = focused
+              ? 'document-text-outline'
+              : 'document-text-outline';
+          else if (route.name === 'Insights')
             iconName = focused ? 'stats-chart' : 'stats-chart-outline';
 
           return <Ionicons name={iconName} size={size} color={color} />;
@@ -53,6 +58,11 @@ function MainTabs() {
         name="Reporting"
         component={ReportingScreen}
         options={{ title: 'Report' }}
+      />
+      <Tab.Screen
+        name="Insights"
+        component={InsightsScreen}
+        options={{ title: 'Insights' }}
       />
     </Tab.Navigator>
   );

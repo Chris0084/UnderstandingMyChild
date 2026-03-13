@@ -4,6 +4,10 @@ import { View, FlatList, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SortButton from '../components/SortButton';
+import * as Clipboard from 'expo-clipboard';
+import { Alert, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { SAMPLE_LOGS } from '../constants/sampleData';
 
 // Component Imports
 import LogCard from '../components/LogCard';
@@ -13,6 +17,60 @@ import FilterModal from '../components/FilterModal';
 
 const ReportingScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
+
+  const injectSampleData = async () => {
+    try {
+      // const sampleData = SAMPLE_LOGS;
+      const sampleData = [];
+
+      // 1. Get current logs first (so you don't delete your own work)
+      const existingData = await AsyncStorage.getItem('@app_logs');
+      const parsedExisting = existingData ? JSON.parse(existingData) : [];
+
+      // 2. Combine them
+      const newData = [...parsedExisting, ...sampleData];
+
+      // 3. Save back to storage
+      await AsyncStorage.setItem('@app_logs', JSON.stringify(newData));
+
+      Alert.alert(
+        'Success',
+        // '25 sample logs have been added to your database!',
+        'This feature is not active at the moment nothing has happened to your data',
+      );
+
+      // 4. Refresh the UI
+      fetchLogs();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const exportFilteredData = async () => {
+    if (filteredLogs.length === 0) {
+      Alert.alert(
+        'No Data',
+        'There are no logs matching your current filters to export.',
+      );
+      return;
+    }
+
+    try {
+      // 1. Convert the filtered array to a formatted JSON string
+      const jsonString = JSON.stringify(filteredLogs, null, 2);
+      console.log('TTT hit here');
+      // 2. Copy to clipboard
+      await Clipboard.setStringAsync(jsonString);
+
+      Alert.alert(
+        'Export Successful',
+        `${filteredLogs.length} logs copied to clipboard as JSON. You can now paste this into an email or document.`,
+      );
+    } catch (error) {
+      console.error('Clipboard Error Details:', error);
+      Alert.alert('Error', 'Failed to copy data to clipboard.');
+    }
+  };
 
   // State Management
   const [allLogs, setAllLogs] = useState([]); // Master data
@@ -133,6 +191,25 @@ const ReportingScreen = ({ navigation }) => {
         onSelectMood={setFilterMood}
         onReset={resetFilters}
       />
+
+      <TouchableOpacity
+        style={styles.exportButton}
+        onPress={exportFilteredData}>
+        <Ionicons name="copy-outline" size={18} color="#007AFF" />
+        <Text style={styles.exportButtonText}>Copy Filtered Data (JSON)</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[
+          styles.exportButton,
+          { backgroundColor: '#f44336', marginTop: 10 },
+        ]}
+        onPress={injectSampleData}>
+        <Ionicons name="flask-outline" size={18} color="#fff" />
+        <Text style={[styles.exportButtonText, { color: '#fff' }]}>
+          Inject Demo Data
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -171,6 +248,22 @@ const styles = StyleSheet.create({
   emptyContainer: {
     marginTop: 50,
     alignItems: 'center',
+  },
+  exportButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#E3F2FD',
+    padding: 12,
+    margin: 20,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#007AFF',
+  },
+  exportButtonText: {
+    color: '#007AFF',
+    fontWeight: 'bold',
+    marginLeft: 8,
   },
 });
 

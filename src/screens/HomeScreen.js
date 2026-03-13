@@ -54,8 +54,10 @@ export default function HomeScreen({ navigation }) {
           color="#5856D6"
         />
         <MainNavButton
-          title="Help"
-          onPress={() => console.log('Nav to Help')}
+          title="Insights"
+          onPress={() =>
+            navigation.navigate('MainApp', { screen: 'InsightsScreen' })
+          }
           color="#FF9500"
         />
       </View>
