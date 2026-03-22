@@ -55,9 +55,7 @@ export default function HomeScreen({ navigation }) {
         />
         <MainNavButton
           title="Insights"
-          onPress={() =>
-            navigation.navigate('MainApp', { screen: 'InsightsScreen' })
-          }
+          onPress={() => navigation.navigate('MainApp', { screen: 'Insights' })}
           color="#FF9500"
         />
       </View>

@@ -1,0 +1,139 @@
+import React from 'react';
+import { View, Dimensions, StyleSheet } from 'react-native';
+import Svg, {
+  G,
+  Path,
+  Text as SvgText,
+  Circle,
+  Defs,
+  RadialGradient,
+  Stop,
+} from 'react-native-svg';
+import InsightCard from './InsightCard';
+
+const { width } = Dimensions.get('window');
+
+const PolarAreaChart = ({ tags }) => {
+  const size = width - 40;
+  const center = size / 2;
+  const maxChartRadius = size / 2 - 80;
+  const innerRadius = 10;
+
+  if (!tags || tags.length === 0) return null;
+
+  const maxCount = Math.max(...tags.map(t => t.count), 1);
+  const angleStep = (2 * Math.PI) / tags.length;
+
+  // Define your base rainbow colors (The "Outer" color)
+  const rainbow = [
+    '#FF6384',
+    '#FF9F40',
+    '#FFCD56',
+    '#4BC0C0',
+    '#36A2EB',
+    '#c0a4f7',
+    '#734292',
+  ];
+
+  // Define the "Inner" darker versions (The "Center" color)
+  const rainbowDark = [
+    '#C62828',
+    '#E65100',
+    '#FBC02D',
+    '#00796B',
+    '#1976D2',
+    '#6d28f7',
+    '#3f0464',
+  ];
+
+  const createWedgePath = (startAngle, endAngle, currentRadius) => {
+    const x1 = innerRadius * Math.cos(startAngle);
+    const y1 = innerRadius * Math.sin(startAngle);
+    const x2 = currentRadius * Math.cos(startAngle);
+    const y2 = currentRadius * Math.sin(startAngle);
+    const x3 = currentRadius * Math.cos(endAngle);
+    const y3 = currentRadius * Math.sin(endAngle);
+    const x4 = innerRadius * Math.cos(endAngle);
+    const y4 = innerRadius * Math.sin(endAngle);
+
+    return `M ${x1} ${y1} L ${x2} ${y2} A ${currentRadius} ${currentRadius} 0 0 1 ${x3} ${y3} L ${x4} ${y4} A ${innerRadius} ${innerRadius} 0 0 0 ${x1} ${y1} Z`;
+  };
+
+  return (
+    <InsightCard title="Tag Intensity Profile">
+      <View style={styles.container}>
+        <Svg width={size} height={size}>
+          <Defs>
+            {rainbow.map((color, i) => (
+              <RadialGradient
+                key={`grad-${i}`}
+                id={`grad-${i}`}
+                cx="0"
+                cy="0"
+                rx={maxChartRadius + innerRadius}
+                ry={maxChartRadius + innerRadius}
+                fx="0"
+                fy="0"
+                gradientUnits="userSpaceOnUse">
+                <Stop offset="0%" stopColor={rainbowDark[i]} stopOpacity="1" />
+                <Stop offset="100%" stopColor={color} stopOpacity="0.9" />
+              </RadialGradient>
+            ))}
+          </Defs>
+
+          <G x={center} y={center}>
+            {/* Background Grid */}
+            {[0.25, 0.5, 0.75, 1].map((p, i) => (
+              <Circle
+                key={i}
+                r={innerRadius + maxChartRadius * p}
+                stroke="#c1c0c0"
+                fill="#bde5ad32"
+              />
+            ))}
+
+            {tags.map((item, index) => {
+              const startAngle = index * angleStep - Math.PI / 2;
+              const endAngle = (index + 1) * angleStep - Math.PI / 2;
+              const currentRadius =
+                innerRadius + (item.count / maxCount) * maxChartRadius;
+
+              const labelAngle = startAngle + angleStep / 2;
+              const labelRadius = currentRadius + 20;
+              const lx = labelRadius * Math.cos(labelAngle);
+              const ly = labelRadius * Math.sin(labelAngle);
+              const isRight = Math.cos(labelAngle) > 0;
+
+              return (
+                <G key={index}>
+                  <Path
+                    d={createWedgePath(startAngle, endAngle, currentRadius)}
+                    fill={`url(#grad-${index % rainbow.length})`}
+                    stroke="#fff"
+                    strokeWidth="1.5"
+                  />
+                  <SvgText
+                    x={lx}
+                    y={ly}
+                    fill="#455A64"
+                    fontSize="11"
+                    fontWeight="bold"
+                    textAnchor={isRight ? 'start' : 'end'}
+                    alignmentBaseline="middle">
+                    {`${item.name}: ${item.count}`}
+                  </SvgText>
+                </G>
+              );
+            })}
+          </G>
+        </Svg>
+      </View>
+    </InsightCard>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: { alignItems: 'center', justifyContent: 'center' },
+});
+
+export default PolarAreaChart;
