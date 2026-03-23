@@ -146,7 +146,7 @@ const InputFormScreen = ({ route, navigation }) => {
       await AsyncStorage.setItem('@app_logs', JSON.stringify(currentLogs));
 
       Alert.alert('Saved', 'Your entry has been recorded!', [
-        { text: 'OK', onPress: () => navigation.goBack() },
+        { text: 'OK', onPress: () => setIsEditing(false) },
       ]);
     } catch (e) {
       Alert.alert('Error', 'Could not save entry.');
@@ -154,56 +154,138 @@ const InputFormScreen = ({ route, navigation }) => {
     }
   };
 
-  return (
-    <ScrollView
-      style={[styles.scrollView, { paddingTop: insets.top }]}
-      contentContainerStyle={styles.container}>
-      <Text style={styles.text}>
-        {existingEntry
-          ? isEditing
-            ? 'Edit Log'
-            : 'View Log'
-          : 'New Log Entry'}
-      </Text>
+  // This is your new "Report" style view
+  const renderReportView = () => (
+    <View style={styles.reportCard}>
+      <View style={styles.reportHeader}>
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}>
+          <Text style={styles.reportDate}>{logDate.toDateString()}</Text>
+        </View>
+        <View style={styles.reportSection}>
+          <Text style={styles.reportLabel}>LOCATION</Text>
+          <Text style={styles.reportValue}>{where || 'Not recorded'}</Text>
+        </View>
+        <View style={styles.tagRow}>
+          {selectedTags.length > 0 ? (
+            selectedTags.map(tag => (
+              <View key={tag} style={styles.reportTag}>
+                <Text style={styles.reportTagText}>{tag.toUpperCase()}</Text>
+              </View>
+            ))
+          ) : (
+            <Text style={styles.placeholderText}>No tags selected</Text>
+          )}
+        </View>
+      </View>
+
+      {/* 2. Media Section (Only shows if there is a URI) */}
+      {mediaUri && (
+        <View style={styles.reportSection}>
+          <Text style={styles.reportLabel}>ATTACHED MEDIA</Text>
+          <MediaSelector
+            mediaUri={mediaUri}
+            editable={false} // This will show the image/video but hide the 'delete' or 'add' buttons
+          />
+        </View>
+      )}
+
+      {/* 3. The Narrative Sections */}
+
+      <View style={styles.reportSection}>
+        <Text style={styles.reportLabel}>DETAILS</Text>
+        <Text style={styles.reportSubLabel}>Lead Up:</Text>
+        <Text style={styles.reportValue}>{leadUp || 'No details'}</Text>
+
+        <Text style={[styles.reportSubLabel, { marginTop: 10 }]}>
+          What Happened:
+        </Text>
+        <Text style={styles.reportValue}>{whatHappened || 'No details'}</Text>
+
+        <Text style={[styles.reportSubLabel, { marginTop: 10 }]}>
+          Recovery/After:
+        </Text>
+        <Text style={styles.reportValue}>{after || 'No details'}</Text>
+      </View>
+
+      {/* 4. Support Strategies Section */}
+      <View
+        style={[
+          styles.reportSection,
+          { borderTopWidth: 1, borderTopColor: '#eee', paddingTop: 15 },
+        ]}>
+        <Text style={styles.reportLabel}>SUPPORT STRATEGIES USED</Text>
+        {Object.values(strategies).every(v => v === 'Not used') ? (
+          <Text style={styles.placeholderText}>
+            No strategies were used for this log.
+          </Text>
+        ) : (
+          Object.entries(strategies).map(([name, value]) => {
+            if (value !== 'Not used') {
+              return (
+                <View key={name} style={styles.reportStrategyRow}>
+                  <Ionicons
+                    name={
+                      value.includes('Effective')
+                        ? 'checkmark-circle'
+                        : 'close-circle'
+                    }
+                    size={18}
+                    color={value.includes('Effective') ? '#4CAF50' : '#F44336'}
+                  />
+                  <Text style={styles.reportValue}>
+                    <Text style={{ fontWeight: 'bold' }}>{name}:</Text> {value}
+                  </Text>
+                </View>
+              );
+            }
+            return null;
+          })
+        )}
+      </View>
+    </View>
+  );
+  // 2. This is your existing Form view (the input boxes)
+  const renderFormView = () => (
+    <>
       <FreeTypeBox
         label="WHERE"
         placeholder="Location (e.g Playground, Kitchen)..."
-        numLines={2}
         value={where}
         onChangeText={setWhere}
-        editable={isEditing}
+        editable={true}
       />
       <FreeTypeBox
         label="LEAD UP"
         placeholder="Triggers or environmental factors..."
-        numLines={3}
         value={leadUp}
         onChangeText={setLeadUp}
-        editable={isEditing}
+        editable={true}
       />
-
       <FreeTypeBox
         label="WHAT HAPPENED"
         placeholder="Triggers or environmental factors..."
-        numLines={3}
         value={whatHappened}
         onChangeText={setWhatHappened}
-        editable={isEditing}
+        editable={true}
       />
-
       <FreeTypeBox
         label="AFTER"
         placeholder="Immediate outcome or recovery..."
-        numLines={3}
         value={after}
         onChangeText={setAfter}
-        editable={isEditing}
+        editable={true}
       />
+
       <DateStamp
         label="DATE"
         date={logDate}
         onChange={setLogDate}
-        editable={isEditing}
+        editable={true}
       />
 
       <TagSelector
@@ -211,51 +293,28 @@ const InputFormScreen = ({ route, navigation }) => {
         tags={availableTags}
         selectedTags={selectedTags}
         onToggle={handleTagToggle}
-        editable={isEditing}
+        editable={true}
       />
 
       <MediaSelector
         label="ATTACHED MEDIA"
         mediaUri={mediaUri}
         onMediaSelected={setMediaUri}
-        editable={isEditing}
+        editable={true}
       />
-
-      {/* <MoodRadioGroup
-        label="IMPACT LEVEL"
-        selectedValue={mood} // This tells the component which one to highlight
-        onSelect={setMood}
-        editable={isEditing}
-      /> */}
-
-      {/* <StrategyMatrix
-        label="Support Strategies Used"
-        values={strategies}
-        onValueChange={handleStrategyChange}
-        editable={isEditing}
-      /> */}
 
       <CustomButton
         label="Add Support Strategies"
-        color={isEditing ? '#2196F3' : '#BDBDBD'} // Blue when editing, Grey when viewing
+        color="#2196F3"
         onPress={() => setModalVisible(true)}
-        disabled={!isEditing} // This is the key line
-        style={{ opacity: isEditing ? 1 : 0.6 }} // Makes it look faded when disabled
       />
 
-      <StrategyModal
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-        strategies={strategies}
-        onUpdate={handleStrategyChange}
-      />
-
+      {/* Strategy Summary List (Preview while editing) */}
       <View style={styles.summaryContainer}>
         {Object.entries(strategies).map(([name, value]) => {
           if (value !== 'Not used') {
             return (
               <View key={name} style={styles.strategyChip}>
-                {/* Effectiveness Indicator */}
                 <Ionicons
                   name={
                     value.includes('Effective')
@@ -265,40 +324,56 @@ const InputFormScreen = ({ route, navigation }) => {
                   size={16}
                   color={value.includes('Effective') ? '#4CAF50' : '#F44336'}
                 />
-
                 <Text style={styles.chipText}>
                   <Text style={{ fontWeight: 'bold' }}> {name}:</Text> {value}
                 </Text>
-
-                {/* THE BIN BUTTON (Delete/Reset) */}
-                {isEditing && (
-                  <TouchableOpacity
-                    onPress={() => handleStrategyChange(name, 'Not used')}
-                    style={styles.deleteIcon}>
-                    <Ionicons name="trash-outline" size={16} color="#999" />
-                  </TouchableOpacity>
-                )}
+                <TouchableOpacity
+                  onPress={() => handleStrategyChange(name, 'Not used')}
+                  style={styles.deleteIcon}>
+                  <Ionicons name="trash-outline" size={16} color="#999" />
+                </TouchableOpacity>
               </View>
             );
           }
           return null;
         })}
-
         {Object.values(strategies).every(v => v === 'Not used') && (
           <Text style={styles.placeholderText}>
-            No strategies recorded for this log.
+            No strategies selected yet.
           </Text>
         )}
       </View>
+    </>
+  );
 
-      {/* --- CUSTOM SUBMIT BUTTON --- */}
+  return (
+    <ScrollView
+      style={[styles.scrollView, { paddingTop: insets.top }]}
+      contentContainerStyle={styles.container}>
+      <Text style={styles.text}>
+        {existingEntry
+          ? isEditing
+            ? 'Edit Log'
+            : 'Log Report'
+          : 'New Log Entry'}
+      </Text>
+
+      {/* --- THE TOGGLE --- */}
+      {isEditing ? renderFormView() : renderReportView()}
+
+      <StrategyModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        strategies={strategies}
+        onUpdate={handleStrategyChange}
+      />
 
       <View style={styles.buttonContainer}>
         {isEditing ? (
           <CustomButton
             label="Save Changes"
             color="#4CAF50"
-            onPress={handleSaveEntry} // We will update this logic next
+            onPress={handleSaveEntry}
             style={styles.halfButton}
           />
         ) : (
@@ -309,19 +384,10 @@ const InputFormScreen = ({ route, navigation }) => {
             style={styles.halfButton}
           />
         )}
-
         <CustomButton
           label="Go Back"
           color="#757575"
-          onPress={() => {
-            if (existingEntry) {
-              // Always go back to Reporting if we were looking at a specific log
-              navigation.navigate('MainApp', { screen: 'Reporting' });
-            } else {
-              // If it's a new log, going back to Home is usually what's expected
-              navigation.navigate('Home');
-            }
-          }}
+          onPress={() => navigation.goBack()}
           style={styles.halfButton}
         />
       </View>
@@ -330,6 +396,10 @@ const InputFormScreen = ({ route, navigation }) => {
 };
 
 const styles = StyleSheet.create({
+  scrollView: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+  },
   container: {
     justifyContent: 'center',
     alignItems: 'center',
@@ -381,6 +451,84 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#333',
     marginLeft: 4,
+  },
+  reportCard: {
+    width: '92%',
+    backgroundColor: '#fff',
+    borderRadius: 15,
+    padding: 20,
+    marginBottom: 20,
+    // Add shadow for iOS
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    // Add elevation for Android
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#efefef',
+  },
+  reportHeader: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    paddingBottom: 15,
+    marginBottom: 15,
+  },
+  reportDate: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  reportLabel: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#999',
+    letterSpacing: 1,
+    marginBottom: 5,
+  },
+  reportSection: {
+    marginBottom: 20,
+  },
+  reportSubLabel: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#555',
+  },
+  reportValue: {
+    fontSize: 15,
+    color: '#444',
+    lineHeight: 22,
+  },
+  tagRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 10,
+  },
+  reportTag: {
+    backgroundColor: '#f0f0f0',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 4,
+    marginRight: 6,
+    marginBottom: 4,
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  reportTagText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#666',
+  },
+  reportStrategyRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start', // Better for long text wrapping
+    marginTop: 10,
+    paddingRight: 10,
+  },
+  placeholderText: {
+    fontSize: 14,
+    color: '#aaa',
+    fontStyle: 'italic',
   },
 });
 
