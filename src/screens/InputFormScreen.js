@@ -1,9 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { TouchableOpacity } from 'react-native';
+import {
+  TouchableOpacity,
+  ScrollView,
+  Text,
+  StyleSheet,
+  Alert,
+  View,
+} from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ScrollView, Text, StyleSheet, Alert, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
+
 // Import components
 import FreeTypeBox from '../components/FreeTypeBox';
 import DateStamp from '../components/DateStamp';
@@ -11,14 +19,14 @@ import TagSelector from '../components/TagSelector';
 import MoodRadioGroup from '../components/MoodRadioGroup';
 import CustomButton from '../components/CustomButton';
 import MediaSelector from '../components/MediaSelector';
-import StrategyMatrix from '../components/StrategyMatrix';
 import StrategyModal from '../components/StrategyModal.js';
-import { Ionicons } from '@expo/vector-icons';
 
 const InputFormScreen = ({ route, navigation }) => {
   const insets = useSafeAreaInsets();
 
-  const existingEntry = route.params?.existingEntry;
+  // Use a local variable to make the code cleaner
+  const currentEntryParam = route.params?.existingEntry;
+
   const defaultStrategies = {
     'Calm down space': 'Not used',
     'Ear defenders': 'Not used',
@@ -27,6 +35,8 @@ const InputFormScreen = ({ route, navigation }) => {
     'Visual timetables': 'Not used',
     'Weighted blanket': 'Not used',
   };
+
+  const [allLogs, setAllLogs] = useState([]);
   const [where, setWhere] = useState('');
   const [leadUp, setLeadUp] = useState('');
   const [whatHappened, setWhatHappened] = useState('');
@@ -39,29 +49,39 @@ const InputFormScreen = ({ route, navigation }) => {
   const [strategies, setStrategies] = useState(defaultStrategies);
   const [modalVisible, setModalVisible] = useState(false);
 
-  // Helper function to update just one strategy
-  const handleStrategyChange = (name, value) => {
-    setStrategies(prev => ({ ...prev, [name]: value }));
-  };
+  // Load ALL logs once when component mounts
+  useEffect(() => {
+    const fetchAllLogs = async () => {
+      const savedData = await AsyncStorage.getItem('@app_logs');
+      if (savedData) {
+        const parsed = JSON.parse(savedData);
+        const sorted = parsed.sort(
+          (a, b) => new Date(b.logDate) - new Date(a.logDate),
+        );
+        setAllLogs(sorted);
+      }
+    };
+    fetchAllLogs();
+  }, []);
 
+  // Sync the form fields whenever the route param changes (like when using arrows)
   useFocusEffect(
     useCallback(() => {
       const entry = route.params?.existingEntry;
 
       if (entry) {
-        // If we arrived with an entry (from Reporting), fill the form
-        setWhere(entry.where);
-        setLeadUp(entry.leadUp);
-        setWhatHappened(entry.whatHappened);
-        setAfter(entry.after);
+        setWhere(entry.where || '');
+        setLeadUp(entry.leadUp || '');
+        setWhatHappened(entry.whatHappened || '');
+        setAfter(entry.after || '');
         setLogDate(new Date(entry.logDate));
         setSelectedTags(entry.tags || []);
-        setMood(entry.impactLevel);
-        setMediaUri(entry.mediaUri);
+        setMood(entry.impactLevel || null);
+        setMediaUri(entry.mediaUri || null);
         setStrategies({ ...defaultStrategies, ...entry.strategies });
-        setIsEditing(false); // Start in View mode
+        setIsEditing(false); // Stay in View mode for existing entries
       } else {
-        // If we arrived via Tab or Home (no entry), clear the form
+        // Reset for New Log
         setWhere('');
         setLeadUp('');
         setWhatHappened('');
@@ -71,44 +91,45 @@ const InputFormScreen = ({ route, navigation }) => {
         setMood(null);
         setMediaUri(null);
         setStrategies(defaultStrategies);
-        setIsEditing(true); // Start in New Log mode
+        setIsEditing(true);
       }
-
-      return () => navigation.setParams({ existingEntry: undefined });
+      // REMOVED the cleanup function that was setting params to undefined
     }, [route.params?.existingEntry]),
   );
 
-  useEffect(() => {
-    const displayData = async () => {
-      const savedData = await AsyncStorage.getItem('@app_logs');
-      console.log('DATABASE CONTENT:', JSON.parse(savedData));
-    };
-    displayData();
-  }, []);
+  const handleStrategyChange = (name, value) => {
+    setStrategies(prev => ({ ...prev, [name]: value }));
+  };
 
-  //   list of tag names
-  const availableTags = [
-    'Sensory',
-    'Communication',
-    'Routine',
-    'Social Connection',
-    'Self-Regulated',
-    'Executive Function',
-    'Sleep',
-  ];
+  const navigateLogs = direction => {
+    const currentId = route.params?.existingEntry?.id;
+    const currentIndex = allLogs.findIndex(log => log.id === currentId);
 
-  //   The logic to add/remove tags
+    // Direction -1 is Newer (up the array), 1 is Older (down the array)
+    const nextIndex = currentIndex + direction;
+
+    if (nextIndex >= 0 && nextIndex < allLogs.length) {
+      const nextLog = allLogs[nextIndex];
+      // This will trigger the useFocusEffect above to update the UI
+      navigation.setParams({ existingEntry: nextLog });
+    } else {
+      Alert.alert(
+        'End of logs',
+        direction === 1
+          ? "You've reached the oldest log."
+          : "You're looking at the most recent log.",
+      );
+    }
+  };
+
   const handleTagToggle = tag => {
     if (selectedTags.includes(tag)) {
-      // Remove tag if it exists
       setSelectedTags(selectedTags.filter(item => item !== tag));
     } else {
-      // Add tag if it doesn't exist
       setSelectedTags([...selectedTags, tag]);
     }
   };
 
-  // --- SUBMIT LOGIC ---
   const handleSaveEntry = async () => {
     if (!where.trim()) {
       Alert.alert('Missing Info', "Please fill in the 'WHERE' field.");
@@ -117,8 +138,7 @@ const InputFormScreen = ({ route, navigation }) => {
 
     try {
       const newEntry = {
-        // Use the existing ID if editing, otherwise create a new one
-        id: existingEntry ? existingEntry.id : Date.now().toString(),
+        id: currentEntryParam ? currentEntryParam.id : Date.now().toString(),
         where,
         leadUp,
         whatHappened,
@@ -133,43 +153,65 @@ const InputFormScreen = ({ route, navigation }) => {
       const existingData = await AsyncStorage.getItem('@app_logs');
       let currentLogs = existingData ? JSON.parse(existingData) : [];
 
-      if (existingEntry) {
-        // EDIT MODE: Find the old version by ID and replace it
+      if (currentEntryParam) {
         currentLogs = currentLogs.map(item =>
-          item.id === existingEntry.id ? newEntry : item,
+          item.id === currentEntryParam.id ? newEntry : item,
         );
       } else {
-        // NEW ENTRY MODE: Just add it to the list
         currentLogs.push(newEntry);
       }
 
       await AsyncStorage.setItem('@app_logs', JSON.stringify(currentLogs));
+
+      // Update local allLogs list so navigation arrows work with the new data
+      const sorted = currentLogs.sort(
+        (a, b) => new Date(b.logDate) - new Date(a.logDate),
+      );
+      setAllLogs(sorted);
 
       Alert.alert('Saved', 'Your entry has been recorded!', [
         { text: 'OK', onPress: () => setIsEditing(false) },
       ]);
     } catch (e) {
       Alert.alert('Error', 'Could not save entry.');
-      console.error(e);
     }
   };
 
-  // This is your new "Report" style view
+  const availableTags = [
+    'Sensory',
+    'Communication',
+    'Routine',
+    'Social Connection',
+    'Self-Regulated',
+    'Executive Function',
+    'Sleep',
+  ];
+
   const renderReportView = () => (
     <View style={styles.reportCard}>
+      <View style={styles.navRow}>
+        <TouchableOpacity
+          onPress={() => navigateLogs(1)}
+          style={styles.navButton}>
+          <Ionicons name="chevron-back" size={24} color="#2196F3" />
+          <Text style={styles.navText}>Prev</Text>
+        </TouchableOpacity>
+
+        <Text style={styles.logCounter}>
+          {allLogs.findIndex(l => l.id === route.params?.existingEntry?.id) + 1}{' '}
+          of {allLogs.length}
+        </Text>
+
+        <TouchableOpacity
+          onPress={() => navigateLogs(-1)}
+          style={styles.navButton}>
+          <Text style={styles.navText}>Next</Text>
+          <Ionicons name="chevron-forward" size={24} color="#2196F3" />
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.reportHeader}>
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}>
-          <Text style={styles.reportDate}>{logDate.toDateString()}</Text>
-        </View>
-        <View style={styles.reportSection}>
-          <Text style={styles.reportLabel}>LOCATION</Text>
-          <Text style={styles.reportValue}>{where || 'Not recorded'}</Text>
-        </View>
+        <Text style={styles.reportDate}>{logDate.toDateString()}</Text>
         <View style={styles.tagRow}>
           {selectedTags.length > 0 ? (
             selectedTags.map(tag => (
@@ -183,36 +225,30 @@ const InputFormScreen = ({ route, navigation }) => {
         </View>
       </View>
 
-      {/* 2. Media Section (Only shows if there is a URI) */}
-      {mediaUri && (
-        <View style={styles.reportSection}>
-          <Text style={styles.reportLabel}>ATTACHED MEDIA</Text>
-          <MediaSelector
-            mediaUri={mediaUri}
-            editable={false} // This will show the image/video but hide the 'delete' or 'add' buttons
-          />
-        </View>
-      )}
-
-      {/* 3. The Narrative Sections */}
-
+      <View style={styles.reportSection}>
+        <Text style={styles.reportLabel}>LOCATION</Text>
+        <Text style={styles.reportValue}>{where || 'Not recorded'}</Text>
+      </View>
       <View style={styles.reportSection}>
         <Text style={styles.reportLabel}>DETAILS</Text>
         <Text style={styles.reportSubLabel}>Lead Up:</Text>
         <Text style={styles.reportValue}>{leadUp || 'No details'}</Text>
-
         <Text style={[styles.reportSubLabel, { marginTop: 10 }]}>
           What Happened:
         </Text>
         <Text style={styles.reportValue}>{whatHappened || 'No details'}</Text>
-
         <Text style={[styles.reportSubLabel, { marginTop: 10 }]}>
           Recovery/After:
         </Text>
         <Text style={styles.reportValue}>{after || 'No details'}</Text>
+        {mediaUri && (
+          <View style={styles.reportSection}>
+            <Text style={styles.reportLabel}>ATTACHED MEDIA</Text>
+            <MediaSelector mediaUri={mediaUri} editable={false} />
+          </View>
+        )}
       </View>
 
-      {/* 4. Support Strategies Section */}
       <View
         style={[
           styles.reportSection,
@@ -220,9 +256,7 @@ const InputFormScreen = ({ route, navigation }) => {
         ]}>
         <Text style={styles.reportLabel}>SUPPORT STRATEGIES USED</Text>
         {Object.values(strategies).every(v => v === 'Not used') ? (
-          <Text style={styles.placeholderText}>
-            No strategies were used for this log.
-          </Text>
+          <Text style={styles.placeholderText}>No strategies were used.</Text>
         ) : (
           Object.entries(strategies).map(([name, value]) => {
             if (value !== 'Not used') {
@@ -238,7 +272,7 @@ const InputFormScreen = ({ route, navigation }) => {
                     color={value.includes('Effective') ? '#4CAF50' : '#F44336'}
                   />
                   <Text style={styles.reportValue}>
-                    <Text style={{ fontWeight: 'bold' }}>{name}:</Text> {value}
+                    <Text style={{ fontWeight: 'bold' }}> {name}:</Text> {value}
                   </Text>
                 </View>
               );
@@ -249,45 +283,39 @@ const InputFormScreen = ({ route, navigation }) => {
       </View>
     </View>
   );
-  // 2. This is your existing Form view (the input boxes)
+
   const renderFormView = () => (
     <>
       <FreeTypeBox
         label="WHERE"
-        placeholder="Location (e.g Playground, Kitchen)..."
         value={where}
         onChangeText={setWhere}
         editable={true}
       />
       <FreeTypeBox
         label="LEAD UP"
-        placeholder="Triggers or environmental factors..."
         value={leadUp}
         onChangeText={setLeadUp}
         editable={true}
       />
       <FreeTypeBox
         label="WHAT HAPPENED"
-        placeholder="Triggers or environmental factors..."
         value={whatHappened}
         onChangeText={setWhatHappened}
         editable={true}
       />
       <FreeTypeBox
         label="AFTER"
-        placeholder="Immediate outcome or recovery..."
         value={after}
         onChangeText={setAfter}
         editable={true}
       />
-
       <DateStamp
         label="DATE"
         date={logDate}
         onChange={setLogDate}
         editable={true}
       />
-
       <TagSelector
         label="TAGS"
         tags={availableTags}
@@ -295,25 +323,27 @@ const InputFormScreen = ({ route, navigation }) => {
         onToggle={handleTagToggle}
         editable={true}
       />
-
+      <MoodRadioGroup
+        label="IMPACT LEVEL"
+        selectedValue={mood}
+        onSelect={setMood}
+        editable={true}
+      />
       <MediaSelector
         label="ATTACHED MEDIA"
         mediaUri={mediaUri}
         onMediaSelected={setMediaUri}
         editable={true}
       />
-
       <CustomButton
         label="Add Support Strategies"
         color="#2196F3"
         onPress={() => setModalVisible(true)}
       />
-
-      {/* Strategy Summary List (Preview while editing) */}
       <View style={styles.summaryContainer}>
-        {Object.entries(strategies).map(([name, value]) => {
-          if (value !== 'Not used') {
-            return (
+        {Object.entries(strategies).map(
+          ([name, value]) =>
+            value !== 'Not used' && (
               <View key={name} style={styles.strategyChip}>
                 <Ionicons
                   name={
@@ -333,14 +363,7 @@ const InputFormScreen = ({ route, navigation }) => {
                   <Ionicons name="trash-outline" size={16} color="#999" />
                 </TouchableOpacity>
               </View>
-            );
-          }
-          return null;
-        })}
-        {Object.values(strategies).every(v => v === 'Not used') && (
-          <Text style={styles.placeholderText}>
-            No strategies selected yet.
-          </Text>
+            ),
         )}
       </View>
     </>
@@ -348,17 +371,17 @@ const InputFormScreen = ({ route, navigation }) => {
 
   return (
     <ScrollView
-      style={[styles.scrollView, { paddingTop: insets.top }]}
+      style={styles.scrollView}
       contentContainerStyle={styles.container}>
+      <View style={{ paddingTop: insets.top }} />
       <Text style={styles.text}>
-        {existingEntry
+        {route.params?.existingEntry
           ? isEditing
             ? 'Edit Log'
             : 'Log Report'
           : 'New Log Entry'}
       </Text>
 
-      {/* --- THE TOGGLE --- */}
       {isEditing ? renderFormView() : renderReportView()}
 
       <StrategyModal
@@ -394,6 +417,8 @@ const InputFormScreen = ({ route, navigation }) => {
     </ScrollView>
   );
 };
+
+// ... (Your styles remain exactly the same as you had them)
 
 const styles = StyleSheet.create({
   scrollView: {
@@ -529,6 +554,30 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#aaa',
     fontStyle: 'italic',
+  },
+  navRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  navButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 5,
+  },
+  navText: {
+    color: '#2196F3',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  logCounter: {
+    fontSize: 12,
+    color: '#999',
+    fontWeight: 'bold',
   },
 });
 
