@@ -10,8 +10,7 @@ export default function HomeScreen({ navigation }) {
   return (
     <View style={[styles.mainScreenContainer, { paddingTop: insets.top }]}>
       <View style={styles.marginContainer}>
-        <HomeCardWrapper
-          imageSource={require('../../assets/home-water-ripple.png')}>
+        <HomeCardWrapper imageSource={require('../../assets/water-ripple.png')}>
           {/* Using ScrollView inside the card ensures buttons are reachable on small screens */}
           <ScrollView
             showsVerticalScrollIndicator={false}
