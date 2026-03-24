@@ -16,7 +16,6 @@ import { Ionicons } from '@expo/vector-icons';
 import FreeTypeBox from '../components/FreeTypeBox';
 import DateStamp from '../components/DateStamp';
 import TagSelector from '../components/TagSelector';
-import MoodRadioGroup from '../components/MoodRadioGroup';
 import CustomButton from '../components/CustomButton';
 import MediaSelector from '../components/MediaSelector';
 import StrategyModal from '../components/StrategyModal.js';
@@ -76,7 +75,7 @@ const InputFormScreen = ({ route, navigation }) => {
         setAfter(entry.after || '');
         setLogDate(new Date(entry.logDate));
         setSelectedTags(entry.tags || []);
-        setMood(entry.impactLevel || null);
+
         setMediaUri(entry.mediaUri || null);
         setStrategies({ ...defaultStrategies, ...entry.strategies });
         setIsEditing(false); // Stay in View mode for existing entries
@@ -145,7 +144,6 @@ const InputFormScreen = ({ route, navigation }) => {
         after,
         logDate: logDate.toISOString(),
         tags: selectedTags,
-        impactLevel: mood,
         mediaUri,
         strategies,
       };
@@ -190,20 +188,28 @@ const InputFormScreen = ({ route, navigation }) => {
   const renderReportView = () => (
     <View style={styles.reportCard}>
       <View style={styles.navRow}>
+        {/* PREV (Moves to an OLDER log) */}
         <TouchableOpacity
-          onPress={() => navigateLogs(1)}
+          onPress={() => navigateLogs(+1)} // +1 moves further down the list to older dates
           style={styles.navButton}>
           <Ionicons name="chevron-back" size={24} color="#2196F3" />
           <Text style={styles.navText}>Prev</Text>
         </TouchableOpacity>
 
         <Text style={styles.logCounter}>
-          {allLogs.findIndex(l => l.id === route.params?.existingEntry?.id) + 1}{' '}
+          {/* {allLogs.findIndex(l => l.id === route.params?.existingEntry?.id) +
+            allLogs.length}{' '}
+          of {allLogs.length} */}
+          {allLogs.length -
+            allLogs.findIndex(
+              l => l.id === route.params?.existingEntry?.id,
+            )}{' '}
           of {allLogs.length}
         </Text>
 
+        {/* NEXT (Moves to a NEWER log) */}
         <TouchableOpacity
-          onPress={() => navigateLogs(-1)}
+          onPress={() => navigateLogs(-1)} // -1 moves up the list toward index 0 (today)
           style={styles.navButton}>
           <Text style={styles.navText}>Next</Text>
           <Ionicons name="chevron-forward" size={24} color="#2196F3" />
@@ -321,12 +327,6 @@ const InputFormScreen = ({ route, navigation }) => {
         tags={availableTags}
         selectedTags={selectedTags}
         onToggle={handleTagToggle}
-        editable={true}
-      />
-      <MoodRadioGroup
-        label="IMPACT LEVEL"
-        selectedValue={mood}
-        onSelect={setMood}
         editable={true}
       />
       <MediaSelector

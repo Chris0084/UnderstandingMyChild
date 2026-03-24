@@ -1,89 +1,91 @@
 import React from 'react';
-import { StyleSheet, View, Text } from 'react-native';
+import { StyleSheet, View, Text, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Logo from '../components/Logo';
 import MainNavButton from '../components/MainNavButton';
+import HomeCardWrapper from '../components/HomeCardWrapper';
 
 export default function HomeScreen({ navigation }) {
   const insets = useSafeAreaInsets();
 
   return (
-    <View
-      style={[
-        styles.container,
-        // This applies padding only where the "unsafe" areas are
-        { paddingTop: insets.top, paddingBottom: insets.bottom },
-      ]}>
-      <View style={styles.content}>
-        <Logo
-          source={require('../../assets/childParentLightbulb.png')}
-          size={120}
-        />
+    <View style={[styles.mainScreenContainer, { paddingTop: insets.top }]}>
+      <View style={styles.marginContainer}>
+        <HomeCardWrapper
+          imageSource={require('../../assets/home-water-ripple2.png')}>
+          {/* Using ScrollView inside the card ensures buttons are reachable on small screens */}
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}>
+            <View style={styles.textContainer}>
+              <Text style={styles.titleText}>
+                Welcome to Understanding My Child
+              </Text>
+              <Text style={styles.paragraphText}>
+                This app is here to support you as you learn more about your
+                child’s development. There are no right or wrong answers — only
+                observations that help build a clearer picture over time.
+              </Text>
+            </View>
 
-        <View style={styles.textContainer}>
-          <Text style={styles.titleText}>
-            Welcome to Understanding My Child
-          </Text>
-          <Text style={styles.paragraphText}>
-            This app is here to support you as you learn more about your child’s
-            development. There are no right or wrong answers — only observations
-            that help build a clearer picture over time. Take your time, follow
-            your instincts, and remember that every child develops in their own
-            unique way.
-          </Text>
-        </View>
-
-        <MainNavButton
-          title="Information"
-          onPress={() =>
-            navigation.navigate('MainApp', { screen: 'Information' })
-          }
-        />
-        <MainNavButton
-          title="Log Form"
-          onPress={() =>
-            navigation.navigate('MainApp', { screen: 'InputForm' })
-          }
-          color="#34C759"
-        />
-        <MainNavButton
-          title="Reporting"
-          onPress={() =>
-            navigation.navigate('MainApp', { screen: 'Reporting' })
-          }
-          color="#5856D6"
-        />
-        <MainNavButton
-          title="Insights"
-          onPress={() => navigation.navigate('MainApp', { screen: 'Insights' })}
-          color="#FF9500"
-        />
+            <MainNavButton
+              title="Information"
+              onPress={() =>
+                navigation.navigate('MainApp', { screen: 'Information' })
+              }
+            />
+            <MainNavButton
+              title="Log Form"
+              onPress={() =>
+                navigation.navigate('MainApp', { screen: 'InputForm' })
+              }
+              color="#34C759"
+            />
+            <MainNavButton
+              title="Reporting"
+              onPress={() =>
+                navigation.navigate('MainApp', { screen: 'Reporting' })
+              }
+              color="#5856D6"
+            />
+            <MainNavButton
+              title="Insights"
+              onPress={() =>
+                navigation.navigate('MainApp', { screen: 'Insights' })
+              }
+              color="#FF9500"
+            />
+          </ScrollView>
+        </HomeCardWrapper>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  mainScreenContainer: {
     flex: 1,
-    backgroundColor: '#a7d7dc',
+    backgroundColor: '#b7b7b4', // Matches your theme background
   },
-  content: {
+  marginContainer: {
     flex: 1,
-    paddingHorizontal: 25,
+    margin: 10, // This creates the "gap" from the phone edge
+    borderRadius: 20, // Rounds the outer corners of the whole UI
+    overflow: 'hidden', // Important: clips the image/card to the rounded corners
   },
   textContainer: {
-    marginVertical: 20,
+    marginBottom: 25,
     alignItems: 'center',
   },
   titleText: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 10,
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 12,
   },
   paragraphText: {
     fontSize: 16,
-    color: '#555',
+    color: '#666',
     textAlign: 'center',
     lineHeight: 24,
   },
