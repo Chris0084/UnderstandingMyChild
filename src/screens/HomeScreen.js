@@ -63,7 +63,7 @@ export default function HomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   mainScreenContainer: {
     flex: 1,
-    backgroundColor: '#b7b7b4', // Matches your theme background
+    backgroundColor: '#b', // Matches your theme background
   },
   marginContainer: {
     flex: 1,

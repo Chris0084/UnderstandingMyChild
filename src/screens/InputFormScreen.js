@@ -66,34 +66,38 @@ const InputFormScreen = ({ route, navigation }) => {
   // Sync the form fields whenever the route param changes (like when using arrows)
   useFocusEffect(
     useCallback(() => {
+      // 1. Grab params
       const entry = route.params?.existingEntry;
+      const modeParam = route.params?.mode;
 
-      if (entry) {
+      // 2. Logic: If we have an entry, load it. If NOT, we MUST reset everything.
+      if (entry && Object.keys(entry).length > 0) {
         setWhere(entry.where || '');
         setLeadUp(entry.leadUp || '');
         setWhatHappened(entry.whatHappened || '');
         setAfter(entry.after || '');
         setLogDate(new Date(entry.logDate));
         setSelectedTags(entry.tags || []);
-
         setMediaUri(entry.mediaUri || null);
         setStrategies({ ...defaultStrategies, ...entry.strategies });
-        setIsEditing(false); // Stay in View mode for existing entries
+
+        // If mode is 'renderReportView', show report. Otherwise, show edit form.
+        setIsEditing(modeParam !== 'renderReportView');
       } else {
-        // Reset for New Log
+        // THIS IS THE FIX: Explicitly clear everything for a New Log
         setWhere('');
         setLeadUp('');
         setWhatHappened('');
         setAfter('');
         setLogDate(new Date());
         setSelectedTags([]);
-        setMood(null);
         setMediaUri(null);
         setStrategies(defaultStrategies);
-        setIsEditing(true);
+        setIsEditing(true); // Always show the form for a new log
       }
-      // REMOVED the cleanup function that was setting params to undefined
-    }, [route.params?.existingEntry]),
+
+      // No cleanup function here - it interferes with the Next/Prev arrows
+    }, [route.params]), // Watch the whole params object
   );
 
   const handleStrategyChange = (name, value) => {
@@ -294,24 +298,28 @@ const InputFormScreen = ({ route, navigation }) => {
     <>
       <FreeTypeBox
         label="WHERE"
+        placeholder="Location (e.g Playground, Kitchen)..."
         value={where}
         onChangeText={setWhere}
         editable={true}
       />
       <FreeTypeBox
         label="LEAD UP"
+        placeholder="Triggers or environmental factors..."
         value={leadUp}
         onChangeText={setLeadUp}
         editable={true}
       />
       <FreeTypeBox
         label="WHAT HAPPENED"
+        placeholder="Triggers or environmental factors..."
         value={whatHappened}
         onChangeText={setWhatHappened}
         editable={true}
       />
       <FreeTypeBox
         label="AFTER"
+        placeholder="Immediate outcome or recovery..."
         value={after}
         onChangeText={setAfter}
         editable={true}

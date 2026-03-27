@@ -74,7 +74,7 @@ const LogCard = ({ entry }) => {
           onPress={() =>
             navigation.navigate('MainApp', {
               screen: 'InputForm',
-              params: { existingEntry: entry }, // 'params' is required for nested navigation
+              params: { existingEntry: entry, mode: 'renderReportView' }, // 'params' is required for nested navigation
             })
           }>
           <Text style={styles.pillButtonText}>View/Edit</Text>

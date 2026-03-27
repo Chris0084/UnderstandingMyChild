@@ -53,6 +53,19 @@ function MainTabs() {
         name="InputForm"
         component={InputFormScreen}
         options={{ title: 'Log' }}
+        // ADD THIS LISTENER:
+        listeners={({ navigation }) => ({
+          tabPress: e => {
+            // Prevent default action
+            e.preventDefault();
+
+            // Manually navigate and force params to be undefined
+            navigation.navigate('InputForm', {
+              existingEntry: undefined,
+              mode: undefined,
+            });
+          },
+        })}
       />
       <Tab.Screen
         name="Reporting"
