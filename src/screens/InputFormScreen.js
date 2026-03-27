@@ -35,6 +35,7 @@ const InputFormScreen = ({ route, navigation }) => {
     'Weighted blanket': 'Not used',
   };
 
+  const [isFavorite, setIsFavorite] = useState(false);
   const [allLogs, setAllLogs] = useState([]);
   const [where, setWhere] = useState('');
   const [leadUp, setLeadUp] = useState('');
@@ -72,6 +73,7 @@ const InputFormScreen = ({ route, navigation }) => {
 
       // 2. Logic: If we have an entry, load it. If NOT, we MUST reset everything.
       if (entry && Object.keys(entry).length > 0) {
+        setIsFavorite(entry.isFavorite || false);
         setWhere(entry.where || '');
         setLeadUp(entry.leadUp || '');
         setWhatHappened(entry.whatHappened || '');
@@ -99,6 +101,65 @@ const InputFormScreen = ({ route, navigation }) => {
       // No cleanup function here - it interferes with the Next/Prev arrows
     }, [route.params]), // Watch the whole params object
   );
+
+  const handleToggleFavorite = async () => {
+    const currentId = route.params?.existingEntry?.id;
+    if (!currentId) return;
+
+    try {
+      const newFavoriteStatus = !isFavorite;
+      setIsFavorite(newFavoriteStatus);
+
+      const savedData = await AsyncStorage.getItem('@app_logs');
+      let logs = savedData ? JSON.parse(savedData) : [];
+
+      // Update the favorite status in the full list
+      logs = logs.map(log =>
+        log.id === currentId ? { ...log, isFavorite: newFavoriteStatus } : log,
+      );
+
+      await AsyncStorage.setItem('@app_logs', JSON.stringify(logs));
+      setAllLogs(logs); // Keep our navigation list in sync
+    } catch (e) {
+      Alert.alert('Error', 'Could not save favorite status.');
+    }
+  };
+
+  // DELETE LOG
+  const handleDeleteLog = () => {
+    Alert.alert(
+      'Delete Log',
+      'Are you sure you want to permanently delete this entry?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const currentId = route.params?.existingEntry?.id;
+              const savedData = await AsyncStorage.getItem('@app_logs');
+              let logs = savedData ? JSON.parse(savedData) : [];
+
+              // Filter out the current log
+              const updatedLogs = logs.filter(log => log.id !== currentId);
+
+              await AsyncStorage.setItem(
+                '@app_logs',
+                JSON.stringify(updatedLogs),
+              );
+              setAllLogs(updatedLogs); // Update local list
+
+              Alert.alert('Deleted', 'Entry removed successfully.');
+              navigation.goBack(); // Take user back to the list
+            } catch (e) {
+              Alert.alert('Error', 'Could not delete entry.');
+            }
+          },
+        },
+      ],
+    );
+  };
 
   const handleStrategyChange = (name, value) => {
     setStrategies(prev => ({ ...prev, [name]: value }));
@@ -150,6 +211,7 @@ const InputFormScreen = ({ route, navigation }) => {
         tags: selectedTags,
         mediaUri,
         strategies,
+        isFavorite: currentEntryParam ? isFavorite : false, // Save favorite status
       };
 
       const existingData = await AsyncStorage.getItem('@app_logs');
@@ -221,7 +283,32 @@ const InputFormScreen = ({ route, navigation }) => {
       </View>
 
       <View style={styles.reportHeader}>
-        <Text style={styles.reportDate}>{logDate.toDateString()}</Text>
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}>
+          <Text style={styles.reportDate}>{logDate.toDateString()}</Text>
+
+          {/* ACTION BUTTONS (Fav and Delete) */}
+          <View style={{ flexDirection: 'row' }}>
+            <TouchableOpacity
+              onPress={handleToggleFavorite}
+              style={{ marginRight: 15 }}>
+              <Ionicons
+                name={isFavorite ? 'heart' : 'heart-outline'}
+                size={26}
+                color={isFavorite ? '#E91E63' : '#999'}
+              />
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={handleDeleteLog}>
+              <Ionicons name="trash-outline" size={26} color="#F44336" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
         <View style={styles.tagRow}>
           {selectedTags.length > 0 ? (
             selectedTags.map(tag => (

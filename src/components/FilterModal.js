@@ -7,9 +7,9 @@ import {
   Animated,
   StyleSheet,
   ScrollView,
+  Switch,
 } from 'react-native';
 import TagSelector from './TagSelector';
-import MoodRadioGroup from './MoodRadioGroup';
 import CustomButton from './CustomButton';
 
 const FilterModal = ({
@@ -19,6 +19,8 @@ const FilterModal = ({
   selectedTags,
   onToggleTag,
   onReset,
+  showFavoritesOnly,
+  onToggleFavorites,
 }) => {
   // 1. Setup Animation Value for the Y position
   const panY = useRef(new Animated.Value(0)).current;
@@ -63,6 +65,15 @@ const FilterModal = ({
           </View>
           <View style={styles.modalContent}>
             <Text style={styles.title}>Filter Entries</Text>
+            <View style={styles.filterSection}>
+              <Text style={styles.sectionLabel}>Show Favorites Only</Text>
+              <Switch
+                trackColor={{ false: '#767577', true: '#E91E63' }}
+                thumbColor={showFavoritesOnly ? '#fff' : '#f4f3f4'}
+                onValueChange={onToggleFavorites}
+                value={showFavoritesOnly}
+              />
+            </View>
 
             <ScrollView>
               <TagSelector
@@ -104,8 +115,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingBottom: 40,
     maxHeight: '80%',
+  },
+  innerContent: {
+    // Removed the nested modalContent style to fix double padding
   },
   grabberContainer: {
     width: '100%',
@@ -116,10 +131,24 @@ const styles = StyleSheet.create({
     width: 40,
     height: 5,
     borderRadius: 3,
-    backgroundColor: '#CCC', // Light grey bar
+    backgroundColor: '#CCC',
   },
-  title: { fontSize: 20, fontWeight: 'bold', marginBottom: 15 },
-  buttonRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 20 },
+  filterSection: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  sectionLabel: { fontSize: 16, color: '#444', fontWeight: '600' },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+  },
 });
 
 export default FilterModal;

@@ -79,6 +79,7 @@ const ReportingScreen = ({ navigation }) => {
   const [isAscending, setIsAscending] = useState(false); // false = Newest First
 
   // Filter states
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [filterTags, setFilterTags] = useState([]);
   const [filterMood, setFilterMood] = useState(null);
 
@@ -102,6 +103,10 @@ const ReportingScreen = ({ navigation }) => {
   useEffect(() => {
     let result = [...allLogs];
 
+    if (showFavoritesOnly) {
+      result = result.filter(log => log.isFavorite === true);
+    }
+
     if (filterTags.length > 0) {
       result = result.filter(
         log => log.tags && log.tags.some(t => filterTags.includes(t)),
@@ -119,7 +124,7 @@ const ReportingScreen = ({ navigation }) => {
     });
 
     setFilteredLogs(result);
-  }, [allLogs, filterTags, filterMood, isAscending]);
+  }, [allLogs, filterTags, filterMood, isAscending, showFavoritesOnly]);
 
   const fetchLogs = async () => {
     try {
@@ -135,6 +140,7 @@ const ReportingScreen = ({ navigation }) => {
   const resetFilters = () => {
     setFilterTags([]);
     setFilterMood(null);
+    setShowFavoritesOnly(false);
   };
 
   // --- THE RETURN STATEMENT ---
@@ -160,7 +166,11 @@ const ReportingScreen = ({ navigation }) => {
           />
           <FilterButton
             onPress={() => setModalVisible(true)}
-            activeFiltersCount={filterTags.length + (filterMood ? 1 : 0)}
+            activeFiltersCount={
+              filterTags.length +
+              (filterMood ? 1 : 0) +
+              (showFavoritesOnly ? 1 : 0)
+            }
           />
         </View>
       </View>
@@ -187,12 +197,14 @@ const ReportingScreen = ({ navigation }) => {
             prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag],
           )
         }
+        showFavoritesOnly={showFavoritesOnly}
+        onToggleFavorites={() => setShowFavoritesOnly(!showFavoritesOnly)}
         selectedMood={filterMood}
         onSelectMood={setFilterMood}
         onReset={resetFilters}
       />
 
-      <TouchableOpacity
+      {/* <TouchableOpacity
         style={styles.exportButton}
         onPress={exportFilteredData}>
         <Ionicons name="copy-outline" size={18} color="#007AFF" />
@@ -209,7 +221,7 @@ const ReportingScreen = ({ navigation }) => {
         <Text style={[styles.exportButtonText, { color: '#fff' }]}>
           Inject Demo Data
         </Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </View>
   );
 };
