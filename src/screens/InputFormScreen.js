@@ -19,6 +19,7 @@ import TagSelector from '../components/TagSelector';
 import CustomButton from '../components/CustomButton';
 import MediaSelector from '../components/MediaSelector';
 import StrategyModal from '../components/StrategyModal.js';
+import Colors from '../constants/Colors.js';
 
 const InputFormScreen = ({ route, navigation }) => {
   const insets = useSafeAreaInsets();
@@ -523,7 +524,7 @@ const styles = StyleSheet.create({
   container: {
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#ffffff',
+    backgroundColor: Colors.sage,
     paddingBottom: 70,
   },
   text: { fontSize: 20, marginBottom: 20 },

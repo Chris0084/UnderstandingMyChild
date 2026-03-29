@@ -3,6 +3,8 @@ import { StyleSheet, View, Text, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MainNavButton from '../components/MainNavButton';
 import HomeCardWrapper from '../components/HomeCardWrapper';
+import NavCard from '../components/NavCard';
+import HorizontalInfoCard from '../components/HorizontalInfoCard';
 
 export default function HomeScreen({ navigation }) {
   const insets = useSafeAreaInsets();
@@ -26,33 +28,66 @@ export default function HomeScreen({ navigation }) {
               </Text>
             </View>
 
-            <MainNavButton
+            <View style={styles.cardGrid}>
+              <NavCard
+                label="Information"
+                iconName="information-circle-outline"
+                onPress={() =>
+                  navigation.navigate('MainApp', { screen: 'Information' })
+                }
+              />
+              <NavCard
+                label="Capture A Moment"
+                iconName="add-circle-outline"
+                onPress={() =>
+                  navigation.navigate('MainApp', { screen: 'InputForm' })
+                }
+              />
+            </View>
+
+            <View style={[styles.cardGrid, { marginTop: 15 }]}>
+              <NavCard
+                label="Journal"
+                iconName="book-outline"
+                onPress={() =>
+                  navigation.navigate('MainApp', { screen: 'Reporting' })
+                }
+              />
+              <NavCard
+                label="Trend Tracker"
+                iconName="bulb-outline"
+                onPress={() =>
+                  navigation.navigate('MainApp', { screen: 'Insights' })
+                }
+              />
+            </View>
+            {/* <MainNavButton
               title="Information"
               onPress={() =>
                 navigation.navigate('MainApp', { screen: 'Information' })
               }
             />
             <MainNavButton
-              title="Log Form"
+              title="Capture A Moment"
               onPress={() =>
                 navigation.navigate('MainApp', { screen: 'InputForm' })
               }
               color="#34C759"
             />
             <MainNavButton
-              title="Reporting"
+              title="View Journal"
               onPress={() =>
                 navigation.navigate('MainApp', { screen: 'Reporting' })
               }
               color="#5856D6"
             />
             <MainNavButton
-              title="Insights"
+              title="Trend Tracker"
               onPress={() =>
                 navigation.navigate('MainApp', { screen: 'Insights' })
               }
               color="#FF9500"
-            />
+            /> */}
           </ScrollView>
         </HomeCardWrapper>
       </View>
@@ -67,7 +102,7 @@ const styles = StyleSheet.create({
   },
   marginContainer: {
     flex: 1,
-    margin: 10, // This creates the "gap" from the phone edge
+    margin: 0, // This creates the "gap" from the phone edge
     borderRadius: 20, // Rounds the outer corners of the whole UI
     overflow: 'hidden', // Important: clips the image/card to the rounded corners
   },
@@ -87,5 +122,10 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
     lineHeight: 24,
+  },
+  cardGrid: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    paddingHorizontal: 10,
   },
 });

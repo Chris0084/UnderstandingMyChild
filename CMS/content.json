@@ -5,8 +5,8 @@
 },
   "modelSections": [
     {
-      "id": "Communication",
-      "imageKey": "what_will_this_app",
+      "id": "ComWahtThisAppWillDo",
+      "imageKey": "whatThisAppWillDoInfo",
       "category": "app",
       "buttonLabel": "What will this app do for me?",
       "modalTitle": "What will this app do for me?",
@@ -15,7 +15,7 @@
     },
      {
       "id": "HowToUse",
-      "imageKey": "how_to_use",
+      "imageKey": "howToUseAppInfo",
       "category": "app",
       "buttonLabel": "How to use this app",
       "modalTitle": "How to use this app",
@@ -24,7 +24,7 @@
     },
     {
       "id": "Communication",
-      "imageKey": "communication",
+      "imageKey": "communicationInfo",
       "category": "tags",
       "buttonLabel": "Communication",
       "modalTitle": "Communication",
@@ -32,7 +32,7 @@
     },
     {
       "id": "ChangeRoutine",
-      "imageKey": "change_routine",
+      "imageKey": "routineInfo",
       "category": "tags",
       "buttonLabel": "Change / Routine",
       "modalTitle": "Change / Routine",
@@ -55,6 +55,7 @@
     },
     {
       "id": "SensoryInput",
+        "imageKey": "sensoryInfo",
       "category": "tags",
       "buttonLabel": "Sensory Input",
       "modalTitle": "Sensory Input",

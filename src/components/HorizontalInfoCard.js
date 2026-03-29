@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import CustomButton from './CustomButton'; // Reusing your existing button for the modal close
+import Colors from '../constants/Colors';
 
 const HorizontalInfoCard = ({ title, body, label, imageSource }) => {
   const [modalVisible, setModalVisible] = useState(false);
@@ -25,7 +26,7 @@ const HorizontalInfoCard = ({ title, body, label, imageSource }) => {
             <Image
               source={imageSource}
               style={styles.cardImage}
-              resizeMode="cover"
+              resizeMode="contain"
             />
           ) : (
             <View style={styles.iconCircle}>
@@ -82,9 +83,10 @@ const styles = StyleSheet.create({
   imageContainer: {
     width: '100%',
     height: '65%', // Image takes up the top portion
-    backgroundColor: '#f0f0f0',
+    backgroundColor: Colors.bottle,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 5,
   },
   cardImage: {
     width: '100%',
@@ -99,10 +101,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cardLabel: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '700',
     color: '#333',
-    padding: 12, // Space around the text at the bottom
+    padding: 8, // Space around the text at the bottom
   },
   modalOverlay: {
     flex: 1,

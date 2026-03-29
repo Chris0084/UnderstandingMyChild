@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import Colors from '../constants/Colors';
 
 const TagSelector = ({
   label,
@@ -74,7 +75,7 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
   },
   pillSelected: {
-    backgroundColor: '#8fae9a',
+    backgroundColor: Colors.darkSage,
     borderColor: '#007AFF',
   },
   tagText: {

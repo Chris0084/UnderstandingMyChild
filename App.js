@@ -35,11 +35,12 @@ function MainTabs() {
           else if (route.name === 'InputForm')
             iconName = focused ? 'add-circle' : 'add-circle-outline';
           else if (route.name === 'Reporting')
-            iconName = focused
-              ? 'document-text-outline'
-              : 'document-text-outline';
+            // iconName = focused
+            //   ? 'document-text-outline'
+            //   : 'document-text-outline';
+            iconName = focused ? 'book-outline' : 'book-outline';
           else if (route.name === 'Insights')
-            iconName = focused ? 'stats-chart' : 'stats-chart-outline';
+            iconName = focused ? 'bulb' : 'bulb-outline';
 
           return <Ionicons name={iconName} size={size} color={color} />;
         },
@@ -52,8 +53,7 @@ function MainTabs() {
       <Tab.Screen
         name="InputForm"
         component={InputFormScreen}
-        options={{ title: 'Log' }}
-        // ADD THIS LISTENER:
+        options={{ title: 'Captue' }}
         listeners={({ navigation }) => ({
           tabPress: e => {
             // Prevent default action
@@ -75,7 +75,7 @@ function MainTabs() {
       <Tab.Screen
         name="Insights"
         component={InsightsScreen}
-        options={{ title: 'Insights' }}
+        options={{ title: 'Trends' }}
       />
     </Tab.Navigator>
   );
@@ -111,6 +111,6 @@ registerRootComponent(App);
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#c42121',
+    backgroundColor: '#ffffff00',
   },
 });

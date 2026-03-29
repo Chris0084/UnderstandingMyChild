@@ -1,22 +1,24 @@
 import React from 'react';
 import { View, ScrollView, StyleSheet, Text, FlatList } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Colors from '../constants/Colors';
 
 // Component Imports
 import TitleText from '../textComponents/TitleText';
 import BodyText from '../textComponents/BodyText';
 import Spacer from '../textComponents/LineSpacer';
 import HorizontalInfoCard from '../components/HorizontalInfoCard';
+import HomeCardWrapper from '../components/HomeCardWrapper';
 
 // CMS Data Import
 import textContent from '../../CMS/content.json';
 
 const imageMap = {
-  what_will_this_app: require('../../assets/infoCardPics/what_will_this_app_do.png'),
-  how_to_use: require('../../assets/infoCardPics/how_to_use.png'),
-  communication: require('../../assets/infoCardPics/communication.png'),
-  change_routine: require('../../assets/infoCardPics/change_routine.png'),
-  social_interaction: require('../../assets/infoCardPics/social_interaction.png'),
+  whatThisAppWillDoInfo: require('../../assets/infoCardPics/whatThisAppWillDoInfo.png'),
+  howToUseAppInfo: require('../../assets/infoCardPics/howToUseAppInfo.png'),
+  communicationInfo: require('../../assets/infoCardPics/communicationInfo.png'),
+  routineInfo: require('../../assets/infoCardPics/routineInfo.png'),
+  sensoryInfo: require('../../assets/infoCardPics/sensoryInfo.png'),
 };
 
 const InformationScreen = () => {
@@ -45,67 +47,90 @@ const InformationScreen = () => {
   );
 
   return (
-    <ScrollView
-      style={[styles.container, { paddingTop: insets.top }]}
-      contentContainerStyle={{ paddingBottom: 40 }}>
-      {/* Intro Header */}
-      <View style={styles.headerContainer}>
-        <TitleText style={styles.mainTitle}>
-          {textContent.infoSection.title}
-        </TitleText>
-        <Spacer height={10} />
-        <BodyText>{textContent.infoSection.infoPara1}</BodyText>
-        <Spacer height={10} />
-        <BodyText>{textContent.infoSection.infoPara2}</BodyText>
+    <View style={[styles.mainScreenContainer, { paddingTop: insets.top }]}>
+      <View style={styles.marginContainer}>
+        <HomeCardWrapper
+          imageSource={require('../../assets/infoBanner.png')}
+          narrowImage={true}
+          containImage={true}>
+          <ScrollView
+            style={styles.transparentContainer}
+            showsVerticalScrollIndicator={false}>
+            <View style={styles.headerContainer}>
+              <TitleText style={styles.mainTitle}>
+                {textContent.infoSection.title}
+              </TitleText>
+              <Spacer height={10} />
+              <BodyText>{textContent.infoSection.infoPara1}</BodyText>
+              <Spacer height={10} />
+              <BodyText>{textContent.infoSection.infoPara2}</BodyText>
+            </View>
+
+            <Spacer height={30} />
+
+            {/* Row 1: Your App */}
+            {renderHorizontalSection(
+              'YOUR APP',
+              textContent.modelSections.filter(item => item.category === 'app'),
+            )}
+
+            <Spacer height={20} />
+
+            {/* Row 2: Tags Defined */}
+            {renderHorizontalSection(
+              'TAGS DEFINED',
+              textContent.modelSections.filter(
+                item => item.category === 'tags',
+              ),
+            )}
+          </ScrollView>
+        </HomeCardWrapper>
       </View>
-
-      <Spacer height={30} />
-
-      {/* Row 1: Your App */}
-      {renderHorizontalSection(
-        'YOUR APP',
-        textContent.modelSections.filter(item => item.category === 'app'),
-      )}
-
-      <Spacer height={20} />
-
-      {/* Row 2: Tags Defined */}
-      {renderHorizontalSection(
-        'TAGS DEFINED',
-        textContent.modelSections.filter(item => item.category === 'tags'),
-      )}
-    </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  mainScreenContainer: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#ff000000', // Use your Colors.primary here to match Home
+  },
+  marginContainer: {
+    flex: 1,
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  transparentContainer: {
+    flex: 1,
+    backgroundColor: Colors.sage, // CRITICAL: This lets the wrapper show through
   },
   headerContainer: {
     paddingHorizontal: 20,
-    marginTop: 20,
+    alignItems: 'center', // Centers text like the Home Screen
+    // backgroundColor: Colors.sage,
   },
   mainTitle: {
     fontSize: 28,
     color: '#333',
+    textAlign: 'center', // Centers the title
   },
   sectionWrapper: {
-    marginBottom: 10,
+    marginBottom: 5,
   },
   sectionHeader: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#999',
-    letterSpacing: 1.5,
+    fontSize: 18,
+    fontWeight: '900',
+    color: Colors.darkGrey, // Slightly darker for readability on the wrapper
+    letterSpacing: 2,
     marginLeft: 20,
     marginBottom: 15,
+    borderBottomWidth: 2, // This creates the "colored margin" look
+    borderBottomColor: '#9c9c9c', // Your chosen color
   },
   horizontalListPadding: {
     paddingLeft: 20,
     paddingRight: 5,
-    paddingBottom: 10, // Space for shadows
+    paddingBottom: 10,
   },
 });
 
