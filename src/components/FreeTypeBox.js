@@ -27,6 +27,7 @@ const FreeTypeBox = ({
             { height: numLines * 24 }, // Sets height based on line count
           ]}
           placeholder={placeholder}
+          placeholderTextColor="#868e76"
           value={value}
           onChangeText={onChangeText}
           editable={editable} // <--- Add this

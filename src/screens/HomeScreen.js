@@ -1,10 +1,8 @@
 import React from 'react';
 import { StyleSheet, View, Text, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import MainNavButton from '../components/MainNavButton';
 import HomeCardWrapper from '../components/HomeCardWrapper';
 import NavCard from '../components/NavCard';
-import HorizontalInfoCard from '../components/HorizontalInfoCard';
 
 export default function HomeScreen({ navigation }) {
   const insets = useSafeAreaInsets();
@@ -43,9 +41,6 @@ export default function HomeScreen({ navigation }) {
                   navigation.navigate('MainApp', { screen: 'InputForm' })
                 }
               />
-            </View>
-
-            <View style={[styles.cardGrid, { marginTop: 15 }]}>
               <NavCard
                 label="Journal"
                 iconName="book-outline"
@@ -125,7 +120,9 @@ const styles = StyleSheet.create({
   },
   cardGrid: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    paddingHorizontal: 10,
+    flexWrap: 'wrap', // Allows items to wrap if they run out of space
+    justifyContent: 'space-between', // Pushes cards to the edges
+    paddingHorizontal: 15, // Padding on the sides of the grid
+    width: '100%',
   },
 });

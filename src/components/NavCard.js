@@ -37,11 +37,11 @@ const NavCard = ({
 
 const styles = StyleSheet.create({
   card: {
-    width: 160,
-    height: 190,
+    width: '46%',
+    aspectRatio: 0.9,
     backgroundColor: '#fff',
     borderRadius: 20,
-    marginRight: 15,
+    margin: '2%',
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     width: '100%',
-    height: '65%',
+    flex: 0.65,
     backgroundColor: Colors.bottle || '#f0f0f0',
     justifyContent: 'center',
     alignItems: 'center',
@@ -70,11 +70,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cardLabel: {
-    fontSize: 18,
+    flex: 0.35,
+    fontSize: 16,
     fontWeight: '700',
     color: '#333',
     padding: 8,
     textAlign: 'center', // Added to look better for navigation
+    textAlignVertical: 'center', // Android centering
+    justifyContent: 'center', // iOS centering
   },
 });
 

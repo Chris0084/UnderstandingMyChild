@@ -20,6 +20,7 @@ import CustomButton from '../components/CustomButton';
 import MediaSelector from '../components/MediaSelector';
 import StrategyModal from '../components/StrategyModal.js';
 import Colors from '../constants/Colors.js';
+import PageHeader from '../components/PageHeader.js';
 
 const InputFormScreen = ({ route, navigation }) => {
   const insets = useSafeAreaInsets();
@@ -298,14 +299,14 @@ const InputFormScreen = ({ route, navigation }) => {
               onPress={handleToggleFavorite}
               style={{ marginRight: 15 }}>
               <Ionicons
-                name={isFavorite ? 'heart' : 'heart-outline'}
-                size={26}
-                color={isFavorite ? '#E91E63' : '#999'}
+                name={isFavorite ? 'star' : 'star-outline'}
+                size={46}
+                color={isFavorite ? '#f80909' : '#999'}
               />
             </TouchableOpacity>
 
             <TouchableOpacity onPress={handleDeleteLog}>
-              <Ionicons name="trash-outline" size={26} color="#F44336" />
+              <Ionicons name="trash-outline" size={46} color="#F44336" />
             </TouchableOpacity>
           </View>
         </View>
@@ -466,51 +467,66 @@ const InputFormScreen = ({ route, navigation }) => {
   );
 
   return (
-    <ScrollView
-      style={styles.scrollView}
-      contentContainerStyle={styles.container}>
-      <View style={{ paddingTop: insets.top }} />
-      <Text style={styles.text}>
-        {route.params?.existingEntry
-          ? isEditing
-            ? 'Edit Log'
-            : 'Log Report'
-          : 'New Log Entry'}
-      </Text>
-
-      {isEditing ? renderFormView() : renderReportView()}
-
-      <StrategyModal
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-        strategies={strategies}
-        onUpdate={handleStrategyChange}
-      />
-
-      <View style={styles.buttonContainer}>
-        {isEditing ? (
-          <CustomButton
-            label="Save Changes"
-            color="#4CAF50"
-            onPress={handleSaveEntry}
-            style={styles.halfButton}
-          />
-        ) : (
-          <CustomButton
-            label="Edit"
-            color="#FFA000"
-            onPress={() => setIsEditing(true)}
-            style={styles.halfButton}
-          />
-        )}
-        <CustomButton
-          label="Go Back"
-          color="#757575"
-          onPress={() => navigation.goBack()}
-          style={styles.halfButton}
+    <View style={[styles.scrollView, { paddingTop: insets.top }]}>
+      <View style={{ width: '100%' }}>
+        <PageHeader
+          title={
+            route.params?.existingEntry
+              ? isEditing
+                ? 'Edit Log'
+                : 'Log Report'
+              : 'New Log Entry'
+          }
+          iconName={
+            route.params?.existingEntry
+              ? isEditing
+                ? 'create-outline'
+                : 'document-text-outline'
+              : 'add-circle-outline'
+          }
+          iconColor={isEditing ? '#000000' : Colors.primary}
         />
       </View>
-    </ScrollView>
+
+      {/* 2. SCROLLABLE CONTENT: The rest of the form */}
+      <ScrollView
+        contentContainerStyle={styles.container}
+        // This ensures the scrollview background matches the page
+        style={{ backgroundColor: Colors.sage }}>
+        {isEditing ? renderFormView() : renderReportView()}
+
+        <StrategyModal
+          visible={modalVisible}
+          onClose={() => setModalVisible(false)}
+          strategies={strategies}
+          onUpdate={handleStrategyChange}
+        />
+
+        <View style={styles.buttonContainer}>
+          {isEditing ? (
+            <CustomButton
+              label="Save Changes"
+              color="#4CAF50"
+              onPress={handleSaveEntry}
+              style={styles.halfButton}
+            />
+          ) : (
+            <CustomButton
+              label="Edit"
+              color="#FFA000"
+              onPress={() => setIsEditing(true)}
+              style={styles.halfButton}
+            />
+          )}
+          <CustomButton
+            label="Go Back"
+            color="#757575"
+            onPress={() => navigation.goBack()}
+            style={styles.halfButton}
+          />
+        </View>
+      </ScrollView>
+    </View>
   );
 };
 
@@ -519,7 +535,7 @@ const InputFormScreen = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: Colors.sage,
   },
   container: {
     justifyContent: 'center',

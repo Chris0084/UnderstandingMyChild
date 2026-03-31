@@ -35,12 +35,9 @@ function MainTabs() {
           else if (route.name === 'InputForm')
             iconName = focused ? 'add-circle' : 'add-circle-outline';
           else if (route.name === 'Reporting')
-            // iconName = focused
-            //   ? 'document-text-outline'
-            //   : 'document-text-outline';
             iconName = focused ? 'book-outline' : 'book-outline';
           else if (route.name === 'Insights')
-            iconName = focused ? 'bulb' : 'bulb-outline';
+            iconName = focused ? 'sparkles' : 'sparkles-outline';
 
           return <Ionicons name={iconName} size={size} color={color} />;
         },
@@ -70,7 +67,7 @@ function MainTabs() {
       <Tab.Screen
         name="Reporting"
         component={ReportingScreen}
-        options={{ title: 'Report' }}
+        options={{ title: 'Journal' }}
       />
       <Tab.Screen
         name="Insights"

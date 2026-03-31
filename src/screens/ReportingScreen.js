@@ -14,6 +14,8 @@ import LogCard from '../components/LogCard';
 import CustomButton from '../components/CustomButton';
 import FilterButton from '../components/FilterButton';
 import FilterModal from '../components/FilterModal';
+import PageHeader from '../components/PageHeader.js';
+import Colors from '../constants/Colors.js';
 
 const ReportingScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
@@ -145,12 +147,11 @@ const ReportingScreen = ({ navigation }) => {
 
   // --- THE RETURN STATEMENT ---
   return (
-    <View
-      style={[
-        styles.container,
-        { paddingTop: insets.top, paddingBottom: insets.bottom },
-      ]}>
-      <Text style={styles.title}>Activity Report</Text>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      <PageHeader
+        title={'Journal'}
+        iconName={'book-outline'}
+        iconColor={'#000000'}></PageHeader>
 
       <View style={styles.buttonRow}>
         <CustomButton
@@ -160,6 +161,15 @@ const ReportingScreen = ({ navigation }) => {
           style={styles.halfButton}
         />
         <View style={styles.actionButtons}>
+          <TouchableOpacity
+            onPress={() => setShowFavoritesOnly(!showFavoritesOnly)}
+            style={styles.iconCircle}>
+            <Ionicons
+              name={showFavoritesOnly ? 'star' : 'star-outline'}
+              size={22}
+              color={showFavoritesOnly ? '#f80909' : '#555'}
+            />
+          </TouchableOpacity>
           <SortButton
             ascending={isAscending}
             onPress={() => setIsAscending(!isAscending)}
@@ -178,8 +188,14 @@ const ReportingScreen = ({ navigation }) => {
       <FlatList
         data={filteredLogs}
         keyExtractor={item => item.id}
-        renderItem={({ item }) => <LogCard entry={item} />}
-        contentContainerStyle={styles.listContent}
+        renderItem={({ item, index }) => (
+          <LogCard entry={item} isAlternate={index % 2 === 0} />
+        )}
+        // Combine the static styles with the dynamic inset value here
+        contentContainerStyle={[
+          styles.listContent,
+          { paddingBottom: insets.bottom + 100 },
+        ]}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text>No entries match these filters.</Text>
@@ -197,8 +213,6 @@ const ReportingScreen = ({ navigation }) => {
             prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag],
           )
         }
-        showFavoritesOnly={showFavoritesOnly}
-        onToggleFavorites={() => setShowFavoritesOnly(!showFavoritesOnly)}
         selectedMood={filterMood}
         onSelectMood={setFilterMood}
         onReset={resetFilters}
@@ -229,7 +243,7 @@ const ReportingScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: Colors.sage,
   },
   title: {
     fontSize: 24,
@@ -246,17 +260,31 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   actionButtons: {
-    flexDirection: 'row', // Put Sort and Filter side-by-side
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
+  },
+  // Add this new style
+  iconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8, // Space between star and sort
+    // Shadow/Elevation to match Sort/Filter buttons
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.41,
   },
   halfButton: {
     width: '35%', // Shrink the Back button slightly to make room
     marginVertical: 0,
   },
-  listContent: {
-    paddingBottom: 20,
-  },
+  listContent: {},
   emptyContainer: {
     marginTop: 50,
     alignItems: 'center',

@@ -2,12 +2,13 @@ import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Ionicons } from '@expo/vector-icons';
 import TotalIncidents from '../insightComponents/TotalIncidents';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import EffectiveTools from '../insightComponents/EffectiveTools';
 import Locations from '../insightComponents/Locations';
 import PolarAreaChart from '../insightComponents/PolarAreaChart';
+import PageHeader from '../components/PageHeader';
+import Colors from '../constants/Colors';
 
 const { width } = Dimensions.get('window');
 
@@ -102,25 +103,34 @@ const InsightsScreen = () => {
   };
 
   return (
-    <ScrollView style={[styles.container, { paddingTop: insets.top }]}>
-      <Text style={styles.header}>Data Insights</Text>
+    <View
+      style={[
+        styles.container,
+        { paddingTop: insets.top, paddingBottom: insets.bottom },
+      ]}>
+      <PageHeader
+        title={'Trend Tracker'}
+        iconName={'sparkles-outline'}
+        iconColor={'#000000'}></PageHeader>
 
-      <TotalIncidents count={stats.totalLogs} />
+      <ScrollView style={[styles.container]}>
+        <TotalIncidents count={stats.totalLogs} />
 
-      <EffectiveTools
-        strategies={stats.topStrategies}
-        totalLogs={stats.totalLogs}
-      />
+        <EffectiveTools
+          strategies={stats.topStrategies}
+          totalLogs={stats.totalLogs}
+        />
 
-      <Locations topLocations={stats.topLocations} />
+        <Locations topLocations={stats.topLocations} />
 
-      <PolarAreaChart tags={stats.topTags} />
-    </ScrollView>
+        <PolarAreaChart tags={stats.topTags} />
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F7FA', padding: 20 },
+  container: { flex: 1, backgroundColor: Colors.sage, padding: 10 },
 });
 
 export default InsightsScreen;

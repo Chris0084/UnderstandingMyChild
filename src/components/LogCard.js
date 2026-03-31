@@ -2,8 +2,9 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import Colors from '../constants/Colors';
 
-const LogCard = ({ entry }) => {
+const LogCard = ({ entry, isAlternate }) => {
   const navigation = useNavigation();
 
   const formattedDate = new Date(entry.logDate).toLocaleDateString('en-GB', {
@@ -22,7 +23,11 @@ const LogCard = ({ entry }) => {
   const remainingCount = activeStrategies.length - 3;
 
   return (
-    <View style={styles.card}>
+    <View
+      style={[
+        styles.card,
+        { backgroundColor: isAlternate ? '#FFFFFF' : '#d4d2d2' }, // White vs a very light sage/cream
+      ]}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Text style={styles.headerText}>{formattedDate}</Text>

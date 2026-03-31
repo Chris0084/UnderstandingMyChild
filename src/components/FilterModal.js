@@ -19,7 +19,6 @@ const FilterModal = ({
   selectedTags,
   onToggleTag,
   onReset,
-  showFavoritesOnly,
   onToggleFavorites,
 }) => {
   // 1. Setup Animation Value for the Y position
@@ -65,15 +64,7 @@ const FilterModal = ({
           </View>
           <View style={styles.modalContent}>
             <Text style={styles.title}>Filter Entries</Text>
-            <View style={styles.filterSection}>
-              <Text style={styles.sectionLabel}>Show Favorites Only</Text>
-              <Switch
-                trackColor={{ false: '#767577', true: '#E91E63' }}
-                thumbColor={showFavoritesOnly ? '#fff' : '#f4f3f4'}
-                onValueChange={onToggleFavorites}
-                value={showFavoritesOnly}
-              />
-            </View>
+            <View style={styles.filterSection}></View>
 
             <ScrollView>
               <TagSelector
