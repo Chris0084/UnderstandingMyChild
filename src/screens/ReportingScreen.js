@@ -7,6 +7,8 @@ import SortButton from '../components/SortButton';
 import * as Clipboard from 'expo-clipboard';
 import { Alert, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
 import { SAMPLE_LOGS } from '../constants/sampleData';
 
 // Component Imports
@@ -165,6 +167,163 @@ const ReportingScreen = ({ navigation }) => {
     setFilterMediaOnly(false);
   };
 
+  const exportFavoritesToPDF = async () => {
+    console.log('QQQ');
+    // 1. Filter only the favorites from your master list
+    const favorites = allLogs.filter(log => log.isFavorite);
+    console.log('DEBUG FAVORITES:', JSON.stringify(favorites[0], null, 2));
+
+    if (favorites.length === 0) {
+      Alert.alert(
+        'No Favorites',
+        'Please mark some entries as favorites first.',
+      );
+      return;
+    }
+
+    // 2. Generate the HTML String
+    const htmlContent = `
+    <html>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
+        <style>
+          body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 40px; color: #333; background-color: #f4f4f4; }
+          h1 { text-align: center; color: #1A1A1A; font-size: 28px; margin-bottom: 40px; text-transform: uppercase; letter-spacing: 2px; }
+          
+          .report-card { 
+            background-color: white; 
+            border-radius: 20px; 
+            padding: 30px; 
+            margin-bottom: 30px; 
+            page-break-inside: avoid;
+            border: 1px solid #e0e0e0;
+          }
+          
+          .header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
+          .report-date { font-size: 18px; font-weight: bold; color: #1A1A1A; }
+          .fav-star { color: #f80909; font-size: 24px; }
+
+          .tag-row { display: flex; flex-wrap: wrap; margin-bottom: 20px; }
+          .report-tag { 
+            background-color: #F0F2F5; 
+            padding: 6px 12px; 
+            border-radius: 8px; 
+            margin-right: 8px; 
+            margin-bottom: 8px;
+          }
+          .report-tag-text { font-size: 10px; font-weight: 800; color: #555; letter-spacing: 1px; }
+          
+          .report-section { margin-top: 20px; }
+          .report-label { font-size: 12px; font-weight: 900; color: #999; letter-spacing: 1.5px; margin-bottom: 6px; display: block; }
+          .report-sub-label { font-size: 14px; font-weight: bold; color: #444; margin-top: 12px; display: block; }
+          .report-value { font-size: 15px; color: #333; line-height: 1.6; margin-top: 4px; display: block; }
+          
+          .divider { border-top: 2px solid #f0f0f0; margin-top: 25px; padding-top: 20px; }
+          
+          .strategy-row { display: flex; align-items: center; margin-top: 10px; }
+          .dot { height: 8px; width: 8px; border-radius: 50%; display: inline-block; margin-right: 10px; }
+          .effective { background-color: #4CAF50; }
+          .ineffective { background-color: #F44336; }
+          .strategy-text { font-size: 14px; color: #333; }
+        </style>
+      </head>
+      <body>
+        <h1>Favorite Observations</h1>
+      ${favorites
+        .map(log => {
+          // 1. Date Handling
+          const logDate = log.logDate ? new Date(log.logDate) : new Date();
+
+          // 2. Title Logic (Using your 'where' key from debug)
+          const displayTitle = log.where ? log.where : 'Observation';
+
+          // 3. Strategies Handling
+          const strategies = log.strategies || {};
+          const strategyEntries = Object.entries(strategies).filter(
+            ([_, v]) => v !== 'Not used',
+          );
+
+          return `
+    <div class="report-card">
+      <div class="header-top">
+        <div style="display: flex; flex-direction: column;">
+          <span class="report-date">${logDate.toDateString()}</span>
+          <span style="font-size: 15px; color: #007AFF; font-weight: bold; margin-top: 4px; text-transform: uppercase;">
+            ${displayTitle}
+          </span>
+        </div>
+        <span class="fav-star">★</span>
+      </div>
+
+      <div class="tag-row">
+        ${
+          log.tags && log.tags.length > 0
+            ? log.tags
+                .map(
+                  tag =>
+                    `<div class="report-tag"><span class="report-tag-text">${tag.toUpperCase()}</span></div>`,
+                )
+                .join('')
+            : '<span style="color: #999; font-size: 12px;">No tags selected</span>'
+        }
+      </div>
+
+      <div class="report-section">
+        <span class="report-label">OBSERVATION DETAILS</span>
+        
+        <span class="report-sub-label">Lead Up:</span>
+        <span class="report-value">${log.leadUp || 'No details recorded.'}</span>
+        
+        <span class="report-sub-label">What Happened:</span>
+        <span class="report-value">${log.whatHappened || 'No details recorded.'}</span>
+        
+        <span class="report-sub-label">Recovery/After:</span>
+        <span class="report-value">${log.after || 'No details recorded.'}</span>
+      </div>
+
+      <div class="report-section divider">
+        <span class="report-label">SUPPORT STRATEGIES USED</span>
+        ${
+          strategyEntries.length === 0
+            ? '<span style="color: #999; font-size: 14px;">No specific strategies were recorded.</span>'
+            : strategyEntries
+                .map(
+                  ([name, value]) => `
+                <div class="strategy-row">
+                  <span class="dot ${value.includes('Effective') ? 'effective' : 'ineffective'}"></span>
+                  <span class="strategy-text"><strong>${name}:</strong> ${value}</span>
+                </div>
+              `,
+                )
+                .join('')
+        }
+      </div>
+    </div>
+  `;
+        })
+        .join('')}
+      </body>
+    </html>
+  `;
+
+    // 3. Generate PDF and Launch Sharing Menu
+    try {
+      const { uri } = await Print.printToFileAsync({
+        html: htmlContent,
+        base64: false,
+      });
+
+      await Sharing.shareAsync(uri, {
+        UTI: '.pdf',
+        mimeType: 'application/pdf',
+        dialogTitle: 'Share your favorite observations',
+      });
+    } catch (error) {
+      console.error('PDF Generation Error:', error);
+      Alert.alert('Error', 'Something went wrong while creating the PDF.');
+    }
+  };
+
   // --- THE RETURN STATEMENT ---
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -198,6 +357,12 @@ const ReportingScreen = ({ navigation }) => {
               (filterMediaOnly ? 1 : 0)
             }
           />
+          <TouchableOpacity
+            onPress={exportFavoritesToPDF}
+            style={styles.exportLabelButton}>
+            <Ionicons name="share-outline" size={18} color="#007AFF" />
+            <Text style={styles.exportLabelText}>Export/Share Favorites</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -281,6 +446,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
+  },
+  exportLabelButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E3F2FD', // Light blue background
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginRight: 8,
+    // Matching the shadow/elevation of your other buttons
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.41,
+    marginLeft: 8,
+  },
+  exportLabelText: {
+    color: '#007AFF',
+    fontSize: 12,
+    fontWeight: '700',
+    marginLeft: 6,
   },
   // Add this new style
   iconCircle: {

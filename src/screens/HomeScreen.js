@@ -25,7 +25,7 @@ export default function HomeScreen({ navigation }) {
 
             <Text style={styles.paragraphText}>
               A dedicated space to log, review, and understand your child’s
-              unique developmental journey through simple daily entries.
+              unique developmental journey through simple journal entries.
             </Text>
           </View>
 
