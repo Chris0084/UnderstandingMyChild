@@ -21,6 +21,8 @@ import MediaSelector from '../components/MediaSelector';
 import StrategyModal from '../components/StrategyModal.js';
 import Colors from '../constants/Colors.js';
 import PageHeader from '../components/PageHeader.js';
+import SplitButton from '../components/SplitButton.js';
+import DiagonalSplitButton from '../components/DiagonalSplitButton.js';
 
 const InputFormScreen = ({ route, navigation }) => {
   const insets = useSafeAreaInsets();
@@ -391,6 +393,7 @@ const InputFormScreen = ({ route, navigation }) => {
         value={where}
         onChangeText={setWhere}
         editable={true}
+        accentColor={Colors.box_accent}
       />
       <FreeTypeBox
         label="LEAD UP"
@@ -398,6 +401,7 @@ const InputFormScreen = ({ route, navigation }) => {
         value={leadUp}
         onChangeText={setLeadUp}
         editable={true}
+        accentColor={Colors.box_accent}
       />
       <FreeTypeBox
         label="WHAT HAPPENED"
@@ -405,6 +409,7 @@ const InputFormScreen = ({ route, navigation }) => {
         value={whatHappened}
         onChangeText={setWhatHappened}
         editable={true}
+        accentColor={Colors.box_accent}
       />
       <FreeTypeBox
         label="AFTER"
@@ -412,6 +417,7 @@ const InputFormScreen = ({ route, navigation }) => {
         value={after}
         onChangeText={setAfter}
         editable={true}
+        accentColor={Colors.box_accent}
       />
       <DateStamp
         label="DATE"
@@ -432,11 +438,20 @@ const InputFormScreen = ({ route, navigation }) => {
         onMediaSelected={setMediaUri}
         editable={true}
       />
-      <CustomButton
+      <SplitButton
+        label="Add Support Strategies"
+        iconName="help-buoy-outline"
+        // mainColor="#F9A825" // Warm Golden Yellow
+        // accentColor="#F57F17" // Darker Golden for the split
+        leftColor={Colors.button_main} // Your main green
+        rightColor={Colors.support_strat_accent} // A slightly darker green
+        onPress={() => setModalVisible(true)}
+      />
+      {/* <CustomButton
         label="Add Support Strategies"
         color="#2196F3"
         onPress={() => setModalVisible(true)}
-      />
+      /> */}
       <View style={styles.summaryContainer}>
         {Object.entries(strategies).map(
           ([name, value]) =>
@@ -485,6 +500,7 @@ const InputFormScreen = ({ route, navigation }) => {
               : 'add-circle-outline'
           }
           iconColor={isEditing ? '#000000' : Colors.primary}
+          accentColor={Colors.log_theme}
         />
       </View>
 
@@ -492,7 +508,7 @@ const InputFormScreen = ({ route, navigation }) => {
       <ScrollView
         contentContainerStyle={styles.container}
         // This ensures the scrollview background matches the page
-        style={{ backgroundColor: Colors.sage }}>
+        style={{ backgroundColor: Colors.background }}>
         {isEditing ? renderFormView() : renderReportView()}
 
         <StrategyModal
@@ -504,23 +520,41 @@ const InputFormScreen = ({ route, navigation }) => {
 
         <View style={styles.buttonContainer}>
           {isEditing ? (
-            <CustomButton
-              label="Save Changes"
-              color="#4CAF50"
+            <SplitButton
+              label="Save"
+              iconName="save-outline"
+              leftColor={Colors.button_main}
+              rightColor={Colors.save_button_accent} // A slightly darker green
               onPress={handleSaveEntry}
               style={styles.halfButton}
             />
           ) : (
-            <CustomButton
+            <SplitButton
               label="Edit"
-              color="#FFA000"
+              iconName="create-outline"
+              leftColor={Colors.button_main} // Your main green
+              rightColor={Colors.edit_button_accent} // A slightly darker green
               onPress={() => setIsEditing(true)}
               style={styles.halfButton}
             />
+            // <CustomButton
+            //   label="Edit"
+            //   color="#FFA000"
+            //   onPress={() => setIsEditing(true)}
+            //   style={styles.halfButton}
+            // />
           )}
-          <CustomButton
+          {/* <CustomButton
             label="Go Back"
             color="#757575"
+            onPress={() => navigation.goBack()}
+            style={styles.halfButton}
+          /> */}
+          <SplitButton
+            label="Back"
+            iconName="chevron-back-outline"
+            leftColor={Colors.button_main}
+            rightColor={Colors.back_button_accent}
             onPress={() => navigation.goBack()}
             style={styles.halfButton}
           />
@@ -535,12 +569,12 @@ const InputFormScreen = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
-    backgroundColor: Colors.sage,
+    backgroundColor: Colors.background,
   },
   container: {
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Colors.sage,
+    backgroundColor: Colors.background,
     paddingBottom: 70,
   },
   text: { fontSize: 20, marginBottom: 20 },
@@ -563,6 +597,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
     borderRadius: 10,
     minHeight: 50,
+    marginBottom: 10,
   },
   strategyChip: {
     flexDirection: 'row',
@@ -604,6 +639,8 @@ const styles = StyleSheet.create({
     elevation: 4,
     borderWidth: 1,
     borderColor: '#efefef',
+    borderLeftColor: Colors.apricot,
+    borderLeftWidth: 20,
   },
   reportHeader: {
     borderBottomWidth: 1,

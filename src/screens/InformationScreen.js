@@ -9,6 +9,7 @@ import BodyText from '../textComponents/BodyText';
 import Spacer from '../textComponents/LineSpacer';
 import HorizontalInfoCard from '../components/HorizontalInfoCard';
 import HomeCardWrapper from '../components/HomeCardWrapper';
+import PageHeader from '../components/PageHeader';
 
 // CMS Data Import
 import textContent from '../../CMS/content.json';
@@ -49,42 +50,40 @@ const InformationScreen = () => {
   return (
     <View style={[styles.mainScreenContainer, { paddingTop: insets.top }]}>
       <View style={styles.marginContainer}>
-        <HomeCardWrapper
-          imageSource={require('../../assets/infoBanner.png')}
-          narrowImage={true}
-          containImage={true}>
-          <ScrollView
-            style={styles.transparentContainer}
-            showsVerticalScrollIndicator={false}>
-            <View style={styles.headerContainer}>
-              <TitleText style={styles.mainTitle}>
-                {textContent.infoSection.title}
-              </TitleText>
-              <Spacer height={10} />
-              <BodyText>{textContent.infoSection.infoPara1}</BodyText>
-              <Spacer height={10} />
-              <BodyText>{textContent.infoSection.infoPara2}</BodyText>
-            </View>
+        <PageHeader
+          title={'Information'}
+          iconName={'book-outline'}
+          iconColor={'#000000'}
+          accentColor={Colors.info_theme}></PageHeader>
+        <ScrollView
+          style={styles.transparentContainer}
+          showsVerticalScrollIndicator={false}>
+          <View style={styles.headerContainer}>
+            <TitleText style={styles.mainTitle}>
+              {textContent.infoSection.title}
+            </TitleText>
+            <Spacer height={10} />
+            <BodyText>{textContent.infoSection.infoPara1}</BodyText>
+            <Spacer height={10} />
+            <BodyText>{textContent.infoSection.infoPara2}</BodyText>
+          </View>
 
-            <Spacer height={30} />
+          <Spacer height={30} />
 
-            {/* Row 1: Your App */}
-            {renderHorizontalSection(
-              'YOUR APP',
-              textContent.modelSections.filter(item => item.category === 'app'),
-            )}
+          {/* Row 1: Your App */}
+          {renderHorizontalSection(
+            'YOUR APP',
+            textContent.modelSections.filter(item => item.category === 'app'),
+          )}
 
-            <Spacer height={20} />
+          <Spacer height={20} />
 
-            {/* Row 2: Tags Defined */}
-            {renderHorizontalSection(
-              'TAGS DEFINED',
-              textContent.modelSections.filter(
-                item => item.category === 'tags',
-              ),
-            )}
-          </ScrollView>
-        </HomeCardWrapper>
+          {/* Row 2: Tags Defined */}
+          {renderHorizontalSection(
+            'TAGS DEFINED',
+            textContent.modelSections.filter(item => item.category === 'tags'),
+          )}
+        </ScrollView>
       </View>
     </View>
   );
@@ -93,7 +92,7 @@ const InformationScreen = () => {
 const styles = StyleSheet.create({
   mainScreenContainer: {
     flex: 1,
-    backgroundColor: '#ff000000', // Use your Colors.primary here to match Home
+    backgroundColor: Colors.background, // Use your Colors.primary here to match Home
   },
   marginContainer: {
     flex: 1,
@@ -102,12 +101,12 @@ const styles = StyleSheet.create({
   },
   transparentContainer: {
     flex: 1,
-    backgroundColor: Colors.sage, // CRITICAL: This lets the wrapper show through
+    backgroundColor: Colors.background, // CRITICAL: This lets the wrapper show through
   },
   headerContainer: {
     paddingHorizontal: 20,
     alignItems: 'center', // Centers text like the Home Screen
-    // backgroundColor: Colors.sage,
+    // backgroundColor: Colors.background,
   },
   mainTitle: {
     fontSize: 28,

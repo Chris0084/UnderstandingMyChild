@@ -151,15 +151,10 @@ const ReportingScreen = ({ navigation }) => {
       <PageHeader
         title={'Journal'}
         iconName={'book-outline'}
-        iconColor={'#000000'}></PageHeader>
+        iconColor={'#000000'}
+        accentColor={Colors.journal_theme}></PageHeader>
 
       <View style={styles.buttonRow}>
-        <CustomButton
-          label="Go Back"
-          color="#757575"
-          onPress={() => navigation.goBack()}
-          style={styles.halfButton}
-        />
         <View style={styles.actionButtons}>
           <TouchableOpacity
             onPress={() => setShowFavoritesOnly(!showFavoritesOnly)}
@@ -243,7 +238,7 @@ const ReportingScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.sage,
+    backgroundColor: Colors.background,
   },
   title: {
     fontSize: 24,

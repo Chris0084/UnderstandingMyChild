@@ -3,7 +3,14 @@ import { StyleSheet, View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Colors from '../constants/Colors';
 
-const PageHeader = ({ title, iconName, iconColor = Colors.primary }) => {
+const PageHeader = ({
+  title,
+  iconName,
+  iconColor = Colors.primary,
+  accentColor,
+}) => {
+  const finalAccentColor = accentColor || iconColor || Colors.primary;
+
   return (
     <View style={styles.headerContainer}>
       <View style={styles.titleRow}>
@@ -18,7 +25,9 @@ const PageHeader = ({ title, iconName, iconColor = Colors.primary }) => {
         )}
       </View>
       {/* A subtle "Striking" accent line */}
-      <View style={styles.accentLine} />
+      <View
+        style={[styles.accentLine, { backgroundColor: finalAccentColor }]}
+      />
     </View>
   );
 };

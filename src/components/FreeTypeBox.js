@@ -16,27 +16,31 @@ const FreeTypeBox = ({
   value,
   onChangeText,
   editable = true,
+  accentColor = '#3B6004', // Default to your Sage/Green
 }) => {
   return (
     <View style={styles.container}>
       {label && <Text style={styles.label}>{label}</Text>}
-      <View style={styles.shadowWrapper}>
-        <TextInput
-          style={[
-            styles.input,
-            { height: numLines * 24 }, // Sets height based on line count
-          ]}
-          placeholder={placeholder}
-          placeholderTextColor="#868e76"
-          value={value}
-          onChangeText={onChangeText}
-          editable={editable} // <--- Add this
-          selectTextOnFocus={editable}
-          // Essential props for "Free Type" behavior:
-          multiline={true} // Allows text to wrap to new lines
-          numberOfLines={numLines} // Sets initial height on Android
-          textAlignVertical="top" // Forces text to start at the top (Android)
-        />
+
+      <View style={[styles.inputContainer, { borderLeftColor: accentColor }]}>
+        <View style={styles.shadowWrapper}>
+          <TextInput
+            style={[
+              styles.input,
+              { height: numLines * 24 }, // Sets height based on line count
+            ]}
+            placeholder={placeholder}
+            placeholderTextColor="#868e76"
+            value={value}
+            onChangeText={onChangeText}
+            editable={editable} // <--- Add this
+            selectTextOnFocus={editable}
+            // Essential props for "Free Type" behavior:
+            multiline={true} // Allows text to wrap to new lines
+            numberOfLines={numLines} // Sets initial height on Android
+            textAlignVertical="top" // Forces text to start at the top (Android)
+          />
+        </View>
       </View>
     </View>
   );
@@ -68,10 +72,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#f7f5f2',
     borderRadius: 12,
   },
+  inputContainer: {
+    borderRadius: 12,
+    overflow: 'hidden', // Clips the TextInput to the rounded corners
+    borderLeftWidth: 20, // This creates your "small part" on the left
+    backgroundColor: '#f7f5f2',
+  },
   input: {
     borderWidth: 1,
+    borderLeftWidth: 0,
     borderColor: '#ccc',
-    borderRadius: 12,
+    borderBottomRightRadius: 12,
+    borderTopRightRadius: 12,
     padding: 12,
     fontSize: 16,
     backgroundColor: '#f7f5f2',

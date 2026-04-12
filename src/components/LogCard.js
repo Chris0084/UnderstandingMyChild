@@ -26,7 +26,7 @@ const LogCard = ({ entry, isAlternate }) => {
     <View
       style={[
         styles.card,
-        { backgroundColor: isAlternate ? '#FFFFFF' : '#d4d2d2' }, // White vs a very light sage/cream
+        { backgroundColor: isAlternate ? '#FFFFFF' : '#eaf7fa' }, // White vs a very light sage/cream
       ]}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>

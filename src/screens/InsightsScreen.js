@@ -111,7 +111,8 @@ const InsightsScreen = () => {
       <PageHeader
         title={'Trend Tracker'}
         iconName={'sparkles-outline'}
-        iconColor={'#000000'}></PageHeader>
+        iconColor={'#000000'}
+        accentColor={Colors.trend_theme}></PageHeader>
 
       <ScrollView style={[styles.container]}>
         <TotalIncidents count={stats.totalLogs} />
@@ -130,7 +131,7 @@ const InsightsScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.sage, padding: 10 },
+  container: { flex: 1, backgroundColor: Colors.background, padding: 10 },
 });
 
 export default InsightsScreen;

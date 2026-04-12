@@ -31,7 +31,7 @@ const HomeCardWrapper = ({
 const styles = StyleSheet.create({
   outerContainer: {
     flex: 1,
-    backgroundColor: Colors.sage, // Matches your theme
+    backgroundColor: Colors.background, // Matches your theme
   },
   headerImage: {
     width: width,
@@ -39,7 +39,7 @@ const styles = StyleSheet.create({
   },
   cardContainer: {
     flex: 1,
-    backgroundColor: Colors.sage,
+    backgroundColor: Colors.background,
     marginTop: 0, // Pulls the card up over the image slightly
     borderTopLeftRadius: 0,
     borderTopRightRadius: 0,

@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
   imageContainer: {
     width: '100%',
     height: '65%', // Image takes up the top portion
-    backgroundColor: Colors.bottle,
+    backgroundColor: Colors.info_card_background,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 5,
