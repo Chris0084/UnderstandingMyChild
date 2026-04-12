@@ -60,7 +60,6 @@ const ReportingScreen = ({ navigation }) => {
     try {
       // 1. Convert the filtered array to a formatted JSON string
       const jsonString = JSON.stringify(filteredLogs, null, 2);
-      console.log('TTT hit here');
       // 2. Copy to clipboard
       await Clipboard.setStringAsync(jsonString);
 
@@ -105,7 +104,6 @@ const ReportingScreen = ({ navigation }) => {
   // 2. Apply Filters whenever data or filter choices change
   useEffect(() => {
     let result = [...allLogs];
-    console.log(result);
 
     if (showFavoritesOnly) {
       result = result.filter(log => log.isFavorite === true);
