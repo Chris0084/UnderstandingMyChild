@@ -299,16 +299,16 @@ const InputFormScreen = ({ route, navigation }) => {
           <View style={{ flexDirection: 'row' }}>
             <TouchableOpacity
               onPress={handleToggleFavorite}
-              style={{ marginRight: 15 }}>
+              style={{ marginRight: 25 }}>
               <Ionicons
                 name={isFavorite ? 'star' : 'star-outline'}
-                size={46}
+                size={30}
                 color={isFavorite ? '#f80909' : '#999'}
               />
             </TouchableOpacity>
 
             <TouchableOpacity onPress={handleDeleteLog}>
-              <Ionicons name="trash-outline" size={46} color="#F44336" />
+              <Ionicons name="trash-outline" size={30} color="#F44336" />
             </TouchableOpacity>
           </View>
         </View>
@@ -426,7 +426,7 @@ const InputFormScreen = ({ route, navigation }) => {
         editable={true}
       />
       <TagSelector
-        label="TAGS"
+        label="Observation Categories"
         tags={availableTags}
         selectedTags={selectedTags}
         onToggle={handleTagToggle}
@@ -488,9 +488,9 @@ const InputFormScreen = ({ route, navigation }) => {
           title={
             route.params?.existingEntry
               ? isEditing
-                ? 'Edit Log'
+                ? 'Edit Journal Entry'
                 : 'Log Report'
-              : 'New Log Entry'
+              : 'New Journal Entry'
           }
           iconName={
             route.params?.existingEntry

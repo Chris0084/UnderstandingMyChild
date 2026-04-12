@@ -106,7 +106,7 @@ const MediaSelector = ({ label, mediaUri, onMediaSelected, editable }) => {
                 styles.placeholderText,
                 !editable && styles.disabledText,
               ]}>
-              Add photo or video evidence
+              Add Media
             </Text>
           </TouchableOpacity>
         )}

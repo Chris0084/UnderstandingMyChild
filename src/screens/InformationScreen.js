@@ -80,7 +80,7 @@ const InformationScreen = () => {
 
           {/* Row 2: Tags Defined */}
           {renderHorizontalSection(
-            'TAGS DEFINED',
+            'Observation Categories Explained',
             textContent.modelSections.filter(item => item.category === 'tags'),
           )}
         </ScrollView>

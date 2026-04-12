@@ -79,6 +79,7 @@ const ReportingScreen = ({ navigation }) => {
   const [filteredLogs, setFilteredLogs] = useState([]); // Displayed data
   const [modalVisible, setModalVisible] = useState(false);
   const [isAscending, setIsAscending] = useState(false); // false = Newest First
+  const [filterMediaOnly, setFilterMediaOnly] = useState(false);
 
   // Filter states
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
@@ -104,9 +105,22 @@ const ReportingScreen = ({ navigation }) => {
   // 2. Apply Filters whenever data or filter choices change
   useEffect(() => {
     let result = [...allLogs];
+    console.log(result);
 
     if (showFavoritesOnly) {
       result = result.filter(log => log.isFavorite === true);
+    }
+
+    if (filterMediaOnly) {
+      // Only keep logs that have an image or a video URI
+      result = result.filter(log => log.mediaUri || log.mediaUri);
+    }
+    // ----------------------
+
+    if (filterTags.length > 0) {
+      result = result.filter(
+        log => log.tags && log.tags.some(t => filterTags.includes(t)),
+      );
     }
 
     if (filterTags.length > 0) {
@@ -126,7 +140,14 @@ const ReportingScreen = ({ navigation }) => {
     });
 
     setFilteredLogs(result);
-  }, [allLogs, filterTags, filterMood, isAscending, showFavoritesOnly]);
+  }, [
+    allLogs,
+    filterTags,
+    filterMood,
+    isAscending,
+    showFavoritesOnly,
+    filterMediaOnly,
+  ]);
 
   const fetchLogs = async () => {
     try {
@@ -143,6 +164,7 @@ const ReportingScreen = ({ navigation }) => {
     setFilterTags([]);
     setFilterMood(null);
     setShowFavoritesOnly(false);
+    setFilterMediaOnly(false);
   };
 
   // --- THE RETURN STATEMENT ---
@@ -174,7 +196,8 @@ const ReportingScreen = ({ navigation }) => {
             activeFiltersCount={
               filterTags.length +
               (filterMood ? 1 : 0) +
-              (showFavoritesOnly ? 1 : 0)
+              (showFavoritesOnly ? 1 : 0) +
+              (filterMediaOnly ? 1 : 0)
             }
           />
         </View>
@@ -208,6 +231,8 @@ const ReportingScreen = ({ navigation }) => {
             prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag],
           )
         }
+        filterMediaOnly={filterMediaOnly}
+        onToggleMediaFilter={() => setFilterMediaOnly(!filterMediaOnly)}
         selectedMood={filterMood}
         onSelectMood={setFilterMood}
         onReset={resetFilters}

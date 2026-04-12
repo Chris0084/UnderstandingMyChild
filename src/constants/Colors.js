@@ -28,16 +28,27 @@ export const Colors = {
   // trend_theme: '#2a9d99',
 
   //background: '#e1ebe1',
-  background: '#f3f7f3',
+  // last ones here
+  // background: '#f3f7f3',
+  // support_strat_accent: '#565AA0',
+  // save_button_accent: '#36949D',
+  // back_button_accent: '#1982C4',
+  // edit_button_accent: '#4267AC',
+  // box_accent: '#FFCA3A',
+  // info_theme: '#6A4C93',
+  // log_theme: '#FF595E',
+  // journal_theme: '#FF924C',
+  // trend_theme: '#8AC926',
+
   support_strat_accent: '#565AA0',
   save_button_accent: '#36949D',
   back_button_accent: '#1982C4',
   edit_button_accent: '#4267AC',
-  box_accent: '#FFCA3A',
-  info_theme: '#6A4C93',
-  log_theme: '#FF595E',
-  journal_theme: '#FF924C',
-  trend_theme: '#8AC926',
+  box_accent: '#d2d2cf',
+  info_theme: '#C6DEF1',
+  log_theme: '#F7D9C4',
+  journal_theme: '#F2C6DE',
+  trend_theme: '#d3c7ab',
 
   sage: '#DDEEDC', // Background
   darkSage: '#7c857c', // Background

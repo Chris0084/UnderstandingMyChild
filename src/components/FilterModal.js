@@ -19,7 +19,8 @@ const FilterModal = ({
   selectedTags,
   onToggleTag,
   onReset,
-  onToggleFavorites,
+  filterMediaOnly,
+  onToggleMediaFilter,
 }) => {
   // 1. Setup Animation Value for the Y position
   const panY = useRef(new Animated.Value(0)).current;
@@ -64,9 +65,20 @@ const FilterModal = ({
           </View>
           <View style={styles.modalContent}>
             <Text style={styles.title}>Filter Entries</Text>
-            <View style={styles.filterSection}></View>
-
-            <ScrollView>
+            <View style={styles.filterSection}>
+              <Text style={styles.sectionLabel}>
+                Only show moments with media
+              </Text>
+              <Switch
+                value={filterMediaOnly}
+                onValueChange={onToggleMediaFilter}
+                trackColor={{ false: '#767577', true: '#4CAF50' }}
+                thumbColor={filterMediaOnly ? '#fff' : '#f4f3f4'}
+              />
+            </View>
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              style={styles.scrollViewStyle}>
               <TagSelector
                 label="Filter by Tags"
                 tags={tags}
@@ -108,10 +120,14 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     paddingHorizontal: 20,
     paddingBottom: 40,
-    maxHeight: '80%',
+    maxHeight: '90%',
   },
   innerContent: {
     // Removed the nested modalContent style to fix double padding
+  },
+  scrollViewStyle: {
+    flexShrink: 1, // Crucial for making the ScrollView behave inside a flexible height modal
+    marginBottom: 10,
   },
   grabberContainer: {
     width: '100%',
@@ -124,15 +140,15 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     backgroundColor: '#CCC',
   },
-  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 20 },
+  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 10 },
   filterSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
-    paddingBottom: 15,
+    paddingVertical: 15,
+    marginBottom: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: '#eee', // Creates a nice divider before the tags
   },
   sectionLabel: { fontSize: 16, color: '#444', fontWeight: '600' },
   buttonRow: {

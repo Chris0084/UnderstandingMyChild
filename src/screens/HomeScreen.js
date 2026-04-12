@@ -29,8 +29,21 @@ export default function HomeScreen({ navigation }) {
             </Text>
           </View>
 
-          {/* CARD GRID: 1-2-1 Staggered Layout */}
           <View style={styles.cardGrid}>
+            <View style={styles.fullRow}>
+              <NavCard
+                title="Capture"
+                description="Quickly log moments or incidents through a simple, guided form."
+                iconName="add-circle-outline"
+                accentColor={Colors.log_theme || '#FCE4EC'}
+                backgroundColor={'#80f08f'}
+                //    style={{ width: '48%', height: 200 }} // Fixed height ensures they match
+                onPress={() =>
+                  navigation.navigate('MainApp', { screen: 'InputForm' })
+                }
+              />
+            </View>
+
             <View style={styles.fullRow}>
               <NavCard
                 title="Information"
@@ -43,24 +56,13 @@ export default function HomeScreen({ navigation }) {
               />
             </View>
 
-            {/* Split Row: Two side-by-side */}
-            <View style={styles.splitRow}>
-              <NavCard
-                title="Capture"
-                description="Quickly log moments or incidents through a simple, guided form."
-                iconName="add-circle-outline"
-                accentColor={Colors.log_theme || '#FCE4EC'}
-                style={{ width: '48%', height: 200 }} // Fixed height ensures they match
-                onPress={() =>
-                  navigation.navigate('MainApp', { screen: 'InputForm' })
-                }
-              />
+            <View style={styles.fullRow}>
               <NavCard
                 title="Journal"
                 description="Access your complete history of logs with easy tools to search and update entries."
                 iconName="book-outline"
                 accentColor={Colors.journal_theme || '#E3F2FD'}
-                style={{ width: '48%', height: 200 }}
+                //   style={{ width: '48%', height: 200 }}
                 onPress={() =>
                   navigation.navigate('MainApp', { screen: 'Reporting' })
                 }
@@ -115,7 +117,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   titleText: {
-    fontSize: 32,
+    fontSize: 38,
     fontWeight: '900',
     color: '#1A1A1A',
     textAlign: 'left',
@@ -124,7 +126,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   paragraphText: {
-    fontSize: 16,
+    fontSize: 20,
     color: '#666',
     textAlign: 'left',
     lineHeight: 24,

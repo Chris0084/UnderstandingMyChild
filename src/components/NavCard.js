@@ -50,8 +50,8 @@ const styles = StyleSheet.create({
     minHeight: 100,
     backgroundColor: '#fff', // Unified background
     borderRadius: 24, // Matches image_0.png
-    padding: 20, // General internal padding
-    marginVertical: 10,
+    padding: 10, // General internal padding
+    marginVertical: 2,
     // Modern "Striking" Shadows
     elevation: 3,
     shadowColor: '#000',
@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
     paddingTop: 5, // Tweak alignment with icon
   },
   titleText: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: '700', // Matches your "Striking" style guide
     color: '#333',
     //  marginBottom: 18,
@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
   },
   descriptionText: {
     textAlign: 'left',
-    fontSize: 18,
+    fontSize: 14,
     color: '#666',
     lineHeight: 20, // Improves readability for longer text
     fontWeight: '400',
