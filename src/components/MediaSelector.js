@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     borderColor: '#5d5a5a',
     borderStyle: 'dashed',
     padding: 10,
-    minHeight: 80,
+    minHeight: 60,
     justifyContent: 'center',
     // Shadow for that "card" look
     elevation: 2,
