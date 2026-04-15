@@ -403,6 +403,7 @@ const InputFormScreen = ({ route, navigation }) => {
         editable={true}
         accentColor={Colors.box_accent}
         numLines={3}
+        enableSpeech={true}
       />
       <FreeTypeBox
         label="WHAT HAPPENED"
@@ -412,6 +413,7 @@ const InputFormScreen = ({ route, navigation }) => {
         editable={true}
         accentColor={Colors.box_accent}
         numLines={3}
+        enableSpeech={true}
       />
       <FreeTypeBox
         label="AFTER"
@@ -421,6 +423,7 @@ const InputFormScreen = ({ route, navigation }) => {
         editable={true}
         accentColor={Colors.box_accent}
         numLines={3}
+        enableSpeech={true}
       />
       <DateStamp
         label="DATE"
