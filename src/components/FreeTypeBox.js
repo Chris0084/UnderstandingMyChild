@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   TextInput,
   StyleSheet,
@@ -6,6 +6,7 @@ import {
   Text,
   TouchableOpacity,
   Alert,
+  Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import {
@@ -16,7 +17,7 @@ import {
 const FreeTypeBox = ({
   label,
   placeholder,
-  numLines,
+  numLines = 2,
   value,
   onChangeText,
   editable = true,
@@ -25,64 +26,89 @@ const FreeTypeBox = ({
 }) => {
   const [isListening, setIsListening] = useState(false);
   const [isThisBoxActive, setIsThisBoxActive] = useState(false);
+  const [interimText, setInterimText] = useState(''); // Stores live speech in-progress
+
+  // --- Animation Logic ---
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    if (isListening && isThisBoxActive) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.2,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+        ]),
+      ).start();
+    } else {
+      pulseAnim.setValue(1);
+    }
+  }, [isListening, isThisBoxActive]);
 
   // --- Voice Events ---
-
-  // Only turn on the "listening" visual (red mic) if THIS box is the active one
   useSpeechRecognitionEvent('start', () => {
-    if (isThisBoxActive) {
-      setIsListening(true);
-    }
+    if (isThisBoxActive) setIsListening(true);
   });
 
   useSpeechRecognitionEvent('end', () => {
     setIsListening(false);
-    setIsThisBoxActive(false); // Reset so other boxes don't get confused
+    setIsThisBoxActive(false);
+    setInterimText(''); // Clear the live preview when finished
   });
 
   useSpeechRecognitionEvent('error', event => {
     console.log('Speech Error:', event.error, event.message);
     setIsListening(false);
     setIsThisBoxActive(false);
+    setInterimText('');
   });
 
   useSpeechRecognitionEvent('result', event => {
-    // CRITICAL: Only update the text if this specific box started the session
     if (!isThisBoxActive) return;
 
     const transcript = event.results[0]?.transcript;
-    if (transcript) {
+
+    if (event.isFinal) {
+      // User finished talking: Save permanently to the parent state
       const newValue = value ? `${value} ${transcript}` : transcript;
       onChangeText(newValue);
+      setInterimText(''); // Reset preview
+    } else {
+      // User is still talking: Show live preview words
+      setInterimText(transcript);
     }
   });
 
   const toggleListening = async () => {
     try {
       if (isListening && isThisBoxActive) {
-        // If we are currently the one listening, stop it
         ExpoSpeechRecognitionModule.stop();
       } else {
-        // If another box is listening, we should probably stop that first (safety)
         ExpoSpeechRecognitionModule.stop();
 
         const result =
           await ExpoSpeechRecognitionModule.requestPermissionsAsync();
         if (!result.granted) {
-          Alert.alert(
-            'Permission denied',
-            'Microphone access is required for voice typing.',
-          );
+          Alert.alert('Permission denied', 'Microphone access is required.');
           return;
         }
 
-        // 1. Tell THIS instance it is now the target for results
         setIsThisBoxActive(true);
-
-        // 2. Start the engine
         await ExpoSpeechRecognitionModule.start({
-          lang: 'en-US',
-          interimResults: false,
+          lang: 'en-GB', // Changed to UK as per your code
+          interimResults: true, // Live updates enabled
+          androidSpeechTimeout: 5000,
+          androidRecognitionExtra: {
+            'android.speech.extra.SPEECH_INPUT_MINIMUM_LENGTH_MILLIS': 5000,
+            'android.speech.extra.SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS': 3000,
+            'android.speech.extra.SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS': 3000, // Fixed: set to 3000 to match others
+          },
         });
       }
     } catch (e) {
@@ -98,10 +124,21 @@ const FreeTypeBox = ({
       <View style={[styles.inputContainer, { borderLeftColor: accentColor }]}>
         <View style={styles.shadowWrapper}>
           <TextInput
-            style={[styles.input, { height: numLines * 24 }]}
+            style={[
+              styles.input,
+              { height: numLines * 24 },
+              isListening && isThisBoxActive && { color: '#6a6a6a' }, // Dim color while live typing
+            ]}
             placeholder={placeholder}
             placeholderTextColor="#868e76"
-            value={value}
+            // Show [Existing Text] + [Live Preview]
+            value={
+              interimText
+                ? value
+                  ? `${value} ${interimText}`
+                  : interimText
+                : value
+            }
             onChangeText={onChangeText}
             editable={editable}
             multiline={true}
@@ -109,17 +146,20 @@ const FreeTypeBox = ({
             textAlignVertical="top"
           />
 
-          {/* --- The Mic Button --- */}
           {enableSpeech && (
             <TouchableOpacity
               style={styles.micButton}
               onPress={toggleListening}
               activeOpacity={0.7}>
-              <Ionicons
-                name={isListening && isThisBoxActive ? 'mic' : 'mic-outline'}
-                size={22}
-                color={isListening && isThisBoxActive ? '#E74C3C' : accentColor}
-              />
+              <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+                <Ionicons
+                  name={isListening && isThisBoxActive ? 'mic' : 'mic-outline'}
+                  size={26}
+                  color={
+                    isListening && isThisBoxActive ? '#47e73c' : accentColor
+                  }
+                />
+              </Animated.View>
             </TouchableOpacity>
           )}
         </View>
@@ -164,7 +204,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 12,
     padding: 12,
     paddingRight: 45,
-    fontSize: 16,
+    fontSize: 14,
     backgroundColor: '#f7f5f2',
     color: '#000',
   },
