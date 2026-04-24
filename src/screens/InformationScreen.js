@@ -20,6 +20,7 @@ const imageMap = {
   communicationInfo: require('../../assets/infoCardPics/communicationInfo.png'),
   routineInfo: require('../../assets/infoCardPics/routineInfo.png'),
   sensoryInfo: require('../../assets/infoCardPics/sensoryInfo.png'),
+  emotionalRegulation: require('../../assets/infoCardPics/emotionalRegulation.png'),
 };
 
 const InformationScreen = () => {
@@ -52,16 +53,16 @@ const InformationScreen = () => {
       <View style={styles.marginContainer}>
         <PageHeader
           title={'Information'}
-          iconName={'book-outline'}
+          iconName={'information-circle-outline'}
           iconColor={'#000000'}
           accentColor={Colors.info_theme}></PageHeader>
         <ScrollView
           style={styles.transparentContainer}
           showsVerticalScrollIndicator={false}>
           <View style={styles.headerContainer}>
-            <TitleText style={styles.mainTitle}>
+            {/* <TitleText style={styles.mainTitle}>
               {textContent.infoSection.title}
-            </TitleText>
+            </TitleText> */}
             <Spacer height={10} />
             <BodyText>{textContent.infoSection.infoPara1}</BodyText>
             <Spacer height={10} />
@@ -80,8 +81,17 @@ const InformationScreen = () => {
 
           {/* Row 2: Tags Defined */}
           {renderHorizontalSection(
-            'Observation Categories Explained',
+            'OBSERVATION CATEGORIES EXPLAINED',
             textContent.modelSections.filter(item => item.category === 'tags'),
+          )}
+
+          <Spacer height={20} />
+          {/* Row 3 */}
+          {renderHorizontalSection(
+            'SUPPORT STRATAGIES EXPLAINED',
+            textContent.modelSections.filter(
+              item => item.category === 'supports',
+            ),
           )}
         </ScrollView>
       </View>
@@ -117,10 +127,10 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   sectionHeader: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '900',
     color: Colors.darkGrey, // Slightly darker for readability on the wrapper
-    letterSpacing: 2,
+    letterSpacing: 0.8,
     marginLeft: 20,
     marginBottom: 15,
     borderBottomWidth: 2, // This creates the "colored margin" look
@@ -129,7 +139,7 @@ const styles = StyleSheet.create({
   horizontalListPadding: {
     paddingLeft: 20,
     paddingRight: 5,
-    paddingBottom: 10,
+    paddingBottom: 15,
   },
 });
 

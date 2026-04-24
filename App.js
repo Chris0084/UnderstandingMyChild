@@ -5,6 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import HomeScreen from './src/screens/HomeScreen';
 import InputFormScreen from './src/screens/InputFormScreen';
@@ -19,8 +20,11 @@ const Tab = createBottomTabNavigator();
 // Create the "Tray" (MainTabs)
 // This handles the bottom navigation for your 3 internal screens
 function MainTabs() {
+  const insets = useSafeAreaInsets();
+
   return (
     <Tab.Navigator
+      backBehavior="history"
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarActiveTintColor: '#007AFF',
@@ -30,6 +34,8 @@ function MainTabs() {
           backgroundColor: '#fff',
           borderTopWidth: 1,
           borderTopColor: '#e0e0e0',
+          paddingBottom: insets.bottom > 0 ? insets.bottom : 10,
+          height: 60 + (insets.bottom > 0 ? insets.bottom : 0),
         },
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
@@ -40,7 +46,7 @@ function MainTabs() {
           else if (route.name === 'InputForm')
             iconName = focused ? 'add-circle' : 'add-circle-outline';
           else if (route.name === 'Reporting')
-            iconName = focused ? 'book-outline' : 'book-outline';
+            iconName = focused ? 'book' : 'book-outline';
           else if (route.name === 'Insights')
             iconName = focused ? 'sparkles' : 'sparkles-outline';
 

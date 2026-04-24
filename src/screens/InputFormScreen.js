@@ -238,7 +238,11 @@ const InputFormScreen = ({ route, navigation }) => {
       setAllLogs(sorted);
 
       Alert.alert('Saved', 'Your entry has been recorded!', [
-        { text: 'OK', onPress: () => setIsEditing(false) },
+        {
+          text: 'OK',
+          onPress: () =>
+            navigation.navigate('MainApp', { screen: 'Reporting' }),
+        },
       ]);
     } catch (e) {
       Alert.alert('Error', 'Could not save entry.');

@@ -436,16 +436,19 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    // flexDirection: 'row',
+    // justifyContent: 'space-between',
+    // alignItems: 'center',
     paddingHorizontal: 20,
     marginBottom: 10,
   },
   actionButtons: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    flexWrap: 'wrap', // <--- THIS IS THE KEY
+    rowGap: 10, // Adds space between rows when it wraps
+    columnGap: 8, // Adds space between buttons horizontally
+    justifyContent: 'flex-start', // Keeps everything to the left
   },
   exportLabelButton: {
     flexDirection: 'row',

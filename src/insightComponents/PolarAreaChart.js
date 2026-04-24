@@ -3,11 +3,11 @@ import { View, Dimensions, StyleSheet } from 'react-native';
 import Svg, {
   G,
   Path,
-  Text as SvgText,
   Circle,
   Defs,
   RadialGradient,
   Stop,
+  Text as SvgText,
 } from 'react-native-svg';
 import InsightCard from './InsightCard';
 
@@ -16,15 +16,16 @@ const { width } = Dimensions.get('window');
 const PolarAreaChart = ({ tags }) => {
   const size = width - 40;
   const center = size / 2;
-  const maxChartRadius = size / 2 - 80;
-  const innerRadius = 10;
+
+  // padding reduced to 40 to give words a bit of room if they go over the edge
+  const maxChartRadius = size / 2 - 40;
+  const innerRadius = 20;
 
   if (!tags || tags.length === 0) return null;
 
   const maxCount = Math.max(...tags.map(t => t.count), 1);
   const angleStep = (2 * Math.PI) / tags.length;
 
-  // Define your base rainbow colors (The "Outer" color)
   const rainbow = [
     '#FF6384',
     '#FF9F40',
@@ -34,8 +35,6 @@ const PolarAreaChart = ({ tags }) => {
     '#c0a4f7',
     '#734292',
   ];
-
-  // Define the "Inner" darker versions (The "Center" color)
   const rainbowDark = [
     '#C62828',
     '#E65100',
@@ -55,7 +54,6 @@ const PolarAreaChart = ({ tags }) => {
     const y3 = currentRadius * Math.sin(endAngle);
     const x4 = innerRadius * Math.cos(endAngle);
     const y4 = innerRadius * Math.sin(endAngle);
-
     return `M ${x1} ${y1} L ${x2} ${y2} A ${currentRadius} ${currentRadius} 0 0 1 ${x3} ${y3} L ${x4} ${y4} A ${innerRadius} ${innerRadius} 0 0 0 ${x1} ${y1} Z`;
   };
 
@@ -82,13 +80,12 @@ const PolarAreaChart = ({ tags }) => {
           </Defs>
 
           <G x={center} y={center}>
-            {/* Background Grid */}
             {[0.25, 0.5, 0.75, 1].map((p, i) => (
               <Circle
                 key={i}
                 r={innerRadius + maxChartRadius * p}
-                stroke="#c1c0c0"
-                fill="#bde5ad32"
+                stroke="#eee"
+                fill="transparent"
               />
             ))}
 
@@ -98,11 +95,21 @@ const PolarAreaChart = ({ tags }) => {
               const currentRadius =
                 innerRadius + (item.count / maxCount) * maxChartRadius;
 
-              const labelAngle = startAngle + angleStep / 2;
-              const labelRadius = currentRadius + 20;
-              const lx = labelRadius * Math.cos(labelAngle);
-              const ly = labelRadius * Math.sin(labelAngle);
-              const isRight = Math.cos(labelAngle) > 0;
+              const middleAngle = startAngle + angleStep / 2;
+
+              // FIX: Use a FIXED radius so labels don't move with the wedge size
+              // This puts the labels at the 70% mark of the total chart area
+              const labelRadius = innerRadius + maxChartRadius * 0.5;
+
+              const tx = labelRadius * Math.cos(middleAngle);
+              const ty = labelRadius * Math.sin(middleAngle);
+
+              let rotation = (middleAngle * 180) / Math.PI;
+
+              // readable flip logic
+              if (rotation > 90 || rotation < -90) {
+                rotation += 180;
+              }
 
               return (
                 <G key={index}>
@@ -110,18 +117,22 @@ const PolarAreaChart = ({ tags }) => {
                     d={createWedgePath(startAngle, endAngle, currentRadius)}
                     fill={`url(#grad-${index % rainbow.length})`}
                     stroke="#fff"
-                    strokeWidth="1.5"
+                    strokeWidth="2"
                   />
-                  <SvgText
-                    x={lx}
-                    y={ly}
-                    fill="#455A64"
-                    fontSize="11"
-                    fontWeight="bold"
-                    textAnchor={isRight ? 'start' : 'end'}
-                    alignmentBaseline="middle">
-                    {`${item.name}: ${item.count}`}
-                  </SvgText>
+
+                  {/* FIXED BLACK LABEL */}
+                  <G rotation={rotation} origin={`${tx}, ${ty}`}>
+                    <SvgText
+                      x={tx}
+                      y={ty}
+                      fill="black" // Changed to black as requested
+                      fontSize="12"
+                      fontWeight="bold"
+                      textAnchor="middle"
+                      alignmentBaseline="middle">
+                      {`${item.name} (${item.count})`}
+                    </SvgText>
+                  </G>
                 </G>
               );
             })}
@@ -133,7 +144,11 @@ const PolarAreaChart = ({ tags }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { alignItems: 'center', justifyContent: 'center' },
+  container: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+  },
 });
 
 export default PolarAreaChart;

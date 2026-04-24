@@ -1,7 +1,7 @@
 { "infoSection":{
   "title":"INFO PAGE",
-"infoPara1":"Gathering examples, understanding what to capture and then finding it again when you really need it can be stressful and time consuming. This app helps you understand your child while preparing for appointments by noting real-life examples. It does not diagnose or replace professional assessment. There are no scores or right answers.",
- "infoPara2":"You don’t need to complete everything. Take this at your own pace."
+"infoPara1":"Everything you need to better understand, document, and advocate for your child. Browse the categories below to find examples and guidance tailored to your family's needs.",
+ "infoPara2":"This resource is designed to assist with professional consultations, not replace them."
 },
   "modelSections": [
     {
@@ -22,7 +22,38 @@
       "para1": "You only need to notice what happens, where, and how it affects your child. The journaling section lets you make a record, in your own words. You can also chose to tag the journal entry under one of the following categories and the impact it had on your child.",
       "para2": "When you want to look back for patterns or specific moments, just head to the Review page where you can sort and filter to make findings things easy."
     },
+     {
+      "id": "capture",
+      "category": "app",
+      "buttonLabel": "Capture A Moment",
+      "modalTitle": "How To Capture A Moment",
+      "para1": "TBC",
+      "para2": "TBC"
+    },
     {
+      "id": "journal",
+      "category": "app",
+      "buttonLabel": "How To Use The Journal",
+      "modalTitle": "How To Use The Journal",
+      "para1": "TBC",
+      "para2": "TBC"
+    },
+     {
+      "id": "trends",
+      "category": "app",
+      "buttonLabel": "Trends",
+      "modalTitle": "Viewing Trends",
+      "para1": "TBC",
+      "para2": "TBC"
+    },
+    {
+      "id": "whatAreObservationCategories",
+      "category": "tags",
+      "buttonLabel": "What Are Observation Categories",
+      "modalTitle": "What Are Observation Categories",
+      "para1": "TBC"
+    },
+      {
       "id": "Communication",
       "imageKey": "communicationInfo",
       "category": "tags",
@@ -64,9 +95,81 @@
     {
       "id": "ExecutiveFunctioning",
       "category": "tags",
-      "buttonLabel": "Executive Functioning ",
+      "buttonLabel": "Executive Functioning",
       "modalTitle": "Executive Functioning ",
       "para1": "This area is about the thinking skills that help us plan, decide what to do, and follow things through including working memory, response inhibition (keeping things in), task initiation, sustained attention, planning and time management."
+    },
+    {
+      "id": "noteForParents",
+      "category": "supports",
+      "buttonLabel": "A Note For Parents",
+      "modalTitle": "A Note For Parents",
+      "para1": "If sensory supports are new to you, it’s okay to start small and be curious. There’s no “right” way to use these tools — some people may love them, others may not, and preferences can change over time. A good first step is observing how your child already interacts with their environment and their behaviour. Before investing you can potentially visit spaces with supports such as play spaces or local charities to see if they would benefit your child."
+    },
+    {
+      "id": "sensorySupports",
+      "category": "supports",
+      "buttonLabel": "Sensory Supports",
+      "modalTitle": "Sensory Supports",
+      "para1": "Sensory supports can help people feel comfortable, calm, and able to engage in daily life. They respect different sensory needs and preferences rather than trying to change who a child is.",
+      "para2": "Common examples include ear defenders for loud environments, chewy jewellery for oral sensory input, and fidget toys that support focus and regulation. What’s useful will vary for each child."
+    },
+     {
+      "id": "structureSupports",
+      "category": "supports",
+      "buttonLabel": "Structure & Predictability Supports",
+      "modalTitle": "Structure & Predictability Supports",
+      "para1": "TBC",
+      "para2": "TBC"
+    },
+      {
+      "id": "communicationSupports",
+      "category": "supports",
+      "buttonLabel": "Communication Supports",
+      "modalTitle": "Communication Supports",
+      "para1": "Communication supports help people express themselves, understand others, and take part in everyday interactions in ways that work for them. They recognise that communication can take many forms — not just spoken words — and support autonomy, dignity, and connection.",
+      "para2": "Examples include AAC (Augmentative and Alternative Communication) such as picture‑based systems, communication boards, or speech apps; emotion cards to help identify and express feelings; and flash cards or visual supports to make routines, choices, and expectations clearer. These tools can reduce frustration, build confidence, and support meaningful communication across home, school, and community settings."
+    },
+     {
+      "id": "socialInteractionSupports",
+      "category": "supports",
+      "buttonLabel": "Social Interaction Supports",
+      "modalTitle": "Social Interaction Supports",
+      "para1": "TBC",
+      "para2": "TBC"
+    },
+     {
+      "id": "emotionalRegulationSupports",
+ "imageKey": "emotionalRegulation",
+      "category": "supports",
+      "buttonLabel": "Emotional Regulation Supports",
+      "modalTitle": "Emotional Regulation Supports",
+      "para1": "Emotional regulation supports are tools and activities that help people manage their energy, emotions, and sensory experiences in ways that feel safe and supportive to them. They recognise that bodies regulate differently, and that movement, pressure, or proprioceptive input can be helpful — not distracting.",
+      "para2": "Examples include weighted vests that provide calming deep pressure, trampolines for releasing excess energy, hammocks or swings for rhythmic movement, and body socks that offer resistance and full‑body sensory input. Used respectfully and by choice, these supports can help people feel more grounded, organised, and ready to engage."
+    },
+      {
+      "id": "environmentAdjustments",
+      "category": "supports",
+      "buttonLabel": "Environment Adjustments",
+      "modalTitle": "Environment Adjustments",
+      "para1": "TBC",
+      "para2": "TBC"
+    },
+    {
+      "id": "executiveFunctioningSupports",
+      "category": "supports",
+      "buttonLabel": "Executive Function Supports",
+      "modalTitle": "Executive Function Supports",
+      "para1": "Executive functioning supports are tools that help people organise their time, attention, and tasks in ways that feel clearer and less overwhelming. They support planning, transitions, memory, and follow‑through, recognising that these skills develop differently for everyone.",
+      "para2": "Examples include timers to make time visible, visual timetables to show what’s happening across the day, and “now and next” boards to support understanding of immediate transitions. These supports can reduce anxiety, support independence, and make expectations more predictable at home and school."
+    },
+         {
+      "id": "maskingEnergyManagementSupports",
+      "category": "supports",
+      "buttonLabel": "Masking & Energy Management Supports",
+      "modalTitle": "Masking & Energy Management Supports",
+      "para1": "TBC",
+      "para2": "TBC"
     }
   ]
 }
