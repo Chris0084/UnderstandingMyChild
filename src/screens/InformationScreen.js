@@ -15,7 +15,7 @@ import PageHeader from '../components/PageHeader';
 import textContent from '../../CMS/content.json';
 
 const imageMap = {
-  whatThisAppWillDoInfo: require('../../assets/infoCardPics/whatThisAppWillDoInfo.png'),
+  execFunction: require('../../assets/infoCardPics/execFunction.png'),
   howToUseAppInfo: require('../../assets/infoCardPics/howToUseAppInfo.png'),
   communicationInfo: require('../../assets/infoCardPics/communicationInfo.png'),
   routineInfo: require('../../assets/infoCardPics/routineInfo.png'),
@@ -64,9 +64,9 @@ const InformationScreen = () => {
               {textContent.infoSection.title}
             </TitleText> */}
             <Spacer height={10} />
-            <BodyText>{textContent.infoSection.infoPara1}</BodyText>
-            <Spacer height={10} />
-            <BodyText>{textContent.infoSection.infoPara2}</BodyText>
+            <BodyText fontSize={22}>
+              {textContent.infoSection.infoPara1}
+            </BodyText>
           </View>
 
           <Spacer height={30} />

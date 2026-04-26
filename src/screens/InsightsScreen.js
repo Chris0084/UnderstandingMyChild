@@ -9,6 +9,7 @@ import Locations from '../insightComponents/Locations';
 import PolarAreaChart from '../insightComponents/PolarAreaChart';
 import PageHeader from '../components/PageHeader';
 import Colors from '../constants/Colors';
+import HeatMap from '../insightComponents/HeatMap';
 
 const { width } = Dimensions.get('window');
 
@@ -32,7 +33,7 @@ const InsightsScreen = () => {
       if (!storedData) return;
       const logs = JSON.parse(storedData);
 
-      // 1. Tally Strategies
+      // --- 1. TALLY STRATEGIES ---
       const strategyCounts = {};
       logs.forEach(log => {
         Object.entries(log.strategies || {}).forEach(([name, status]) => {
@@ -45,16 +46,16 @@ const InsightsScreen = () => {
       const topStrategies = Object.entries(strategyCounts)
         .map(([name, count]) => ({ name, count }))
         .sort((a, b) => b.count - a.count)
-        .slice(0, 5); // Get Top 5
+        .slice(0, 5);
 
-      // 2. Tally Locations
+      // --- 2. TALLY LOCATIONS ---
       const locationCounts = {};
       logs.forEach(log => {
         let rawLoc = log.where || 'Unknown';
         const cleanLoc = rawLoc
           .trim()
           .toLowerCase()
-          .split(/\s+/) // Splits by any amount of whitespace
+          .split(/\s+/)
           .map(word => word.charAt(0).toUpperCase() + word.slice(1))
           .join(' ');
         locationCounts[cleanLoc] = (locationCounts[cleanLoc] || 0) + 1;
@@ -65,6 +66,7 @@ const InsightsScreen = () => {
         .sort((a, b) => b.count - a.count)
         .slice(0, 3);
 
+      // --- 3. TALLY TAGS (Polar Chart) ---
       const tagCounts = {
         Sensory: 0,
         Communication: 0,
@@ -75,7 +77,6 @@ const InsightsScreen = () => {
         Sleep: 0,
       };
 
-      // Now loop through logs to fill tagCounts
       logs.forEach(log => {
         (log.tags || []).forEach(tag => {
           if (tagCounts.hasOwnProperty(tag)) {
@@ -84,21 +85,48 @@ const InsightsScreen = () => {
         });
       });
 
-      // Now map it to the array format your RadialTagChart needs
       const topTags = Object.entries(tagCounts).map(([name, count]) => ({
         name,
         count,
       }));
 
-      // 4. Update state ONCE at the very end with everything
+      // --- 4. HEATMAP LOGIC (NEW) ---
+      const times = ['Morning', 'Afternoon', 'Evening', 'Night time'];
+      // Initialize a 7-day matrix (Sun-Sat)
+      let heatMapMatrix = Array.from({ length: 7 }, (_, i) => ({
+        dayIndex: i,
+        slots: times.map(t => ({ time: t, count: 0 })),
+      }));
+
+      logs.forEach(log => {
+        const date = new Date(log.logDate);
+        const dayIndex = date.getDay(); // 0 is Sunday
+        const timeLabel = log.timeOfDay;
+
+        if (timeLabel) {
+          const timeIndex = times.indexOf(timeLabel);
+          if (timeIndex !== -1) {
+            heatMapMatrix[dayIndex].slots[timeIndex].count += 1;
+          }
+        }
+      });
+
+      // Find the highest number of incidents in any single slot to scale colors
+      const maxCount = Math.max(
+        ...heatMapMatrix.flatMap(d => d.slots.map(s => s.count)),
+        1, // Default to 1 to avoid division by zero
+      );
+
+      // --- 5. UPDATE STATE (ONCE) ---
       setStats({
         topStrategies,
         topLocations,
-        topTags, // This is what the Radial chart uses
+        topTags,
+        heatMapData: { matrix: heatMapMatrix, maxCount }, // Added this
         totalLogs: logs.length,
       });
     } catch (e) {
-      console.error(e);
+      console.error('Error calculating insights:', e);
     }
   };
 
@@ -116,6 +144,8 @@ const InsightsScreen = () => {
 
       <ScrollView style={[styles.container]}>
         <TotalIncidents count={stats.totalLogs} />
+
+        <HeatMap data={stats.heatMapData} />
 
         <EffectiveTools
           strategies={stats.topStrategies}

@@ -24,8 +24,8 @@ const ReportingScreen = ({ navigation }) => {
 
   const injectSampleData = async () => {
     try {
-      // const sampleData = SAMPLE_LOGS;
-      const sampleData = [];
+      const sampleData = SAMPLE_LOGS;
+      // const sampleData = [];
 
       // 1. Get current logs first (so you don't delete your own work)
       const existingData = await AsyncStorage.getItem('@app_logs');
@@ -244,16 +244,21 @@ const ReportingScreen = ({ navigation }) => {
           );
 
           return `
-    <div class="report-card">
-      <div class="header-top">
-        <div style="display: flex; flex-direction: column;">
+   <div class="report-card">
+    <div class="header-top">
+      <div style="display: flex; flex-direction: column;">
+        <div style="display: flex; align-items: center; gap: 10px;">
           <span class="report-date">${logDate.toDateString()}</span>
-          <span style="font-size: 15px; color: #007AFF; font-weight: bold; margin-top: 4px; text-transform: uppercase;">
-            ${displayTitle}
+          <span style="background: #E3F2FD; color: #007AFF; font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: bold; text-transform: uppercase;">
+             ${log.timeOfDay || ''}
           </span>
         </div>
-        <span class="fav-star">★</span>
+        <span style="font-size: 15px; color: #1A1A1A; font-weight: bold; margin-top: 4px; text-transform: uppercase;">
+          ${displayTitle}
+        </span>
       </div>
+      <span class="fav-star">★</span>
+    </div>
 
       <div class="tag-row">
         ${

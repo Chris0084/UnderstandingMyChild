@@ -36,7 +36,7 @@ export default function HomeScreen({ navigation }) {
                 description="Quickly log moments or incidents through a simple, guided form."
                 iconName="add-circle-outline"
                 accentColor={Colors.log_theme || '#FCE4EC'}
-                backgroundColor={'#80f08f'}
+                backgroundColor={'#a7e7a7'}
                 //    style={{ width: '48%', height: 200 }} // Fixed height ensures they match
                 onPress={() =>
                   navigation.navigate('MainApp', { screen: 'InputForm' })

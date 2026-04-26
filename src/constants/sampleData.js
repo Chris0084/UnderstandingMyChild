@@ -2,6 +2,7 @@ export const SAMPLE_LOGS = [
   {
     id: '1741896001000',
     where: 'Supermarket',
+    timeOfDay: 'Morning',
     leadUp:
       'Checking out at the busy till with loud beeping and bright lights.',
     whatHappened:
@@ -20,6 +21,7 @@ export const SAMPLE_LOGS = [
   {
     id: '1741896002000',
     where: 'Bedroom',
+    timeOfDay: 'Evening',
     leadUp:
       'Getting ready for bed; transition from playing with Lego to brushing teeth.',
     whatHappened:
@@ -39,6 +41,7 @@ export const SAMPLE_LOGS = [
   {
     id: '1741896003000',
     where: 'School Gates',
+    timeOfDay: 'Morning',
     leadUp: 'Arriving at school; very crowded with other parents and children.',
     whatHappened:
       'Clung to my leg, crying quietly and refusing to enter the building.',
@@ -57,6 +60,7 @@ export const SAMPLE_LOGS = [
   {
     id: '1741896004000',
     where: 'Kitchen',
+    timeOfDay: 'Morning',
     leadUp:
       'I turned on the blender to make a smoothie while child was eating breakfast.',
     whatHappened:
@@ -75,6 +79,7 @@ export const SAMPLE_LOGS = [
   {
     id: '1741896005000',
     where: 'Park',
+    timeOfDay: 'Afternoon',
     leadUp: 'Another child took the swing that they were waiting for.',
     whatHappened: 'Pushed the other child and started yelling loudly.',
     after: 'Left the park; discussed the situation using visuals once home.',
@@ -91,6 +96,7 @@ export const SAMPLE_LOGS = [
   {
     id: '1741896006000',
     where: 'Living Room',
+    timeOfDay: 'Evening',
     leadUp: 'Tablet time ended; I gave a 2-minute warning.',
     whatHappened:
       'Threw the tablet on the sofa and started kicking the cushions.',
@@ -108,6 +114,7 @@ export const SAMPLE_LOGS = [
   {
     id: '1741896007000',
     where: 'Bedroom',
+    timeOfDay: 'Morning',
     leadUp: 'Woke up twice during the night; very tired this morning.',
     whatHappened:
       'Total refusal to get dressed; crying over the texture of the socks.',
@@ -126,6 +133,7 @@ export const SAMPLE_LOGS = [
   {
     id: '1741896008000',
     where: 'Hallway',
+    timeOfDay: 'Morning',
     leadUp: "Putting on shoes to go to a doctor's appointment.",
     whatHappened:
       "Child sat on the floor and went limp; wouldn't communicate at all.",
@@ -143,6 +151,7 @@ export const SAMPLE_LOGS = [
   {
     id: '1741896009000',
     where: 'Dining Room',
+    timeOfDay: 'Afternoon',
     leadUp: 'Grandparents visited; lots of overlapping conversations.',
     whatHappened:
       'Child started humming loudly and spinning in circles, then hid under the table.',
@@ -160,6 +169,7 @@ export const SAMPLE_LOGS = [
   {
     id: '1741896010000',
     where: 'Car',
+    timeOfDay: 'Afternoon',
     leadUp: 'Stuck in traffic for 40 minutes on the way home from school.',
     whatHappened:
       "Kicking the back of the driver's seat and crying 'I want out'.",
@@ -177,6 +187,7 @@ export const SAMPLE_LOGS = [
   {
     id: '1741896011000',
     where: 'Bathroom',
+    timeOfDay: 'Evening',
     leadUp: 'Hair washing during bath time.',
     whatHappened:
       'Extreme distress; screaming and trying to climb out of the bath.',
@@ -193,6 +204,7 @@ export const SAMPLE_LOGS = [
   {
     id: '1741896012000',
     where: 'Playground',
+    timeOfDay: 'Morning',
     leadUp: 'End of play time; whistle blew to go back inside.',
     whatHappened:
       'Child ran to the far end of the field and refused to come back.',
@@ -210,6 +222,7 @@ export const SAMPLE_LOGS = [
   {
     id: '1741896013000',
     where: 'Kitchen',
+    timeOfDay: 'Evening',
     leadUp: 'Asked child to put their plate in the sink.',
     whatHappened:
       'Child stared blankly for 30 seconds, then got angry when I repeated the instruction.',
@@ -228,6 +241,7 @@ export const SAMPLE_LOGS = [
   {
     id: '1741896014000',
     where: 'Library',
+    timeOfDay: 'Morning',
     leadUp: "A group of toddlers started a 'sing-along' session nearby.",
     whatHappened:
       'Child started rocking back and forth and making a low growling noise.',
@@ -245,6 +259,7 @@ export const SAMPLE_LOGS = [
   {
     id: '1741896015000',
     where: 'Bedroom',
+    timeOfDay: 'Morning',
     leadUp: 'Changing from pajamas into school uniform.',
     whatHappened: "Child upset because the school jumper felt 'scratchy'.",
     after: 'Put a soft t-shirt underneath; child settled down.',
@@ -260,6 +275,7 @@ export const SAMPLE_LOGS = [
   {
     id: '1741896016000',
     where: 'Kitchen',
+    timeOfDay: 'Evening',
     leadUp: 'Dinner was served; carrots were touching the pasta.',
     whatHappened:
       'Child pushed the plate off the table; pasta went everywhere.',
@@ -277,6 +293,7 @@ export const SAMPLE_LOGS = [
   {
     id: '1741896017000',
     where: 'Classroom',
+    timeOfDay: 'Morning',
     leadUp: 'The teacher changed the seat plan unexpectedly.',
     whatHappened:
       'Child sat at the new desk but put their head down and refused to work.',
@@ -295,6 +312,7 @@ export const SAMPLE_LOGS = [
   {
     id: '1741896018000',
     where: 'Hallway',
+    timeOfDay: 'Afternoon',
     leadUp: 'Coming home from school; lots of mud on shoes.',
     whatHappened:
       'Upset when told shoes had to come off before entering the lounge.',
@@ -312,6 +330,7 @@ export const SAMPLE_LOGS = [
   {
     id: '1741896019000',
     where: 'Doctor Office',
+    timeOfDay: 'Morning',
     leadUp: 'Waiting for 20 minutes in a small, warm room.',
     whatHappened:
       'Child began pacing and touching all the medical equipment on the desk.',
@@ -329,6 +348,7 @@ export const SAMPLE_LOGS = [
   {
     id: '1741896020000',
     where: 'Living Room',
+    timeOfDay: 'Afternoon',
     leadUp: 'Asking the child what they wanted for lunch.',
     whatHappened:
       "Child yelled 'I don't know' and started hitting their own head.",
@@ -346,6 +366,7 @@ export const SAMPLE_LOGS = [
   {
     id: '1741896021000',
     where: 'Bedroom',
+    timeOfDay: 'Night time',
     leadUp: 'Lights out; time to go to sleep.',
     whatHappened: "Crying that the room was 'too dark' and 'scary'.",
     after: 'Added a dim red nightlight; stayed nearby until child slept.',
@@ -362,6 +383,7 @@ export const SAMPLE_LOGS = [
   {
     id: '1741896022000',
     where: 'School Hall',
+    timeOfDay: 'Morning',
     leadUp: 'Assembly with the whole school; very loud singing.',
     whatHappened: 'Child tried to crawl under the chairs and began to cry.',
     after:
@@ -379,6 +401,7 @@ export const SAMPLE_LOGS = [
   {
     id: '1741896023000',
     where: 'Kitchen',
+    timeOfDay: 'Afternoon',
     leadUp: 'The wrong color cup was given for juice.',
     whatHappened: 'Child threw the cup across the kitchen; juice everywhere.',
     after: 'Sat on the floor together until calm; child helped clean up later.',
@@ -395,6 +418,7 @@ export const SAMPLE_LOGS = [
   {
     id: '1741896024000',
     where: 'Supermarket',
+    timeOfDay: 'Afternoon',
     leadUp: 'Walking through the freezer aisle (very cold).',
     whatHappened: 'Child became very stiff and refused to keep walking.',
     after: "Put on child's hoodie; child felt better immediately.",
@@ -410,6 +434,7 @@ export const SAMPLE_LOGS = [
   {
     id: '1741896025000',
     where: 'Living Room',
+    timeOfDay: 'Evening',
     leadUp: 'Grandparents leaving after a long day of play.',
     whatHappened:
       'Child hid behind the sofa and refused to say goodbye; crying loudly.',

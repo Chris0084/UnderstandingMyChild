@@ -22,6 +22,13 @@ const LogCard = ({ entry, isAlternate }) => {
   const displayStrategies = activeStrategies.slice(0, 3);
   const remainingCount = activeStrategies.length - 3;
 
+  const TIME_ICONS = {
+    Morning: 'sunny-outline',
+    Afternoon: 'partly-sunny-outline',
+    Evening: 'moon-outline',
+    'Night time': 'cloudy-night-outline',
+  };
+
   return (
     <View
       style={[
@@ -30,7 +37,28 @@ const LogCard = ({ entry, isAlternate }) => {
       ]}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Text style={styles.headerText}>{formattedDate}</Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginBottom: 2,
+            }}>
+            <Text style={styles.headerText}>{formattedDate}</Text>
+
+            {entry.timeOfDay && (
+              <View style={styles.timePill}>
+                {/* Render the icon based on the label */}
+                <Ionicons
+                  name={TIME_ICONS[entry.timeOfDay] || 'time-outline'}
+                  size={10}
+                  color="#666"
+                  style={{ marginRight: 4 }}
+                />
+                <Text style={styles.timePillText}>{entry.timeOfDay}</Text>
+              </View>
+            )}
+          </View>
+
           <Text style={styles.headerText}>
             Where: {entry.where.slice(0, 15)}
           </Text>
@@ -255,6 +283,23 @@ const styles = StyleSheet.create({
     color: '#999',
     fontWeight: 'bold',
     marginLeft: 4,
+  },
+  timePill: {
+    flexDirection: 'row', // Added this
+    alignItems: 'center', // Added this
+    backgroundColor: '#F5F5F5',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    marginLeft: 8,
+    borderWidth: 0.5,
+    borderColor: '#E0E0E0',
+  },
+  timePillText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#666',
+    textTransform: 'uppercase',
   },
 });
 

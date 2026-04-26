@@ -22,7 +22,16 @@ import StrategyModal from '../components/StrategyModal.js';
 import Colors from '../constants/Colors.js';
 import PageHeader from '../components/PageHeader.js';
 import SplitButton from '../components/SplitButton.js';
+import TimeOfDaySelector from '../components/TimeOfDaySelector.js';
 import DiagonalSplitButton from '../components/DiagonalSplitButton.js';
+
+const getTimeOfDay = () => {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 12) return 'Morning';
+  if (hour >= 12 && hour < 17) return 'Afternoon';
+  if (hour >= 17 && hour < 22) return 'Evening';
+  return 'Night time';
+};
 
 const InputFormScreen = ({ route, navigation }) => {
   const insets = useSafeAreaInsets();
@@ -52,6 +61,7 @@ const InputFormScreen = ({ route, navigation }) => {
   const [isEditing, setIsEditing] = useState(true);
   const [strategies, setStrategies] = useState(defaultStrategies);
   const [modalVisible, setModalVisible] = useState(false);
+  const [timeOfDay, setTimeOfDay] = useState(getTimeOfDay());
 
   // Load ALL logs once when component mounts
   useEffect(() => {
@@ -86,7 +96,7 @@ const InputFormScreen = ({ route, navigation }) => {
         setSelectedTags(entry.tags || []);
         setMediaUri(entry.mediaUri || null);
         setStrategies({ ...defaultStrategies, ...entry.strategies });
-
+        setTimeOfDay(entry.timeOfDay || 'Morning'); // Load from log
         // If mode is 'renderReportView', show report. Otherwise, show edit form.
         setIsEditing(modeParam !== 'renderReportView');
       } else {
@@ -99,6 +109,7 @@ const InputFormScreen = ({ route, navigation }) => {
         setSelectedTags([]);
         setMediaUri(null);
         setStrategies(defaultStrategies);
+        setTimeOfDay(getTimeOfDay()); // Reset to current time for new log
         setIsEditing(true); // Always show the form for a new log
       }
 
@@ -212,6 +223,7 @@ const InputFormScreen = ({ route, navigation }) => {
         whatHappened,
         after,
         logDate: logDate.toISOString(),
+        timeOfDay,
         tags: selectedTags,
         mediaUri,
         strategies,
@@ -298,7 +310,18 @@ const InputFormScreen = ({ route, navigation }) => {
             alignItems: 'center',
           }}>
           <Text style={styles.reportDate}>{logDate.toDateString()}</Text>
-
+          <Text
+            style={[
+              styles.reportLabel,
+              { marginTop: 5, color: Colors.primary },
+            ]}>
+            {timeOfDay} {/* Add this variable so it shows up in the report! */}
+          </Text>
+          <Text
+            style={[
+              styles.reportLabel,
+              { marginTop: 5, color: Colors.primary },
+            ]}></Text>
           {/* ACTION BUTTONS (Fav and Delete) */}
           <View style={{ flexDirection: 'row' }}>
             <TouchableOpacity
@@ -434,6 +457,10 @@ const InputFormScreen = ({ route, navigation }) => {
         date={logDate}
         onChange={setLogDate}
         editable={true}
+      />
+      <TimeOfDaySelector
+        onSelect={setTimeOfDay}
+        selectedTime={timeOfDay} // Pass current state so it stays in sync
       />
       <TagSelector
         label="Observation Categories"

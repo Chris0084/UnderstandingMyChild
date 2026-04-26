@@ -1,7 +1,5 @@
 { "infoSection":{
-  "title":"INFO PAGE",
-"infoPara1":"Everything you need to better understand, document, and advocate for your child. Browse the categories below to find examples and guidance tailored to your family's needs.",
- "infoPara2":"This resource is designed to assist with professional consultations, not replace them."
+ "infoPara1":"This resource is designed to assist with professional consultations, not replace them."
 },
   "modelSections": [
     {
@@ -95,6 +93,7 @@
     {
       "id": "ExecutiveFunctioning",
       "category": "tags",
+         "imageKey": "execFunction",
       "buttonLabel": "Executive Functioning",
       "modalTitle": "Executive Functioning ",
       "para1": "This area is about the thinking skills that help us plan, decide what to do, and follow things through including working memory, response inhibition (keeping things in), task initiation, sustained attention, planning and time management."
