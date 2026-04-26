@@ -1,11 +1,54 @@
-import React from 'react';
+import React, { useEffect } from 'react'; // 1. REMOVE useEffect when strippng the day populate
 import { StyleSheet, View, Text, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import NavCard from '../components/NavCard';
 import Colors from '../constants/Colors';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // 2. REMOVE whole line when strippng the day populate
 
 export default function HomeScreen({ navigation }) {
   const insets = useSafeAreaInsets();
+  //remove this whole useEffect REMOVE useEffect when strippng the day populate
+  useEffect(() => {
+    const runBackfill = async () => {
+      try {
+        const storedData = await AsyncStorage.getItem('@app_logs');
+        if (!storedData) return;
+
+        let logs = JSON.parse(storedData);
+        let hasChanges = false;
+
+        const updatedLogs = logs.map(log => {
+          // If timeOfDay is missing or null, calculate it from the ID or date
+          if (!log.timeOfDay) {
+            const timestamp = parseInt(log.id);
+            const date = !isNaN(timestamp)
+              ? new Date(timestamp)
+              : new Date(log.logDate);
+            const hour = date.getHours();
+
+            let timeLabel = 'Night time';
+            if (hour >= 5 && hour < 12) timeLabel = 'Morning';
+            else if (hour >= 12 && hour < 17) timeLabel = 'Afternoon';
+            else if (hour >= 17 && hour < 21) timeLabel = 'Evening';
+
+            hasChanges = true;
+            return { ...log, timeOfDay: timeLabel };
+          }
+          return log;
+        });
+
+        if (hasChanges) {
+          console.log('Backfilling missing timeOfDay data...');
+          await AsyncStorage.setItem('@app_logs', JSON.stringify(updatedLogs));
+        }
+      } catch (e) {
+        console.error('Backfill error:', e);
+      }
+    };
+
+    runBackfill();
+  }, []); // Empty dependency array means this runs ONCE when the app opens
+  // --- BACKFILL LOGIC END ---
 
   return (
     <View style={[styles.mainScreenContainer, { paddingTop: insets.top }]}>

@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import TotalIncidents from '../insightComponents/TotalIncidents';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import EffectiveTools from '../insightComponents/EffectiveTools';
+import LeastEffectiveTools from '../insightComponents/LeastEffectiveTools';
 import Locations from '../insightComponents/Locations';
 import PolarAreaChart from '../insightComponents/PolarAreaChart';
 import PageHeader from '../components/PageHeader';
@@ -33,12 +34,16 @@ const InsightsScreen = () => {
       if (!storedData) return;
       const logs = JSON.parse(storedData);
 
-      // --- 1. TALLY STRATEGIES ---
+      // --- 1. TALLY STRATEGIES (Effective vs Not Effective) ---
       const strategyCounts = {};
+      const leastEffectiveCounts = {}; // New object for ineffective tools
+
       logs.forEach(log => {
         Object.entries(log.strategies || {}).forEach(([name, status]) => {
           if (status === 'Effective') {
             strategyCounts[name] = (strategyCounts[name] || 0) + 1;
+          } else if (status === 'Not effective') {
+            leastEffectiveCounts[name] = (leastEffectiveCounts[name] || 0) + 1;
           }
         });
       });
@@ -46,6 +51,11 @@ const InsightsScreen = () => {
       const topStrategies = Object.entries(strategyCounts)
         .map(([name, count]) => ({ name, count }))
         .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
+
+      const leastEffectiveStrategies = Object.entries(leastEffectiveCounts)
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => b.count - a.count) // Sorting high-to-low to see what fails most often
         .slice(0, 5);
 
       // --- 2. TALLY LOCATIONS ---
@@ -90,9 +100,8 @@ const InsightsScreen = () => {
         count,
       }));
 
-      // --- 4. HEATMAP LOGIC (NEW) ---
+      // --- 4. HEATMAP LOGIC ---
       const times = ['Morning', 'Afternoon', 'Evening', 'Night time'];
-      // Initialize a 7-day matrix (Sun-Sat)
       let heatMapMatrix = Array.from({ length: 7 }, (_, i) => ({
         dayIndex: i,
         slots: times.map(t => ({ time: t, count: 0 })),
@@ -100,7 +109,7 @@ const InsightsScreen = () => {
 
       logs.forEach(log => {
         const date = new Date(log.logDate);
-        const dayIndex = date.getDay(); // 0 is Sunday
+        const dayIndex = date.getDay();
         const timeLabel = log.timeOfDay;
 
         if (timeLabel) {
@@ -111,18 +120,18 @@ const InsightsScreen = () => {
         }
       });
 
-      // Find the highest number of incidents in any single slot to scale colors
       const maxCount = Math.max(
         ...heatMapMatrix.flatMap(d => d.slots.map(s => s.count)),
-        1, // Default to 1 to avoid division by zero
+        1,
       );
 
       // --- 5. UPDATE STATE (ONCE) ---
       setStats({
         topStrategies,
+        leastEffectiveStrategies, // Added this
         topLocations,
         topTags,
-        heatMapData: { matrix: heatMapMatrix, maxCount }, // Added this
+        heatMapData: { matrix: heatMapMatrix, maxCount },
         totalLogs: logs.length,
       });
     } catch (e) {
@@ -149,6 +158,11 @@ const InsightsScreen = () => {
 
         <EffectiveTools
           strategies={stats.topStrategies}
+          totalLogs={stats.totalLogs}
+        />
+
+        <LeastEffectiveTools
+          strategies={stats.leastEffectiveStrategies}
           totalLogs={stats.totalLogs}
         />
 
