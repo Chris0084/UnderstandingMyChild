@@ -2,7 +2,7 @@
   "expo": {
     "name": "UnderstandingMyChild",
     "slug": "UnderstandingMyChild",
-    "version": "1.22.0",
+    "version": "1.23.0",
     "orientation": "portrait",
     "icon": "./assets/appIcons/appIcon.png",
     "userInterfaceStyle": "light",
