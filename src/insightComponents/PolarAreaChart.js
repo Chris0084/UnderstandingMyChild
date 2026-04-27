@@ -58,7 +58,7 @@ const PolarAreaChart = ({ tags }) => {
   };
 
   return (
-    <InsightCard title="Tag Intensity Profile">
+    <InsightCard title="Observation Category Profile">
       <View style={styles.container}>
         <Svg width={size} height={size}>
           <Defs>

@@ -20,7 +20,14 @@ const imageMap = {
   communicationInfo: require('../../assets/infoCardPics/communicationInfo.png'),
   routineInfo: require('../../assets/infoCardPics/routineInfo.png'),
   sensoryInfo: require('../../assets/infoCardPics/sensoryInfo.png'),
-  emotionalRegulation: require('../../assets/infoCardPics/emotionalRegulation.png'),
+  regulationSupport: require('../../assets/infoCardPics/regulationSupport.png'),
+  communicationSupport: require('../../assets/infoCardPics/communicationSupport.png'),
+  sensorySupport: require('../../assets/infoCardPics/sensorySupport.png'),
+  socialInteractionSupport: require('../../assets/infoCardPics/socialInteractionSupport.png'),
+  environmentSupport: require('../../assets/infoCardPics/environmentSupport.png'),
+  maskingSupport: require('../../assets/infoCardPics/maskingSupport.png'),
+  structureSupport: require('../../assets/infoCardPics/structureSupport.png'),
+  noteParentsSupport: require('../../assets/infoCardPics/noteParentsSupport.png'),
 };
 
 const InformationScreen = () => {

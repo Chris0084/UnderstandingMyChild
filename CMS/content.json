@@ -8,8 +8,7 @@
       "category": "app",
       "buttonLabel": "What will this app do for me?",
       "modalTitle": "What will this app do for me?",
-      "para1": "This app helps you organise what you already see.",
-      "para2": "Clinicians don’t look for one behaviour or moment. They look for patterns over time across a small number of areas. These areas come from the DSM-5 criteria used in UK assessments. They help professionals understand how a child experiences the world. This app will help you understand the DSM –5 areas, identify what works for your child and gather examples easily for any assessments. By identifying patterns, we can start to understand what different behaviours are communicating. This understanding can help gather evidence for diagnosis, highlight support needs in school and decide on adjustments to help your child."
+      "para1": "This app will help you understand your child’s experiences by bringing their behaviours, incidents, successes, and everyday moments together in one organised place. It makes it easier to spot patterns, recognise what your child might need, and keep track of what’s working well—without relying on memory during busy SENCO or paediatric appointments. You can save photos, videos, and notes; tag what you think drove each moment; see which support tools were helpful; and export the examples you want to share. It’s designed to give you clarity, confidence, and useful information that supports your child in a way that feels respectful and grounded in who they are. "
     },
      {
       "id": "HowToUse",
@@ -25,24 +24,21 @@
       "category": "app",
       "buttonLabel": "Capture A Moment",
       "modalTitle": "How To Capture A Moment",
-      "para1": "TBC",
-      "para2": "TBC"
+      "para1": "This section helps you quickly record what you’ve noticed in a straightforward way. When something happens—whether it’s a challenge, a success, or anything you want to remember—you can use the form to log it with your voice, choose the date and time, note what you think may have driven the behaviour, and record which support tools were used. You can add photos or videos if they help, and use stars to mark entries you want to find easily later. It’s designed to keep everything clear, simple, and useful when you need it. "
     },
     {
       "id": "journal",
       "category": "app",
       "buttonLabel": "How To Use The Journal",
       "modalTitle": "How To Use The Journal",
-      "para1": "TBC",
-      "para2": "TBC"
+      "para1": "Your journal keeps everything in one place so you don’t have to search through messages, notes, or photos to find the examples you need. You can sort entries by date, filter by driver or media, or choose to view only your starred moments. Select view/edit to see more details, make changes, delete entries, or move smoothly between moments. It’s designed to help you quickly find the information that matters, without any stress."
     },
      {
       "id": "trends",
       "category": "app",
       "buttonLabel": "Trends",
       "modalTitle": "Viewing Trends",
-      "para1": "TBC",
-      "para2": "TBC"
+      "para1": "The more you record, the more the app can show you. Over time, you’ll start to see which times, days, or places your child might find more challenging, which support tools are helping, and what underlying drivers may need attention. These patterns can make it easier to understand what’s going on and decide what to try next."
     },
     {
       "id": "whatAreObservationCategories",
@@ -57,7 +53,8 @@
       "category": "tags",
       "buttonLabel": "Communication",
       "modalTitle": "Communication",
-      "para1": "How does your child communicate such as sharing interests, responding to others, and taking turns in conversation. This section also includes nonverbal communication, incorporating how eye contact, facial expression, tone of voice, and gestures are used and understood."
+      "para1": "How your child understands and expresses themselves.",
+      "para2": "Key examples you might capture: Difficulty asking for help or items, becoming frustrated when not understood, needing extra time to process instructions."
     },
     {
       "id": "ChangeRoutine",
@@ -65,7 +62,8 @@
       "category": "tags",
       "buttonLabel": "Change / Routine",
       "modalTitle": "Change / Routine",
-      "para1": "Repetitive movements or speech. Repeated actions, sounds, phrases, or patterns of play that may be calming or regulating. Strong preferences for routines, predictability, or familiar ways of doing things. Intense interests that may be unusual in intensity or take up a lot of time and attention. These patterns often help a child feel safe and organised."
+      "para1": "How routines and changes to expectations affect your child.",
+      "para2": "Key examples you might capture: Distress during transitions, difficulty with unexpected changes, needing predictability to feel comfortable."
     },
     {
       "id": "SocialInteraction",
@@ -73,14 +71,17 @@
       "category": "tags",
       "buttonLabel": "Social Interaction",
       "modalTitle": "Social Interaction",
-      "para1": "How a child develops, understands, and maintains relationships with peers and adults. Differences here don’t mean a lack of care or empathy — they reflect different ways of connecting. This area also covers interacting with the wider social world including interaction with strangers and groups."
+      "para1": "How your child experiences and engages with others.",
+      "para2": "Key examples you might capture: Preferring to play alone or alongside others, finding group situations overwhelming, difficulty joining in or sharing attention."
     },
     {
       "id": "EmotionalRegulation",
       "category": "tags",
       "buttonLabel": "Emotional Regulation",
       "modalTitle": "Emotional Regulation",
-      "para1": "This area allows you to capture when you child has either struggled to regulate or has coped well with a situation. Capturing meltdowns and avoided-meltdowns can be a powerful tool in understanding how to help you child."
+      "para1": "How your child experiences and manages their emotions.",
+      "para2": "Key examples you might capture: Big emotional responses, becoming overwhelmed, needing time or support to feel calm again."
+
     },
     {
       "id": "SensoryInput",
@@ -88,19 +89,22 @@
       "category": "tags",
       "buttonLabel": "Sensory Input",
       "modalTitle": "Sensory Input",
-      "para1": "Being more or less sensitive to sounds, lights, textures, movement, pain, temperature, or other sensory input. Sensory needs can change depending on stress, tiredness, or environment. Difficulty with toileting or other internal sensory processing."
+      "para1": "How your child experiences and responds to sensory input.",
+      "para2": "Key examples you might capture: Sensitivity to noise, light, or textures, avoiding certain sensations, or actively seeking movement or sensory input."
     },
     {
       "id": "ExecutiveFunctioning",
       "category": "tags",
-         "imageKey": "execFunction",
+      "imageKey": "execFunction",
       "buttonLabel": "Executive Functioning",
       "modalTitle": "Executive Functioning ",
-      "para1": "This area is about the thinking skills that help us plan, decide what to do, and follow things through including working memory, response inhibition (keeping things in), task initiation, sustained attention, planning and time management."
+      "para1": "The skills used to plan, organise, and manage tasks.",
+      "para2": "Key examples you might capture: Difficulty starting or finishing tasks, needing reminders, becoming stuck with multi-step activities."
     },
     {
       "id": "noteForParents",
       "category": "supports",
+      "imageKey": "noteParentsSupport",
       "buttonLabel": "A Note For Parents",
       "modalTitle": "A Note For Parents",
       "para1": "If sensory supports are new to you, it’s okay to start small and be curious. There’s no “right” way to use these tools — some people may love them, others may not, and preferences can change over time. A good first step is observing how your child already interacts with their environment and their behaviour. Before investing you can potentially visit spaces with supports such as play spaces or local charities to see if they would benefit your child."
@@ -108,6 +112,7 @@
     {
       "id": "sensorySupports",
       "category": "supports",
+      "imageKey": "sensorySupport",
       "buttonLabel": "Sensory Supports",
       "modalTitle": "Sensory Supports",
       "para1": "Sensory supports can help people feel comfortable, calm, and able to engage in daily life. They respect different sensory needs and preferences rather than trying to change who a child is.",
@@ -116,6 +121,7 @@
      {
       "id": "structureSupports",
       "category": "supports",
+      "imageKey": "structureSupport",
       "buttonLabel": "Structure & Predictability Supports",
       "modalTitle": "Structure & Predictability Supports",
       "para1": "TBC",
@@ -124,6 +130,7 @@
       {
       "id": "communicationSupports",
       "category": "supports",
+      "imageKey": "communicationSupport",
       "buttonLabel": "Communication Supports",
       "modalTitle": "Communication Supports",
       "para1": "Communication supports help people express themselves, understand others, and take part in everyday interactions in ways that work for them. They recognise that communication can take many forms — not just spoken words — and support autonomy, dignity, and connection.",
@@ -132,6 +139,7 @@
      {
       "id": "socialInteractionSupports",
       "category": "supports",
+       "imageKey": "socialInteractionSupport",
       "buttonLabel": "Social Interaction Supports",
       "modalTitle": "Social Interaction Supports",
       "para1": "TBC",
@@ -139,7 +147,7 @@
     },
      {
       "id": "emotionalRegulationSupports",
- "imageKey": "emotionalRegulation",
+      "imageKey": "regulationSupport",
       "category": "supports",
       "buttonLabel": "Emotional Regulation Supports",
       "modalTitle": "Emotional Regulation Supports",
@@ -149,6 +157,7 @@
       {
       "id": "environmentAdjustments",
       "category": "supports",
+      "imageKey": "environmentSupport",
       "buttonLabel": "Environment Adjustments",
       "modalTitle": "Environment Adjustments",
       "para1": "TBC",
@@ -165,6 +174,7 @@
          {
       "id": "maskingEnergyManagementSupports",
       "category": "supports",
+      "imageKey": "maskingSupport",
       "buttonLabel": "Masking & Energy Management Supports",
       "modalTitle": "Masking & Energy Management Supports",
       "para1": "TBC",

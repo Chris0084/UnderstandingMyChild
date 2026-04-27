@@ -271,146 +271,186 @@ const InputFormScreen = ({ route, navigation }) => {
     'Sleep',
   ];
 
-  const renderReportView = () => (
-    <View style={styles.reportCard}>
-      <View style={styles.navRow}>
-        {/* PREV (Moves to an OLDER log) */}
-        <TouchableOpacity
-          onPress={() => navigateLogs(+1)} // +1 moves further down the list to older dates
-          style={styles.navButton}>
-          <Ionicons name="chevron-back" size={24} color="#2196F3" />
-          <Text style={styles.navText}>Prev</Text>
-        </TouchableOpacity>
+  const renderReportView = () => {
+    // Helper for the icons and colors based on timeOfDay
+    const getTimeStyles = time => {
+      switch (time) {
+        case 'Morning':
+          return { icon: 'sunny-outline', color: '#FFB300' };
+        case 'Afternoon':
+          return { icon: 'partly-sunny-outline', color: '#FB8C00' };
+        case 'Evening':
+          return { icon: 'moon-outline', color: '#5C6BC0' };
+        case 'Night time':
+          return { icon: 'cloudy-night-outline', color: '#283593' };
+        default:
+          return { icon: 'time-outline', color: '#999' };
+      }
+    };
 
-        <Text style={styles.logCounter}>
-          {/* {allLogs.findIndex(l => l.id === route.params?.existingEntry?.id) +
-            allLogs.length}{' '}
-          of {allLogs.length} */}
-          {allLogs.length -
-            allLogs.findIndex(
-              l => l.id === route.params?.existingEntry?.id,
-            )}{' '}
-          of {allLogs.length}
-        </Text>
+    const timeStyles = getTimeStyles(timeOfDay);
 
-        {/* NEXT (Moves to a NEWER log) */}
-        <TouchableOpacity
-          onPress={() => navigateLogs(-1)} // -1 moves up the list toward index 0 (today)
-          style={styles.navButton}>
-          <Text style={styles.navText}>Next</Text>
-          <Ionicons name="chevron-forward" size={24} color="#2196F3" />
-        </TouchableOpacity>
-      </View>
+    return (
+      <View style={styles.reportCard}>
+        {/* 1. NAVIGATION ROW */}
+        <View style={styles.navRow}>
+          <TouchableOpacity
+            onPress={() => navigateLogs(+1)}
+            style={styles.navButton}>
+            <Ionicons name="chevron-back" size={24} color="#2196F3" />
+            <Text style={styles.navText}>Prev</Text>
+          </TouchableOpacity>
 
-      <View style={styles.reportHeader}>
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}>
-          <Text style={styles.reportDate}>{logDate.toDateString()}</Text>
-          <Text
-            style={[
-              styles.reportLabel,
-              { marginTop: 5, color: Colors.primary },
-            ]}>
-            {timeOfDay} {/* Add this variable so it shows up in the report! */}
+          <Text style={styles.logCounter}>
+            {allLogs.length -
+              allLogs.findIndex(
+                l => l.id === route.params?.existingEntry?.id,
+              )}{' '}
+            of {allLogs.length}
           </Text>
-          <Text
-            style={[
-              styles.reportLabel,
-              { marginTop: 5, color: Colors.primary },
-            ]}></Text>
-          {/* ACTION BUTTONS (Fav and Delete) */}
-          <View style={{ flexDirection: 'row' }}>
-            <TouchableOpacity
-              onPress={handleToggleFavorite}
-              style={{ marginRight: 25 }}>
-              <Ionicons
-                name={isFavorite ? 'star' : 'star-outline'}
-                size={30}
-                color={isFavorite ? '#f80909' : '#999'}
-              />
-            </TouchableOpacity>
 
-            <TouchableOpacity onPress={handleDeleteLog}>
-              <Ionicons name="trash-outline" size={30} color="#F44336" />
-            </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => navigateLogs(-1)}
+            style={styles.navButton}>
+            <Text style={styles.navText}>Next</Text>
+            <Ionicons name="chevron-forward" size={24} color="#2196F3" />
+          </TouchableOpacity>
+        </View>
+
+        {/* 2. HEADER SECTION (Stacked Date/Time + Buttons) */}
+        <View style={styles.reportHeader}>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+            }}>
+            {/* LEFT CONTAINER: Forces Date & Time to stay together and stack */}
+            <View style={{ flexDirection: 'column', flex: 1 }}>
+              <Text style={styles.reportDate}>{logDate.toDateString()}</Text>
+
+              {/* Time of Day Row - Sitting directly under the Date */}
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  marginTop: 4,
+                }}>
+                <Ionicons
+                  name={timeStyles.icon}
+                  size={18}
+                  color={timeStyles.color}
+                  style={{ marginRight: 6 }}
+                />
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontWeight: '600',
+                    color: timeStyles.color,
+                  }}>
+                  {timeOfDay}
+                </Text>
+              </View>
+            </View>
+
+            {/* RIGHT CONTAINER: Favorite and Trash buttons */}
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <TouchableOpacity
+                onPress={handleToggleFavorite}
+                style={{ marginRight: 20 }}>
+                <Ionicons
+                  name={isFavorite ? 'star' : 'star-outline'}
+                  size={30}
+                  color={isFavorite ? '#f80909' : '#999'}
+                />
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={handleDeleteLog}>
+                <Ionicons name="trash-outline" size={30} color="#F44336" />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* 3. TAGS ROW */}
+          <View style={styles.tagRow}>
+            {selectedTags.length > 0 ? (
+              selectedTags.map(tag => (
+                <View key={tag} style={styles.reportTag}>
+                  <Text style={styles.reportTagText}>{tag.toUpperCase()}</Text>
+                </View>
+              ))
+            ) : (
+              <Text style={styles.placeholderText}>No tags selected</Text>
+            )}
           </View>
         </View>
 
-        <View style={styles.tagRow}>
-          {selectedTags.length > 0 ? (
-            selectedTags.map(tag => (
-              <View key={tag} style={styles.reportTag}>
-                <Text style={styles.reportTagText}>{tag.toUpperCase()}</Text>
-              </View>
-            ))
-          ) : (
-            <Text style={styles.placeholderText}>No tags selected</Text>
-          )}
+        {/* 4. CONTENT SECTIONS */}
+        <View style={styles.reportSection}>
+          <Text style={styles.reportLabel}>LOCATION</Text>
+          <Text style={styles.reportValue}>{where || 'Not recorded'}</Text>
         </View>
-      </View>
 
-      <View style={styles.reportSection}>
-        <Text style={styles.reportLabel}>LOCATION</Text>
-        <Text style={styles.reportValue}>{where || 'Not recorded'}</Text>
-      </View>
-      <View style={styles.reportSection}>
-        <Text style={styles.reportLabel}>DETAILS</Text>
-        <Text style={styles.reportSubLabel}>Lead Up:</Text>
-        <Text style={styles.reportValue}>{leadUp || 'No details'}</Text>
-        <Text style={[styles.reportSubLabel, { marginTop: 10 }]}>
-          What Happened:
-        </Text>
-        <Text style={styles.reportValue}>{whatHappened || 'No details'}</Text>
-        <Text style={[styles.reportSubLabel, { marginTop: 10 }]}>
-          Recovery/After:
-        </Text>
-        <Text style={styles.reportValue}>{after || 'No details'}</Text>
+        <View style={styles.reportSection}>
+          <Text style={styles.reportLabel}>DETAILS</Text>
+          <Text style={styles.reportSubLabel}>Lead Up:</Text>
+          <Text style={styles.reportValue}>{leadUp || 'No details'}</Text>
+          <Text style={[styles.reportSubLabel, { marginTop: 10 }]}>
+            What Happened:
+          </Text>
+          <Text style={styles.reportValue}>{whatHappened || 'No details'}</Text>
+          <Text style={[styles.reportSubLabel, { marginTop: 10 }]}>
+            Recovery/After:
+          </Text>
+          <Text style={styles.reportValue}>{after || 'No details'}</Text>
+        </View>
+
         {mediaUri && (
           <View style={styles.reportSection}>
             <Text style={styles.reportLabel}>ATTACHED MEDIA</Text>
             <MediaSelector mediaUri={mediaUri} editable={false} />
           </View>
         )}
-      </View>
 
-      <View
-        style={[
-          styles.reportSection,
-          { borderTopWidth: 1, borderTopColor: '#eee', paddingTop: 15 },
-        ]}>
-        <Text style={styles.reportLabel}>SUPPORT STRATEGIES USED</Text>
-        {Object.values(strategies).every(v => v === 'Not used') ? (
-          <Text style={styles.placeholderText}>No strategies were used.</Text>
-        ) : (
-          Object.entries(strategies).map(([name, value]) => {
-            if (value !== 'Not used') {
-              return (
-                <View key={name} style={styles.reportStrategyRow}>
-                  <Ionicons
-                    name={
-                      value.includes('Effective')
-                        ? 'checkmark-circle'
-                        : 'close-circle'
-                    }
-                    size={18}
-                    color={value.includes('Effective') ? '#4CAF50' : '#F44336'}
-                  />
-                  <Text style={styles.reportValue}>
-                    <Text style={{ fontWeight: 'bold' }}> {name}:</Text> {value}
-                  </Text>
-                </View>
-              );
-            }
-            return null;
-          })
-        )}
+        {/* 5. STRATEGIES SECTION */}
+        <View
+          style={[
+            styles.reportSection,
+            { borderTopWidth: 1, borderTopColor: '#eee', paddingTop: 15 },
+          ]}>
+          <Text style={styles.reportLabel}>SUPPORT STRATEGIES USED</Text>
+          {Object.values(strategies).every(v => v === 'Not used') ? (
+            <Text style={styles.placeholderText}>No strategies were used.</Text>
+          ) : (
+            Object.entries(strategies).map(([name, value]) => {
+              if (value !== 'Not used') {
+                return (
+                  <View key={name} style={styles.reportStrategyRow}>
+                    <Ionicons
+                      name={
+                        value.includes('Effective')
+                          ? 'checkmark-circle'
+                          : 'close-circle'
+                      }
+                      size={18}
+                      color={
+                        value.includes('Effective') ? '#4CAF50' : '#F44336'
+                      }
+                    />
+                    <Text style={styles.reportValue}>
+                      <Text style={{ fontWeight: 'bold' }}> {name}:</Text>{' '}
+                      {value}
+                    </Text>
+                  </View>
+                );
+              }
+              return null;
+            })
+          )}
+        </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   const renderFormView = () => (
     <>

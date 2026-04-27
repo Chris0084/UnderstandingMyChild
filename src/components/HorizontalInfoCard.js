@@ -33,12 +33,12 @@ const HorizontalInfoCard = ({ title, body, label, imageSource }) => {
               <Ionicons
                 name="information-circle-outline"
                 size={24}
-                color="#2196F3"
+                color="#85b285"
               />
             </View>
           )}
         </View>
-        <Text style={styles.cardLabel} numberOfLines={2}>
+        <Text style={styles.cardLabel} numberOfLines={3}>
           {label}
         </Text>
       </TouchableOpacity>
@@ -57,7 +57,7 @@ const HorizontalInfoCard = ({ title, body, label, imageSource }) => {
             <CustomButton
               label="Close"
               onPress={() => setModalVisible(false)}
-              color="#2196F3"
+              color="#85b285"
             />
           </View>
         </View>
@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     width: '100%',
-    height: '65%', // Image takes up the top portion
+    height: '55%', // Image takes up the top portion
     backgroundColor: Colors.info_card_background,
     justifyContent: 'center',
     alignItems: 'center',
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     marginBottom: 15,
-    color: '#2196F3',
+    color: '#85b285',
   },
   modalBodyScroll: {
     marginBottom: 20,
