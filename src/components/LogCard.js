@@ -33,7 +33,12 @@ const LogCard = ({ entry, isAlternate }) => {
     <View
       style={[
         styles.card,
-        { backgroundColor: isAlternate ? '#FFFFFF' : '#eaf7fa' }, // White vs a very light sage/cream
+        { backgroundColor: isAlternate ? '#FFFFFF' : '#eaf7fa' },
+        // Add this line to highlight the left edge of favorite cards
+        entry.isFavorite && {
+          borderLeftWidth: 5,
+          borderLeftColor: Colors.starred_theme,
+        },
       ]}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
@@ -43,6 +48,14 @@ const LogCard = ({ entry, isAlternate }) => {
               alignItems: 'center',
               marginBottom: 2,
             }}>
+            {entry.isFavorite && (
+              <Ionicons
+                name="star"
+                size={14}
+                color={Colors.starred_theme} // Using a bright red/orange to match your favorite color
+                style={{ marginRight: 6 }}
+              />
+            )}
             <Text style={styles.headerText}>{formattedDate}</Text>
 
             {entry.timeOfDay && (
@@ -66,34 +79,16 @@ const LogCard = ({ entry, isAlternate }) => {
 
         {/* --- MEDIA INDICATOR --- */}
         {entry.mediaUri && (
-          <View
-            style={[
-              styles.mediaBadge,
-              // Subtly change background color if it's a video vs photo
-              {
-                backgroundColor:
-                  entry.mediaUri.toLowerCase().endsWith('.mp4') ||
-                  entry.mediaUri.toLowerCase().endsWith('.mov')
-                    ? '#E8F5E9'
-                    : '#FFF3E0',
-              },
-            ]}>
-            {entry.mediaUri.toLowerCase().endsWith('.mp4') ||
-            entry.mediaUri.toLowerCase().endsWith('.mov') ? (
-              <>
-                <Ionicons name="play-circle" size={14} color="#4CAF50" />
-                <Text style={[styles.mediaText, { color: '#4CAF50' }]}>
-                  VIDEO
-                </Text>
-              </>
-            ) : (
-              <>
-                <Ionicons name="image" size={14} color="#FF9800" />
-                <Text style={[styles.mediaText, { color: '#FF9800' }]}>
-                  PHOTO
-                </Text>
-              </>
-            )}
+          <View style={styles.mediaBadge}>
+            <Ionicons
+              name={
+                entry.mediaUri.toLowerCase().match(/\.(mp4|mov|m4v)$/)
+                  ? 'videocam'
+                  : 'camera'
+              }
+              size={16}
+              color="#666"
+            />
           </View>
         )}
       </View>
@@ -192,10 +187,10 @@ const styles = StyleSheet.create({
   mediaBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E8F5E9', // Light green background
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 20, // Full rounded pill
+    backgroundColor: 'rgba(0,0,0,0.05)', // Super subtle gray
   },
   mediaText: {
     fontSize: 9,

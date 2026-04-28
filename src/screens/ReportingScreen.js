@@ -345,7 +345,7 @@ const ReportingScreen = ({ navigation }) => {
             <Ionicons
               name={showFavoritesOnly ? 'star' : 'star-outline'}
               size={22}
-              color={showFavoritesOnly ? '#f80909' : '#555'}
+              color={showFavoritesOnly ? Colors.starred_theme : '#555'}
             />
           </TouchableOpacity>
           <SortButton

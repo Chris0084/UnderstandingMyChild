@@ -388,7 +388,7 @@ const InputFormScreen = ({ route, navigation }) => {
                 <Ionicons
                   name={isFavorite ? 'star' : 'star-outline'}
                   size={30}
-                  color={isFavorite ? '#f80909' : '#999'}
+                  color={isFavorite ? Colors.starred_theme : '#999'}
                 />
               </TouchableOpacity>
 

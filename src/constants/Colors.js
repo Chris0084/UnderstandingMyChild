@@ -49,6 +49,7 @@ export const Colors = {
   log_theme: '#F7D9C4',
   journal_theme: '#F2C6DE',
   trend_theme: '#d3c7ab',
+  starred_theme: '#e45555',
 
   sage: '#DDEEDC', // Background
   darkSage: '#7c857c', // Background

@@ -3,19 +3,30 @@ import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import InsightCard from './InsightCard';
 
 const { width } = Dimensions.get('window');
-const COLUMN_WIDTH = (width - 60) / 8; // Accounts for labels and padding
+const COLUMN_WIDTH = (width - 66) / 8; // Accounts for labels and padding
 
 const HeatMap = ({ data }) => {
   if (!data) return null;
 
   const times = ['Morning', 'Afternoon', 'Evening', 'Night time'];
-  const dayLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  const dayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
   // Helper to determine color intensity
   const getCellColor = count => {
-    if (count === 0) return '#F5F5F5';
-    const opacity = Math.min(count / data.maxCount, 1);
-    return `rgba(255, 82, 82, ${0.2 + opacity * 0.8})`; // Red intensity
+    if (count === 0) return '#F5F5F5'; // Empty state
+
+    const weight = count / data.maxCount;
+
+    if (weight < 0.33) {
+      // Low intensity: Yellow
+      return `rgba(255, 214, 0, ${0.4 + weight})`;
+    } else if (weight < 0.66) {
+      // Medium intensity: Orange
+      return `rgba(255, 145, 0, ${0.5 + weight})`;
+    } else {
+      // High intensity: Red
+      return `rgba(255, 23, 68, ${0.6 + weight})`;
+    }
   };
 
   return (
@@ -106,7 +117,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  cellText: { fontSize: 10, fontWeight: 'bold', color: '#fff' },
+  cellText: { fontSize: 10, fontWeight: 'bold', color: '#000000' },
 });
 
 export default HeatMap;

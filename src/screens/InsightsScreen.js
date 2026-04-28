@@ -101,25 +101,32 @@ const InsightsScreen = () => {
       }));
 
       // --- 4. HEATMAP LOGIC ---
+      // --- 4. HEATMAP LOGIC (Monday to Sunday) ---
       const times = ['Morning', 'Afternoon', 'Evening', 'Night time'];
+
+      // Initialize the matrix
       let heatMapMatrix = Array.from({ length: 7 }, (_, i) => ({
-        dayIndex: i,
+        dayIndex: i, // 0 will now represent Monday
         slots: times.map(t => ({ time: t, count: 0 })),
       }));
 
       logs.forEach(log => {
         const date = new Date(log.logDate);
-        const dayIndex = date.getDay();
+        const rawDay = date.getDay(); // Sun=0, Mon=1, Tue=2...
+
+        // SHIFT LOGIC:
+        // Convert Sun(0) to 6, and Mon(1) to 0, Tue(2) to 1, etc.
+        const mondayFirstIndex = rawDay === 0 ? 6 : rawDay - 1;
+
         const timeLabel = log.timeOfDay;
 
         if (timeLabel) {
           const timeIndex = times.indexOf(timeLabel);
           if (timeIndex !== -1) {
-            heatMapMatrix[dayIndex].slots[timeIndex].count += 1;
+            heatMapMatrix[mondayFirstIndex].slots[timeIndex].count += 1;
           }
         }
       });
-
       const maxCount = Math.max(
         ...heatMapMatrix.flatMap(d => d.slots.map(s => s.count)),
         1,
