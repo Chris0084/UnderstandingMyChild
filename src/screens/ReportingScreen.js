@@ -169,15 +169,13 @@ const ReportingScreen = ({ navigation }) => {
   };
 
   const exportFavoritesToPDF = async () => {
-    console.log('QQQ');
     // 1. Filter only the favorites from your master list
     const favorites = allLogs.filter(log => log.isFavorite);
-    console.log('DEBUG FAVORITES:', JSON.stringify(favorites[0], null, 2));
 
     if (favorites.length === 0) {
       Alert.alert(
-        'No Favorites',
-        'Please mark some entries as favorites first.',
+        'No Starred Logs',
+        'Please mark some entries as starred first.',
       );
       return;
     }
@@ -229,7 +227,7 @@ const ReportingScreen = ({ navigation }) => {
         </style>
       </head>
       <body>
-        <h1>Favorite Observations</h1>
+        <h1>Starred Observations</h1>
       ${favorites
         .map(log => {
           // 1. Date Handling
@@ -367,7 +365,9 @@ const ReportingScreen = ({ navigation }) => {
             onPress={exportFavoritesToPDF}
             style={styles.exportLabelButton}>
             <Ionicons name="share-outline" size={18} color="#007AFF" />
-            <Text style={styles.exportLabelText}>Export/Share Favorites</Text>
+            <Text style={styles.exportLabelText}>
+              Export/Share Starred Logs
+            </Text>
           </TouchableOpacity>
         </View>
       </View>

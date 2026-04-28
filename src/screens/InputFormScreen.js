@@ -23,7 +23,7 @@ import Colors from '../constants/Colors.js';
 import PageHeader from '../components/PageHeader.js';
 import SplitButton from '../components/SplitButton.js';
 import TimeOfDaySelector from '../components/TimeOfDaySelector.js';
-import DiagonalSplitButton from '../components/DiagonalSplitButton.js';
+import * as FileSystem from 'expo-file-system/legacy';
 
 const getTimeOfDay = () => {
   const hour = new Date().getHours();
@@ -209,6 +209,32 @@ const InputFormScreen = ({ route, navigation }) => {
     }
   };
 
+  const saveMediaPermanently = async tempUri => {
+    if (!tempUri) return null;
+
+    try {
+      // 1. Get the extension from the tempUri (e.g., 'mp4' or 'jpg')
+      const extension = tempUri.split('.').pop();
+      const filename = `journal_${Date.now()}.${extension}`;
+      const permanentUri = FileSystem.documentDirectory + filename;
+
+      // 2. Standard check to see if already saved
+      if (tempUri.includes(FileSystem.documentDirectory)) {
+        return tempUri;
+      }
+
+      await FileSystem.copyAsync({
+        from: tempUri,
+        to: permanentUri,
+      });
+
+      return permanentUri;
+    } catch (error) {
+      console.error('Error saving media:', error);
+      return tempUri;
+    }
+  };
+
   const handleSaveEntry = async () => {
     if (!where.trim()) {
       Alert.alert('Missing Info', "Please fill in the 'WHERE' field.");
@@ -216,6 +242,7 @@ const InputFormScreen = ({ route, navigation }) => {
     }
 
     try {
+      const permanentMediaUri = await saveMediaPermanently(mediaUri);
       const newEntry = {
         id: currentEntryParam ? currentEntryParam.id : Date.now().toString(),
         where,
@@ -225,7 +252,7 @@ const InputFormScreen = ({ route, navigation }) => {
         logDate: logDate.toISOString(),
         timeOfDay,
         tags: selectedTags,
-        mediaUri,
+        mediaUri: permanentMediaUri,
         strategies,
         isFavorite: currentEntryParam ? isFavorite : false, // Save favorite status
       };

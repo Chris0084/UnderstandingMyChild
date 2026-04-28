@@ -15,11 +15,16 @@ import { Ionicons } from '@expo/vector-icons';
 const { width, height } = Dimensions.get('window');
 
 const MediaSelector = ({ label, mediaUri, onMediaSelected, editable }) => {
-  const [fullscreen, setFullscreen] = useState(false); // Controls the popup
+  const [fullscreen, setFullscreen] = useState(false);
+
+  // Helper to check if the file is a video
+  const isVideo =
+    mediaUri?.toLowerCase().endsWith('.mp4') ||
+    mediaUri?.toLowerCase().endsWith('.mov') ||
+    mediaUri?.toLowerCase().endsWith('.m4v');
 
   const pickMedia = async () => {
     if (!editable) return;
-
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       alert('Permission needed to access your gallery.');
@@ -27,9 +32,9 @@ const MediaSelector = ({ label, mediaUri, onMediaSelected, editable }) => {
     }
 
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images', 'videos'],
+      mediaTypes: ['images', 'videos'], // Allows both
       allowsEditing: false,
-      quality: 0.7, // Slightly lower quality saves storage space
+      quality: 0.7,
     });
 
     if (!result.canceled) {
@@ -37,16 +42,11 @@ const MediaSelector = ({ label, mediaUri, onMediaSelected, editable }) => {
     }
   };
 
-  const removeMedia = () => {
-    onMediaSelected(null);
-  };
-
-  // Logic for what happens when the thumbnail is tapped
   const handlePress = () => {
     if (editable) {
-      pickMedia(); // If editing, tap to change
+      pickMedia();
     } else if (mediaUri) {
-      setFullscreen(true); // If viewing, tap to zoom
+      setFullscreen(true);
     }
   };
 
@@ -57,16 +57,33 @@ const MediaSelector = ({ label, mediaUri, onMediaSelected, editable }) => {
       <View style={[styles.card, !editable && styles.disabledCard]}>
         {mediaUri ? (
           <View style={styles.mediaWrapper}>
-            {/* Wrap the thumbnail so it triggers handlePress */}
-            <TouchableOpacity onPress={handlePress}>
-              <Image source={{ uri: mediaUri }} style={styles.thumbnail} />
+            {/* THUMBNAIL SECTION */}
+            <TouchableOpacity
+              onPress={handlePress}
+              style={styles.thumbnailContainer}>
+              {isVideo ? (
+                <View>
+                  <Video
+                    source={{ uri: mediaUri }}
+                    style={styles.thumbnail}
+                    resizeMode={ResizeMode.COVER}
+                    shouldPlay={false}
+                    positionMillis={500} // Shows a frame from 0.5s in
+                  />
+                  {/* Overlay play icon so user knows it's a video */}
+                  <View style={styles.playIconOverlay}>
+                    <Ionicons name="play" size={16} color="white" />
+                  </View>
+                </View>
+              ) : (
+                <Image source={{ uri: mediaUri }} style={styles.thumbnail} />
+              )}
             </TouchableOpacity>
 
             <View style={styles.infoArea}>
-              {/* Wrap the text area as well so it's a bigger touch target */}
               <TouchableOpacity onPress={handlePress}>
                 <Text style={styles.filename} numberOfLines={1}>
-                  Attachment added
+                  {isVideo ? 'Video Attachment' : 'Image Attachment'}
                 </Text>
                 {!editable && (
                   <Text style={{ fontSize: 11, color: '#007AFF' }}>
@@ -83,7 +100,7 @@ const MediaSelector = ({ label, mediaUri, onMediaSelected, editable }) => {
                     <Text style={styles.buttonText}>Change</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    onPress={removeMedia}
+                    onPress={() => onMediaSelected(null)}
                     style={styles.deleteButton}>
                     <Ionicons name="trash-outline" size={16} color="#f44336" />
                   </TouchableOpacity>
@@ -111,7 +128,8 @@ const MediaSelector = ({ label, mediaUri, onMediaSelected, editable }) => {
           </TouchableOpacity>
         )}
       </View>
-      {/* --- FULLSCREEN VIEW MODAL --- */}
+
+      {/* FULLSCREEN MODAL */}
       <Modal visible={fullscreen} transparent={true} animationType="fade">
         <View style={styles.fullScreenOverlay}>
           <TouchableOpacity
@@ -119,17 +137,14 @@ const MediaSelector = ({ label, mediaUri, onMediaSelected, editable }) => {
             onPress={() => setFullscreen(false)}>
             <Ionicons name="close-circle" size={40} color="white" />
           </TouchableOpacity>
-          {/* Check if the URI is a video or an image */}
-          {mediaUri?.toLowerCase().endsWith('.mp4') ||
-          mediaUri?.toLowerCase().endsWith('.mov') ||
-          mediaUri?.toLowerCase().endsWith('.m4v') ? (
+
+          {isVideo ? (
             <Video
               source={{ uri: mediaUri }}
               style={styles.fullImage}
-              useNativeControls // Shows Play/Pause/Slider
+              useNativeControls
               resizeMode={ResizeMode.CONTAIN}
-              isLooping={false}
-              shouldPlay={true} // Autoplay when opened
+              shouldPlay={true}
             />
           ) : (
             <Image
@@ -163,20 +178,28 @@ const styles = StyleSheet.create({
     padding: 10,
     minHeight: 60,
     justifyContent: 'center',
-    // Shadow for that "card" look
     elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
   },
   disabledCard: { backgroundColor: '#F5F5F5', borderColor: '#EEE' },
   mediaWrapper: { flexDirection: 'row', alignItems: 'center' },
+  thumbnailContainer: {
+    position: 'relative',
+    width: 60,
+    height: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   thumbnail: {
     width: 60,
     height: 60,
     borderRadius: 8,
     backgroundColor: '#eee',
+  },
+  playIconOverlay: {
+    position: 'absolute',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 12,
+    padding: 4,
   },
   infoArea: { flex: 1, marginLeft: 15, justifyContent: 'center' },
   filename: { fontSize: 14, fontWeight: '500', color: '#333', marginBottom: 5 },
@@ -209,16 +232,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  fullImage: {
-    width: width,
-    height: height * 0.8,
-  },
-  closeFull: {
-    position: 'absolute',
-    top: 50,
-    right: 20,
-    zIndex: 10,
-  },
+  fullImage: { width: width, height: height * 0.8 },
+  closeFull: { position: 'absolute', top: 50, right: 20, zIndex: 10 },
 });
 
 export default MediaSelector;
