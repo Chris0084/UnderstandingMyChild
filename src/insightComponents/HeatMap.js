@@ -13,20 +13,20 @@ const HeatMap = ({ data }) => {
 
   // Helper to determine color intensity
   const getCellColor = count => {
-    if (count === 0) return '#F5F5F5'; // Empty state
+    if (count === 0) return '#F5F5F5'; // Empty/Default state
 
-    const weight = count / data.maxCount;
+    // 1. Determine where this count sits on a scale of 0 to 1
+    const intensity = count / data.maxCount;
 
-    if (weight < 0.33) {
-      // Low intensity: Yellow
-      return `rgba(255, 214, 0, ${0.4 + weight})`;
-    } else if (weight < 0.66) {
-      // Medium intensity: Orange
-      return `rgba(255, 145, 0, ${0.5 + weight})`;
-    } else {
-      // High intensity: Red
-      return `rgba(255, 23, 68, ${0.6 + weight})`;
-    }
+    // 2. Map intensity to Hue (60 is Yellow, 0 is Red)
+    // As intensity increases, hue decreases toward Red
+    const hue = 60 - intensity * 60;
+
+    // 3. Map intensity to Lightness (Optional but makes it look better)
+    // This makes low counts a bit lighter/softer and high counts deep and rich
+    const lightness = 80 - intensity * 30;
+
+    return `hsl(${hue}, 100%, ${lightness}%)`;
   };
 
   return (

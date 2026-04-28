@@ -126,7 +126,7 @@ const PolarAreaChart = ({ tags }) => {
                       x={tx}
                       y={ty}
                       fill="black" // Changed to black as requested
-                      fontSize="12"
+                      fontSize="14"
                       fontWeight="bold"
                       textAnchor="middle"
                       alignmentBaseline="middle">
