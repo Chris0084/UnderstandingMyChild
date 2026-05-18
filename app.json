@@ -2,7 +2,7 @@
   "expo": {
     "name": "UnderstandingMyChild",
     "slug": "UnderstandingMyChild",
-    "version": "1.26.0",
+    "version": "1.27.0",
     "orientation": "portrait",
     "icon": "./assets/appIcons/appIcon.png",
     "userInterfaceStyle": "light",
@@ -13,6 +13,7 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
+      "bundleIdentifier": "com.jstarapps.UnderstandingMyChild",
       "supportsTablet": true
     },
       "android": {
