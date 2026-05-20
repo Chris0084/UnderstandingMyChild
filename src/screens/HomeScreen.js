@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'; // 1. REMOVE useEffect when strippng the day populate
+import React, { useEffect } from 'react';
 import { StyleSheet, View, Text, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import NavCard from '../components/NavCard';

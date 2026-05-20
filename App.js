@@ -1,11 +1,13 @@
+import React, { useEffect } from 'react';
 import { registerRootComponent } from 'expo';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Purchases, { LOG_LEVEL } from 'react-native-purchases';
 
 import HomeScreen from './src/screens/HomeScreen';
 import InputFormScreen from './src/screens/InputFormScreen';
@@ -13,6 +15,8 @@ import ReportingScreen from './src/screens/ReportingScreen';
 import InformationScreen from './src/screens/InformationScreen';
 import InsightsScreen from './src/screens/InsightsScreen';
 
+const REVENUECAT_API_KEY_ANDROID = 'goog_IWwoiEXBtmlKnyOAttqtyASFHeP';
+const REVENUECAT_API_KEY_IOS = 'appl_ZPpTExksxWvIRwWfNBToxzoSvFo';
 // Initialize both navigators
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -94,6 +98,39 @@ function MainTabs() {
  * Navigation Containers or Theme Providers.
  */
 export default function App() {
+  useEffect(() => {
+    const initializePurchases = async () => {
+      try {
+        Purchases.setLogLevel(Purchases.LOG_LEVEL.DEBUG); // Helps track the 7-day sandbox trials in logs
+
+        if (Platform.OS === 'ios') {
+          await Purchases.configure({ apiKey: REVENUECAT_API_KEY_IOS });
+        } else if (Platform.OS === 'android') {
+          await Purchases.configure({ apiKey: REVENUECAT_API_KEY_ANDROID });
+        }
+        getCustomerInfo();
+      } catch (error) {
+        console.error('RevenueCat Initialization Error:', error);
+      }
+    };
+
+    initializePurchases();
+  }, []);
+
+  async function getCustomerInfo() {
+    try {
+      const customerInfo = await Purchases.getCustomerInfo();
+      const offerings = await Purchases.getOfferings();
+      const products = await Purchases.getProducts(['UMC_annual']);
+      console.log('QQQ:');
+      console.log('customerInfo:', customerInfo);
+      console.log('offerings:', offerings);
+      console.log('products:', products);
+    } catch (e) {
+      console.error('RevenueCat error:', e);
+    }
+  }
+
   return (
     <SafeAreaProvider style={styles.container}>
       <NavigationContainer>

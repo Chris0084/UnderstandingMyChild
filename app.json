@@ -14,29 +14,37 @@
     },
     "ios": {
       "bundleIdentifier": "com.jstarapps.UnderstandingMyChild",
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSSpeechRecognitionUsageDescription": "Allow UnderstandingMyChild to recognize your voice.",
+        "NSMicrophoneUsageDescription": "Allow UnderstandingMyChild to access the microphone.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
-      "android": {
+    "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/appIcons/appIconNoBackground.png", 
+        "foregroundImage": "./assets/appIcons/appIconNoBackground.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.chris0084.UnderstandingMyChild"
+      "package": "com.chris0084.UnderstandingMyChild",
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-   "plugins": [
-  "@react-native-community/datetimepicker",
-  [
-    "expo-speech-recognition",
-    {
-      "microphonePermission": "Allow UnderstandingMyChild to access the microphone.",
-      "speechRecognitionPermission": "Allow UnderstandingMyChild to recognize your voice."
-    }
-  ]
-],
+    "plugins": [
+      "@react-native-community/datetimepicker",
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Allow UnderstandingMyChild to access the microphone.",
+          "speechRecognitionPermission": "Allow UnderstandingMyChild to recognize your voice."
+        }
+      ]
+    ],
     "extra": {
       "eas": {
         "projectId": "65343bd6-feee-44a5-b927-1f30088e7de0"

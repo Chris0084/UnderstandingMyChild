@@ -12,6 +12,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 
+import RevenueCatUI, { PAYWALL_RESULT } from 'react-native-purchases-ui';
+
 // Import components
 import FreeTypeBox from '../components/FreeTypeBox';
 import DateStamp from '../components/DateStamp';
@@ -81,6 +83,24 @@ const InputFormScreen = ({ route, navigation }) => {
   // Sync the form fields whenever the route param changes (like when using arrows)
   useFocusEffect(
     useCallback(() => {
+      const checkPremiumStatus = async () => {
+        try {
+          // Evaluates entitlement; opens your configured Paywall automatically if missing 'UMC_subscriber'
+          const result = await RevenueCatUI.presentPaywallIfNeeded({
+            requiredEntitlementIdentifier: 'UMC_subscriber',
+          });
+
+          // If they cancel out or fail the trial transaction, boot them back safely
+          if (result === PAYWALL_RESULT.CANCELLED) {
+            navigation.goBack();
+            return;
+          }
+        } catch (error) {
+          console.error('Failed to present RevenueCat Paywall overlay:', error);
+        }
+      };
+
+      checkPremiumStatus();
       // 1. Grab params
       const entry = route.params?.existingEntry;
       const modeParam = route.params?.mode;
