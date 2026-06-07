@@ -4,7 +4,7 @@
   "modelSections": [
     {
       "id": "ComWahtThisAppWillDo",
-      "imageKey": "whatThisAppWillDoInfo",
+      "imageKey": "whatCanThisAppDo",
       "category": "app",
       "buttonLabel": "What will this app do for me?",
       "modalTitle": "What will this app do for me?",
@@ -21,6 +21,7 @@
     },
      {
       "id": "capture",
+      "imageKey": "captureMoment",
       "category": "app",
       "buttonLabel": "Capture A Moment",
       "modalTitle": "How To Capture A Moment",
@@ -28,6 +29,7 @@
     },
     {
       "id": "journal",
+      "imageKey": "howToUseJournal2",
       "category": "app",
       "buttonLabel": "How To Use The Journal",
       "modalTitle": "How To Use The Journal",
@@ -35,6 +37,7 @@
     },
      {
       "id": "trends",
+      "imageKey": "trends",
       "category": "app",
       "buttonLabel": "Trends",
       "modalTitle": "Viewing Trends",
@@ -42,10 +45,12 @@
     },
     {
       "id": "whatAreObservationCategories",
+      "imageKey": "whatAreObvsCatogories",
       "category": "tags",
       "buttonLabel": "What Are Observation Categories",
       "modalTitle": "What Are Observation Categories",
-      "para1": "TBC"
+      "para1": "Observation categories are gentle ways of organising the moments you record. They help you notice the drivers behind what’s happening, the underlying reasons, needs, or pressures your child might be experiencing.",
+      "para2": "They’re not about judging behaviour. They’re simply a way to group similar moments so patterns become easier to see. Over time, these categories help you understand the “why” behind your child’s reactions — not to label them, but to support them."
     },
       {
       "id": "Communication",
@@ -67,7 +72,7 @@
     },
     {
       "id": "SocialInteraction",
-       "imageKey": "social_interaction",
+      "imageKey": "socialInteraction",
       "category": "tags",
       "buttonLabel": "Social Interaction",
       "modalTitle": "Social Interaction",
@@ -76,6 +81,7 @@
     },
     {
       "id": "EmotionalRegulation",
+      "imageKey": "emotionalRegulation",
       "category": "tags",
       "buttonLabel": "Emotional Regulation",
       "modalTitle": "Emotional Regulation",
@@ -124,8 +130,8 @@
       "imageKey": "structureSupport",
       "buttonLabel": "Structure & Predictability Supports",
       "modalTitle": "Structure & Predictability Supports",
-      "para1": "TBC",
-      "para2": "TBC"
+      "para1": "Structure and predictability supports help autistic children feel safe, calm, and able to engage by making daily life more understandable and consistent.",
+      "para2": "These supports can include visual schedules that show what’s happening next, clear routines that reduce uncertainty, timers to signal transitions, and simple step by step guides for tasks or social situations. By creating a predictable rhythm to the day and offering clear information up front, these tools reduce anxiety, support independence, and make it easier for children to participate with confidence."
     },
       {
       "id": "communicationSupports",
@@ -142,8 +148,8 @@
        "imageKey": "socialInteractionSupport",
       "buttonLabel": "Social Interaction Supports",
       "modalTitle": "Social Interaction Supports",
-      "para1": "TBC",
-      "para2": "TBC"
+      "para1": "Social support tools help autistic children feel more confident, prepared, and comfortable in social situations by offering clear structure, predictable routines, and low‑pressure ways to connect with others.",
+      "para2": "These can include social stories that break down everyday events into simple, reassuring steps; turn‑taking games that make interaction feel manageable and predictable; Lego‑based activities that encourage teamwork through shared building; and social practice tools like role‑play, scripts, or visual cue cards that support children as they explore real‑life interactions at their own pace. Used flexibly and matched to a child’s interests and communication style, these tools can make social experiences feel safer, more understandable, and more enjoyable."
     },
      {
       "id": "emotionalRegulationSupports",
@@ -160,11 +166,12 @@
       "imageKey": "environmentSupport",
       "buttonLabel": "Environment Adjustments",
       "modalTitle": "Environment Adjustments",
-      "para1": "TBC",
-      "para2": "TBC"
+      "para1": "Environmental adjustments involve shaping spaces so they feel predictable, calm, and accessible, making social participation easier and less stressful.",
+      "para2": "This can include using visual schedules, offering quiet breakout areas, reducing sensory overload in busy rooms, or arranging seating to support comfort and connection. Thoughtful adjustments like these help children engage more confidently and comfortably in everyday environments."
     },
     {
       "id": "executiveFunctioningSupports",
+      "imageKey": "execFunctionSupports",
       "category": "supports",
       "buttonLabel": "Executive Function Supports",
       "modalTitle": "Executive Function Supports",
@@ -177,8 +184,7 @@
       "imageKey": "maskingSupport",
       "buttonLabel": "Masking & Energy Management Supports",
       "modalTitle": "Masking & Energy Management Supports",
-      "para1": "TBC",
-      "para2": "TBC"
+      "para1": "Masking supports focus on reducing the pressure autistic children may feel to hide their natural behaviours or copy others in order to blend in. These supports encourage children to express themselves in ways that feel authentic and safe, whether that’s through stimming, using alternative communication, or taking breaks when social demands become overwhelming. By helping children recognise when they are masking and offering permission to be themselves, these supports promote wellbeing and reduce exhaustion."
     }
   ]
 }

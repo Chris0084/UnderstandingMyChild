@@ -15,18 +15,28 @@ import PageHeader from '../components/PageHeader';
 import textContent from '../../CMS/content.json';
 
 const imageMap = {
+  whatCanThisAppDo: require('../../assets/infoCardPics/whatCanThisAppDo.png'),
   execFunction: require('../../assets/infoCardPics/execFunction.png'),
   howToUseAppInfo: require('../../assets/infoCardPics/howToUseAppInfo.png'),
+  captureMoment: require('../../assets/infoCardPics/captureMoment.png'),
+  howToUseJournal: require('../../assets/infoCardPics/howToUseJournal.png'),
+  howToUseJournal2: require('../../assets/infoCardPics/howToUseJournal2.png'),
+  trends: require('../../assets/infoCardPics/trends.png'),
+  whatAreObvsCatogories: require('../../assets/infoCardPics/whatAreObvsCatogories.png'),
   communicationInfo: require('../../assets/infoCardPics/communicationInfo.png'),
   routineInfo: require('../../assets/infoCardPics/routineInfo.png'),
+  socialInteraction: require('../../assets/infoCardPics/socialInteraction.png'),
   sensoryInfo: require('../../assets/infoCardPics/sensoryInfo.png'),
   regulationSupport: require('../../assets/infoCardPics/regulationSupport.png'),
   communicationSupport: require('../../assets/infoCardPics/communicationSupport.png'),
+
+  emotionalRegulation: require('../../assets/infoCardPics/emotionalRegulation.png'),
   sensorySupport: require('../../assets/infoCardPics/sensorySupport.png'),
   socialInteractionSupport: require('../../assets/infoCardPics/socialInteractionSupport.png'),
   environmentSupport: require('../../assets/infoCardPics/environmentSupport.png'),
   maskingSupport: require('../../assets/infoCardPics/maskingSupport.png'),
   structureSupport: require('../../assets/infoCardPics/structureSupport.png'),
+  execFunctionSupports: require('../../assets/infoCardPics/execFunctionSupports.png'),
   noteParentsSupport: require('../../assets/infoCardPics/noteParentsSupport.png'),
 };
 

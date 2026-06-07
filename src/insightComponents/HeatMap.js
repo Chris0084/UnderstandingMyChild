@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import InsightCard from './InsightCard';
 
 const { width } = Dimensions.get('window');
-const COLUMN_WIDTH = (width - 66) / 8; // Accounts for labels and padding
+const COLUMN_WIDTH = (width - 86) / 9; // Accounts for labels and padding
 
 const HeatMap = ({ data }) => {
   if (!data) return null;
@@ -100,15 +100,15 @@ const styles = StyleSheet.create({
   gridContainer: { flexDirection: 'row' },
   yAxis: {
     justifyContent: 'space-between',
-    paddingVertical: 25,
-    marginRight: 5,
+    paddingVertical: 20,
+    marginRight: 8,
   },
   axisLabel: { fontSize: 10, color: '#999', fontWeight: 'bold' },
   grid: { flex: 1 },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   cell: {
     width: COLUMN_WIDTH,

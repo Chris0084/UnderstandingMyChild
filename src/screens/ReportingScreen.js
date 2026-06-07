@@ -32,8 +32,8 @@ const ReportingScreen = ({ navigation }) => {
       const parsedExisting = existingData ? JSON.parse(existingData) : [];
 
       // 2. Combine them
-      const newData = [...parsedExisting, ...sampleData];
-      // const newData = [...sampleData];
+      //const newData = [...parsedExisting, ...sampleData];
+      const newData = [...sampleData];
 
       // 3. Save back to storage
       await AsyncStorage.setItem('@app_logs', JSON.stringify(newData));

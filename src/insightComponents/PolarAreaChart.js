@@ -26,23 +26,43 @@ const PolarAreaChart = ({ tags }) => {
   const maxCount = Math.max(...tags.map(t => t.count), 1);
   const angleStep = (2 * Math.PI) / tags.length;
 
+  // const rainbow = [
+  //   '#FF6384',
+  //   '#FF9F40',
+  //   '#FFCD56',
+  //   '#4BC0C0',
+  //   '#36A2EB',
+  //   '#c0a4f7',
+  //   '#734292',
+  // ];
+
+  // const rainbowDark = [
+  //   '#C62828',
+  //   '#E65100',
+  //   '#FBC02D',
+  //   '#00796B',
+  //   '#1976D2',
+  //   '#6d28f7',
+  //   '#3f0464',
+  // ];
   const rainbow = [
-    '#FF6384',
-    '#FF9F40',
-    '#FFCD56',
-    '#4BC0C0',
-    '#36A2EB',
-    '#c0a4f7',
-    '#734292',
+    '#FFB3BA', // Pastel Pink
+    '#FFDFBA', // Pastel Orange
+    '#FFFFBA', // Pastel Yellow
+    '#BAFFC9', // Pastel Mint Green
+    '#BAE1FF', // Pastel Sky Blue
+    '#D6C2FE', // Pastel Lavender
+    '#F1C0FB', // Pastel Orchid
   ];
+
   const rainbowDark = [
-    '#C62828',
-    '#E65100',
-    '#FBC02D',
-    '#00796B',
-    '#1976D2',
-    '#6d28f7',
-    '#3f0464',
+    '#FF6B8B', // Medium Coral Pink
+    '#FFA15A', // Medium Soft Orange
+    '#FFD573', // Medium Warm Yellow
+    '#64D2D2', // Medium Soft Teal
+    '#5EB5EF', // Medium Soft Blue
+    '#A37FFA', // Medium Bright Purple
+    '#C882E6', // Medium Soft Magenta/Violet
   ];
 
   const createWedgePath = (startAngle, endAngle, currentRadius) => {
