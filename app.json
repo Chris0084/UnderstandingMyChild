@@ -2,7 +2,7 @@
   "expo": {
     "name": "UnderstandingMyChild",
     "slug": "UnderstandingMyChild",
-    "version": "2.0.0",
+    "version": "2.1.0",
     "orientation": "portrait",
     "icon": "./assets/appIcons/appIcon.png",
     "userInterfaceStyle": "light",
@@ -16,8 +16,9 @@
       "bundleIdentifier": "com.jstarapps.UnderstandingMyChild",
       "supportsTablet": true,
       "infoPlist": {
-        "NSSpeechRecognitionUsageDescription": "Allow UnderstandingMyChild to recognize your voice.",
-        "NSMicrophoneUsageDescription": "Allow UnderstandingMyChild to access the microphone.",
+        "NSMicrophoneUsageDescription": "This app uses the microphone to allow you to dictate journal entries via speech-to-text.",
+        "NSSpeechRecognitionUsageDescription": "This app uses speech recognition to convert your voice into text for your journal entries.",
+        "NSPhotoLibraryUsageDescription": "This app requires access to your photo library so you can select and attach photos or videos directly to your journal entries.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
