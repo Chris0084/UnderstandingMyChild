@@ -14,6 +14,7 @@ import InputFormScreen from './src/screens/InputFormScreen';
 import ReportingScreen from './src/screens/ReportingScreen';
 import InformationScreen from './src/screens/InformationScreen';
 import InsightsScreen from './src/screens/InsightsScreen';
+import SettingsScreen from './src/screens/SettingsScreen';
 
 const REVENUECAT_API_KEY_ANDROID = 'goog_IWwoiEXBtmlKnyOAttqtyASFHeP';
 const REVENUECAT_API_KEY_IOS = 'appl_ZPpTExksxWvIRwWfNBToxzoSvFo';
@@ -144,6 +145,12 @@ export default function App() {
 
           {/* This one Stack screen now holds ALL your tabbed pages */}
           <Stack.Screen name="MainApp" component={MainTabs} />
+
+          <Stack.Screen
+            name="Settings"
+            component={SettingsScreen}
+            options={{ title: 'Settings' }}
+          />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>

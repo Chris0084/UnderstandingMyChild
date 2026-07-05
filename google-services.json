@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "500833231264",
+    "project_id": "understandingmychild-b9eb7",
+    "storage_bucket": "understandingmychild-b9eb7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:500833231264:android:df70ccb5c4c295b7b7c4c5",
+        "android_client_info": {
+          "package_name": "com.chris0084.UnderstandingMyChild"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD3OLcJj4WurLvhQjZCVHAMAqKVQe-DoB0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

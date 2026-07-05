@@ -14,6 +14,7 @@
     },
     "ios": {
       "bundleIdentifier": "com.jstarapps.UnderstandingMyChild",
+      "googleServicesFile": "./GoogleService-Info.plist",
       "supportsTablet": true,
       "infoPlist": {
         "NSMicrophoneUsageDescription": "This app uses the microphone to allow you to dictate journal entries via speech-to-text.",
@@ -29,6 +30,7 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.chris0084.UnderstandingMyChild",
+      "googleServicesFile": "./google-services.json",
       "permissions": [
         "android.permission.RECORD_AUDIO"
       ]
@@ -44,7 +46,9 @@
           "microphonePermission": "Allow UnderstandingMyChild to access the microphone.",
           "speechRecognitionPermission": "Allow UnderstandingMyChild to recognize your voice."
         }
-      ]
+      ],
+      "@react-native-firebase/app",
+      "@react-native-firebase/analytics"
     ],
     "extra": {
       "eas": {
