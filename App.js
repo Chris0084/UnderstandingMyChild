@@ -15,6 +15,7 @@ import ReportingScreen from './src/screens/ReportingScreen';
 import InformationScreen from './src/screens/InformationScreen';
 import InsightsScreen from './src/screens/InsightsScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
+import EHCPTimeline from './src/screens/EHCPTimeline';
 
 const REVENUECAT_API_KEY_ANDROID = 'goog_IWwoiEXBtmlKnyOAttqtyASFHeP';
 const REVENUECAT_API_KEY_IOS = 'appl_ZPpTExksxWvIRwWfNBToxzoSvFo';
@@ -54,6 +55,8 @@ function MainTabs() {
             iconName = focused ? 'book' : 'book-outline';
           else if (route.name === 'Insights')
             iconName = focused ? 'sparkles' : 'sparkles-outline';
+          else if (route.name === 'EHCPTimeline')
+            iconName = focused ? 'list-circle' : 'list-circle-outline';
 
           return <Ionicons name={iconName} size={size} color={color} />;
         },
@@ -89,6 +92,11 @@ function MainTabs() {
         name="Insights"
         component={InsightsScreen}
         options={{ title: 'Trends' }}
+      />
+      <Tab.Screen
+        name="EHCPTimeline"
+        component={EHCPTimeline}
+        options={{ title: 'EHCP' }}
       />
     </Tab.Navigator>
   );

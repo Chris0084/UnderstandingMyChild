@@ -176,6 +176,17 @@ export default function HomeScreen({ navigation }) {
                 }
               />
             </View>
+            <View style={styles.fullRow}>
+              <NavCard
+                title="EHCP Process"
+                description="A clear guide to the EHCP process. Follow the simple steps and tick them off along the way."
+                iconName="list-circle-outline"
+                accentColor={Colors.Ehcp_theme || '#FFE0B2'}
+                onPress={() =>
+                  navigation.navigate('MainApp', { screen: 'EHCPTimeline' })
+                }
+              />
+            </View>
           </View>
         </ScrollView>
       </View>

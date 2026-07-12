@@ -50,6 +50,7 @@ export const Colors = {
   journal_theme: '#F2C6DE',
   trend_theme: '#d3c7ab',
   starred_theme: '#e45555',
+  Ehcp_theme: '#e97474',
 
   sage: '#DDEEDC', // Background
   darkSage: '#7c857c', // Background
