@@ -25,11 +25,21 @@ const TimelineStepCard = ({
   weekLabel,
   summary,
   parentRole,
+  parentRole2 = null,
+  parentRole3 = null,
+  parentRole4 = null,
+  parentRole5 = null,
   expandedDetails,
+  expandedDetails2,
   isLast,
   isCompleted,
   onToggleComplete,
   sourceUrl,
+  sourceUrlLabel, // Custom label for link 1
+  sourceUrl2, // Second link
+  sourceUrl2Label, // Second label
+  sourceUrl3, // Third link
+  sourceUrl3Label, // Third label
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -42,6 +52,28 @@ const TimelineStepCard = ({
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     onToggleComplete();
   };
+
+  // Helper function to safely open external links
+  const handleOpenLink = async url => {
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        Alert.alert('Error', 'Unable to open this guidance link.');
+      }
+    } catch (e) {
+      console.warn('Failed to launch link:', e);
+    }
+  };
+
+  const activeRoles = [
+    parentRole,
+    parentRole2,
+    parentRole3,
+    parentRole4,
+    parentRole5,
+  ].filter(role => role !== undefined && role !== null && role !== '');
 
   return (
     <View style={styles.timelineRow}>
@@ -102,7 +134,8 @@ const TimelineStepCard = ({
           <View style={isCompleted && styles.contentCompleted}>
             <Text style={styles.summaryText}>{summary}</Text>
 
-            {parentRole && (
+            {/* Parent Role Callout Block */}
+            {activeRoles.length > 0 && (
               <View
                 style={[
                   styles.parentRoleBox,
@@ -115,36 +148,72 @@ const TimelineStepCard = ({
                   ]}>
                   Parent Role
                 </Text>
-                <Text style={styles.parentRoleBody}>{parentRole}</Text>
+                {activeRoles.map((roleText, idx) => (
+                  <Text
+                    key={idx}
+                    style={[
+                      styles.parentRoleBody,
+                      idx > 0 && { marginTop: 2 },
+                    ]}>
+                    <Text style={styles.bullet}>{'\u2022 '}</Text>
+                    {roleText}
+                  </Text>
+                ))}
               </View>
             )}
 
             {isExpanded && (
               <View style={styles.expandedContent}>
                 <Text style={styles.detailsHeading}>Detailed Guidance:</Text>
+
+                {/* Main Details */}
                 <Text style={styles.detailsText}>{expandedDetails}</Text>
 
-                {/* Web Link Integration */}
-                {sourceUrl && (
-                  <TouchableOpacity
-                    style={styles.linkButton}
-                    onPress={async () => {
-                      const supported = await Linking.canOpenURL(sourceUrl);
-                      if (supported) {
-                        await Linking.openURL(sourceUrl);
-                      } else {
-                        Alert.alert(
-                          'Error',
-                          'Unable to open this guidance link.',
-                        );
-                      }
-                    }}>
-                    <Ionicons name="open-outline" size={14} color="#0056B3" />
-                    <Text style={styles.linkButtonText}>
-                      Read Official Statutory Guidance
-                    </Text>
-                  </TouchableOpacity>
+                {/* Optional details2 rendered on a new line with space */}
+                {expandedDetails2 && (
+                  <Text style={[styles.detailsText, { marginTop: 10 }]}>
+                    {expandedDetails2}
+                  </Text>
                 )}
+
+                {/* --- Dynamic Web Link List --- */}
+                <View style={styles.linkListContainer}>
+                  {/* Link 1 */}
+                  {sourceUrl && (
+                    <TouchableOpacity
+                      style={styles.linkButton}
+                      onPress={() => handleOpenLink(sourceUrl)}>
+                      <Ionicons name="open-outline" size={14} color="#0056B3" />
+                      <Text style={styles.linkButtonText}>
+                        {sourceUrlLabel || 'Read Official Statutory Guidance'}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+
+                  {/* Link 2 */}
+                  {sourceUrl2 && (
+                    <TouchableOpacity
+                      style={styles.linkButton}
+                      onPress={() => handleOpenLink(sourceUrl2)}>
+                      <Ionicons name="open-outline" size={14} color="#0056B3" />
+                      <Text style={styles.linkButtonText}>
+                        {sourceUrl2Label || 'Read Secondary Guidance'}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+
+                  {/* Link 3 */}
+                  {sourceUrl3 && (
+                    <TouchableOpacity
+                      style={styles.linkButton}
+                      onPress={() => handleOpenLink(sourceUrl3)}>
+                      <Ionicons name="open-outline" size={14} color="#0056B3" />
+                      <Text style={styles.linkButtonText}>
+                        {sourceUrl3Label || 'Read Additional Guidance'}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
             )}
 
@@ -181,7 +250,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     backgroundColor: '#0056B3',
     zIndex: 2,
-    marginTop: 18, // Lowered slightly to align with the new text layout height
+    marginTop: 18,
   },
   dotCompleted: { backgroundColor: '#4CAF50' },
   verticalLine: {
@@ -210,8 +279,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#F4F6F4',
     borderColor: '#D0DBF0',
   },
-
-  // New Checkbox Layout Styles
   checkboxContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -232,7 +299,6 @@ const styles = StyleSheet.create({
     color: '#4CAF50',
     fontWeight: '700',
   },
-
   headerRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -320,20 +386,28 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   detailsText: { fontSize: 12, color: '#666666', lineHeight: 18 },
+  linkListContainer: {
+    marginTop: 4,
+    alignItems: 'flex-start',
+  },
   linkButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 12,
+    marginTop: 8,
     backgroundColor: '#EEF4FA',
-    padding: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
     borderRadius: 6,
-    alignSelf: 'flex-start',
   },
   linkButtonText: {
     color: '#0056B3',
     fontSize: 12,
     fontWeight: '600',
     marginLeft: 6,
+  },
+  bullet: {
+    fontSize: 18, // Adjust size of the bullet
+    fontWeight: 'bold', // Make it pop a bit more
   },
 });
 

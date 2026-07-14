@@ -11,7 +11,7 @@ import { Ionicons } from '@expo/vector-icons'; // or 'react-native-vector-icons/
 import NavCard from '../components/NavCard';
 import Colors from '../constants/Colors';
 import AsyncStorage from '@react-native-async-storage/async-storage'; // 2. REMOVE whole line when strippng the day populate
-import {
+import analytics, {
   getAnalytics,
   setAnalyticsCollectionEnabled,
 } from '@react-native-firebase/analytics';
@@ -95,6 +95,36 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
+  // --- REUSABLE TIME-STAMPED TRACKING HELPER ---
+  const trackActionAndNavigate = async (
+    buttonId,
+    targetScreen,
+    screenParams = null,
+  ) => {
+    try {
+      const currentTimestamp = new Date().toISOString(); // Localized highly-precise timestamp string
+
+      // Logs custom event with parameters
+      await analytics().logEvent('home_navigation_clicked', {
+        button_id: buttonId,
+        click_timestamp: currentTimestamp,
+      });
+
+      console.log(
+        `[Analytics Logs] Event 'home_navigation_clicked' fired for: ${buttonId}`,
+      );
+    } catch (error) {
+      console.warn('Analytics event failed to log:', error);
+    } finally {
+      // Always navigate regardless of whether the tracking framework succeeded or failed
+      if (screenParams) {
+        navigation.navigate(targetScreen, screenParams);
+      } else {
+        navigation.navigate(targetScreen);
+      }
+    }
+  };
+
   return (
     <View style={[styles.mainScreenContainer, { paddingTop: insets.top }]}>
       {/* --- FLOATING COG HEADER BUTTON --- */}
@@ -136,7 +166,9 @@ export default function HomeScreen({ navigation }) {
                 accentColor={Colors.log_theme || '#FCE4EC'}
                 backgroundColor={'#a7e7a7'}
                 onPress={() =>
-                  navigation.navigate('MainApp', { screen: 'InputForm' })
+                  trackActionAndNavigate('capture_card', 'MainApp', {
+                    screen: 'InputForm',
+                  })
                 }
               />
             </View>
@@ -148,7 +180,9 @@ export default function HomeScreen({ navigation }) {
                 iconName="information-circle-outline"
                 accentColor={Colors.info_theme || '#D4EAE2'}
                 onPress={() =>
-                  navigation.navigate('MainApp', { screen: 'Information' })
+                  trackActionAndNavigate('information_card', 'MainApp', {
+                    screen: 'Information',
+                  })
                 }
               />
             </View>
@@ -160,7 +194,9 @@ export default function HomeScreen({ navigation }) {
                 iconName="book-outline"
                 accentColor={Colors.journal_theme || '#E3F2FD'}
                 onPress={() =>
-                  navigation.navigate('MainApp', { screen: 'Reporting' })
+                  trackActionAndNavigate('journal_history_card', 'MainApp', {
+                    screen: 'Reporting',
+                  })
                 }
               />
             </View>
@@ -172,18 +208,22 @@ export default function HomeScreen({ navigation }) {
                 iconName="sparkles-outline"
                 accentColor={Colors.trend_theme || '#FFF3E0'}
                 onPress={() =>
-                  navigation.navigate('MainApp', { screen: 'Insights' })
+                  trackActionAndNavigate('trend_tracker_card', 'MainApp', {
+                    screen: 'Insights',
+                  })
                 }
               />
             </View>
             <View style={styles.fullRow}>
               <NavCard
-                title="EHCP Process"
-                description="A clear guide to the EHCP process. Follow the simple steps and tick them off along the way."
+                title="EHCP Timeline"
+                description="A clear guide to the EHCP timeline. Follow the simple steps and tick them off along the way."
                 iconName="list-circle-outline"
                 accentColor={Colors.Ehcp_theme || '#FFE0B2'}
                 onPress={() =>
-                  navigation.navigate('MainApp', { screen: 'EHCPTimeline' })
+                  trackActionAndNavigate('ehcp_timeline_card', 'MainApp', {
+                    screen: 'EHCPTimeline',
+                  })
                 }
               />
             </View>
