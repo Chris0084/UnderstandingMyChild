@@ -1,6 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { trackAnalyticsAndExecute } from '../utils/analyticsHelper';
 
 /**
  * SplitButton Component
@@ -19,10 +20,25 @@ const SplitButton = ({
   onPress,
   style,
 }) => {
+  const handlePress = () => {
+    // Sanitize label to create a clean event key (e.g., "Save Entry" -> "button_split_save_entry")
+    const formattedId = (label || 'button')
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]/g, '_');
+
+    const eventName = `button_split_${formattedId}`;
+
+    trackAnalyticsAndExecute(eventName, () => {
+      if (onPress) {
+        onPress();
+      }
+    });
+  };
   return (
     <TouchableOpacity
       style={[styles.container, style]}
-      onPress={onPress}
+      onPress={handlePress}
       activeOpacity={0.8}>
       {/* Left Section (75%) */}
       <View style={[styles.leftSection, { backgroundColor: leftColor }]}>

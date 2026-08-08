@@ -11,10 +11,11 @@ import { Ionicons } from '@expo/vector-icons'; // or 'react-native-vector-icons/
 import NavCard from '../components/NavCard';
 import Colors from '../constants/Colors';
 import AsyncStorage from '@react-native-async-storage/async-storage'; // 2. REMOVE whole line when strippng the day populate
-import analytics, {
+import {
   getAnalytics,
   setAnalyticsCollectionEnabled,
 } from '@react-native-firebase/analytics';
+import { trackAnalyticsAndExecute } from '../utils/analyticsHelper';
 
 export default function HomeScreen({ navigation }) {
   const insets = useSafeAreaInsets();
@@ -95,36 +96,6 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
-  // --- REUSABLE TIME-STAMPED TRACKING HELPER ---
-  const trackActionAndNavigate = async (
-    buttonId,
-    targetScreen,
-    screenParams = null,
-  ) => {
-    try {
-      const currentTimestamp = new Date().toISOString(); // Localized highly-precise timestamp string
-
-      // Logs custom event with parameters
-      await analytics().logEvent('home_navigation_clicked', {
-        button_id: buttonId,
-        click_timestamp: currentTimestamp,
-      });
-
-      console.log(
-        `[Analytics Logs] Event 'home_navigation_clicked' fired for: ${buttonId}`,
-      );
-    } catch (error) {
-      console.warn('Analytics event failed to log:', error);
-    } finally {
-      // Always navigate regardless of whether the tracking framework succeeded or failed
-      if (screenParams) {
-        navigation.navigate(targetScreen, screenParams);
-      } else {
-        navigation.navigate(targetScreen);
-      }
-    }
-  };
-
   return (
     <View style={[styles.mainScreenContainer, { paddingTop: insets.top }]}>
       {/* --- FLOATING COG HEADER BUTTON --- */}
@@ -158,6 +129,7 @@ export default function HomeScreen({ navigation }) {
           </View>
 
           <View style={styles.cardGrid}>
+            {/* CAPTURE CARD */}
             <View style={styles.fullRow}>
               <NavCard
                 title="Capture"
@@ -166,13 +138,16 @@ export default function HomeScreen({ navigation }) {
                 accentColor={Colors.log_theme || '#FCE4EC'}
                 backgroundColor={'#a7e7a7'}
                 onPress={() =>
-                  trackActionAndNavigate('capture_card', 'MainApp', {
-                    screen: 'InputForm',
-                  })
+                  trackAnalyticsAndExecute(
+                    'button_HomeScreen_capture_card',
+                    () =>
+                      navigation.navigate('MainApp', { screen: 'InputForm' }),
+                  )
                 }
               />
             </View>
 
+            {/* INFORMATION CARD */}
             <View style={styles.fullRow}>
               <NavCard
                 title="Information"
@@ -180,13 +155,16 @@ export default function HomeScreen({ navigation }) {
                 iconName="information-circle-outline"
                 accentColor={Colors.info_theme || '#D4EAE2'}
                 onPress={() =>
-                  trackActionAndNavigate('information_card', 'MainApp', {
-                    screen: 'Information',
-                  })
+                  trackAnalyticsAndExecute(
+                    'button_HomeScreen_information_card',
+                    () =>
+                      navigation.navigate('MainApp', { screen: 'Information' }),
+                  )
                 }
               />
             </View>
 
+            {/* JOURNAL CARD */}
             <View style={styles.fullRow}>
               <NavCard
                 title="Journal"
@@ -194,13 +172,16 @@ export default function HomeScreen({ navigation }) {
                 iconName="book-outline"
                 accentColor={Colors.journal_theme || '#E3F2FD'}
                 onPress={() =>
-                  trackActionAndNavigate('journal_history_card', 'MainApp', {
-                    screen: 'Reporting',
-                  })
+                  trackAnalyticsAndExecute(
+                    'button_HomeScreen_journal_history_card',
+                    () =>
+                      navigation.navigate('MainApp', { screen: 'Reporting' }),
+                  )
                 }
               />
             </View>
 
+            {/* TREND TRACKER CARD */}
             <View style={styles.fullRow}>
               <NavCard
                 title="Trend Tracker"
@@ -208,12 +189,16 @@ export default function HomeScreen({ navigation }) {
                 iconName="sparkles-outline"
                 accentColor={Colors.trend_theme || '#FFF3E0'}
                 onPress={() =>
-                  trackActionAndNavigate('trend_tracker_card', 'MainApp', {
-                    screen: 'Insights',
-                  })
+                  trackAnalyticsAndExecute(
+                    'button_HomeScreen_trend_tracker_card',
+                    () =>
+                      navigation.navigate('MainApp', { screen: 'Insights' }),
+                  )
                 }
               />
             </View>
+
+            {/* EHCP TIMELINE CARD */}
             <View style={styles.fullRow}>
               <NavCard
                 title="EHCP Timeline"
@@ -221,9 +206,13 @@ export default function HomeScreen({ navigation }) {
                 iconName="list-circle-outline"
                 accentColor={Colors.Ehcp_theme || '#FFE0B2'}
                 onPress={() =>
-                  trackActionAndNavigate('ehcp_timeline_card', 'MainApp', {
-                    screen: 'EHCPTimeline',
-                  })
+                  trackAnalyticsAndExecute(
+                    'button_HomeScreen_ehcp_timeline_card',
+                    () =>
+                      navigation.navigate('MainApp', {
+                        screen: 'EHCPTimeline',
+                      }),
+                  )
                 }
               />
             </View>

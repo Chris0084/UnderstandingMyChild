@@ -9,17 +9,47 @@ import {
   Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import CustomButton from './CustomButton'; // Reusing your existing button for the modal close
+import CustomButton from './CustomButton';
 import Colors from '../constants/Colors';
 
-const HorizontalInfoCard = ({ title, body, label, imageSource }) => {
+// Analytics Helper
+import { trackAnalyticsAndExecute } from '../utils/analyticsHelper';
+
+const HorizontalInfoCard = ({
+  title,
+  body,
+  label,
+  imageSource,
+  analyticsId,
+  analyticsParams,
+}) => {
   const [modalVisible, setModalVisible] = useState(false);
+
+  const handleCardPress = () => {
+    // Generate a fallback key from label/title if analyticsId isn't explicitly passed
+    const fallbackKey = (label || title || 'card')
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]/g, '_');
+
+    const eventName = analyticsId
+      ? `info_card_${analyticsId}`
+      : `info_card_${fallbackKey}`;
+
+    trackAnalyticsAndExecute(
+      eventName,
+      () => {
+        setModalVisible(true);
+      },
+      analyticsParams,
+    );
+  };
 
   return (
     <>
       <TouchableOpacity
         style={styles.card}
-        onPress={() => setModalVisible(true)}
+        onPress={handleCardPress}
         activeOpacity={0.8}>
         <View style={styles.imageContainer}>
           {imageSource ? (
@@ -69,11 +99,11 @@ const HorizontalInfoCard = ({ title, body, label, imageSource }) => {
 const styles = StyleSheet.create({
   card: {
     width: 140,
-    height: 160, // Increased height slightly to fit image + text better
+    height: 160,
     backgroundColor: '#fff',
     borderRadius: 20,
     marginRight: 15,
-    overflow: 'hidden', // Clips the image to the card corners
+    overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
@@ -82,7 +112,7 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     width: '100%',
-    height: '55%', // Image takes up the top portion
+    height: '55%',
     backgroundColor: Colors.info_card_background,
     justifyContent: 'center',
     alignItems: 'center',
@@ -104,7 +134,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     color: '#333',
-    padding: 8, // Space around the text at the bottom
+    padding: 8,
   },
   modalOverlay: {
     flex: 1,

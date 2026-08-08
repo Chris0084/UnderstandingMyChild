@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Purchases, { LOG_LEVEL } from 'react-native-purchases';
+import { trackAnalyticsAndExecute } from './src/utils/analyticsHelper';
 
 import HomeScreen from './src/screens/HomeScreen';
 import InputFormScreen from './src/screens/InputFormScreen';
@@ -61,42 +62,82 @@ function MainTabs() {
           return <Ionicons name={iconName} size={size} color={color} />;
         },
       })}>
+      {/* INFORMATION TAB */}
       <Tab.Screen
         name="Information"
         component={InformationScreen}
         options={{ title: 'Info' }}
+        listeners={({ navigation }) => ({
+          tabPress: e => {
+            e.preventDefault();
+            trackAnalyticsAndExecute('tab_bar_information', () => {
+              navigation.navigate('Information');
+            });
+          },
+        })}
       />
+
+      {/* CAPTURE / INPUT FORM TAB */}
       <Tab.Screen
         name="InputForm"
         component={InputFormScreen}
         options={{ title: 'Captue' }}
         listeners={({ navigation }) => ({
           tabPress: e => {
-            // Prevent default action
             e.preventDefault();
-
-            // Manually navigate and force params to be undefined
-            navigation.navigate('InputForm', {
-              existingEntry: undefined,
-              mode: undefined,
+            trackAnalyticsAndExecute('tab_bar_capture', () => {
+              navigation.navigate('InputForm', {
+                existingEntry: undefined,
+                mode: undefined,
+              });
             });
           },
         })}
       />
+
+      {/* REPORTING / JOURNAL TAB */}
       <Tab.Screen
         name="Reporting"
         component={ReportingScreen}
         options={{ title: 'Journal' }}
+        listeners={({ navigation }) => ({
+          tabPress: e => {
+            e.preventDefault();
+            trackAnalyticsAndExecute('tab_bar_reporting', () => {
+              navigation.navigate('Reporting');
+            });
+          },
+        })}
       />
+
+      {/* INSIGHTS / TRENDS TAB */}
       <Tab.Screen
         name="Insights"
         component={InsightsScreen}
         options={{ title: 'Trends' }}
+        listeners={({ navigation }) => ({
+          tabPress: e => {
+            e.preventDefault();
+            trackAnalyticsAndExecute('tab_bar_insights', () => {
+              navigation.navigate('Insights');
+            });
+          },
+        })}
       />
+
+      {/* EHCP TIMELINE TAB */}
       <Tab.Screen
         name="EHCPTimeline"
         component={EHCPTimeline}
         options={{ title: 'EHCP' }}
+        listeners={({ navigation }) => ({
+          tabPress: e => {
+            e.preventDefault();
+            trackAnalyticsAndExecute('tab_bar_ehcp_timeline', () => {
+              navigation.navigate('EHCPTimeline');
+            });
+          },
+        })}
       />
     </Tab.Navigator>
   );

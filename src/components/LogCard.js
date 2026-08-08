@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import Colors from '../constants/Colors';
+import { trackAnalyticsAndExecute } from '../utils/analyticsHelper';
 
 const LogCard = ({ entry, isAlternate }) => {
   const navigation = useNavigation();
@@ -27,6 +28,15 @@ const LogCard = ({ entry, isAlternate }) => {
     Afternoon: 'partly-sunny-outline',
     Evening: 'moon-outline',
     'Night time': 'cloudy-night-outline',
+  };
+
+  const handleViewEditPress = () => {
+    trackAnalyticsAndExecute('button_log_card_view_edit', () => {
+      navigation.navigate('MainApp', {
+        screen: 'InputForm',
+        params: { existingEntry: entry, mode: 'renderReportView' },
+      });
+    });
   };
 
   return (
@@ -99,12 +109,7 @@ const LogCard = ({ entry, isAlternate }) => {
 
         <TouchableOpacity
           style={styles.pillButton}
-          onPress={() =>
-            navigation.navigate('MainApp', {
-              screen: 'InputForm',
-              params: { existingEntry: entry, mode: 'renderReportView' }, // 'params' is required for nested navigation
-            })
-          }>
+          onPress={handleViewEditPress}>
           <Text style={styles.pillButtonText}>View/Edit</Text>
         </TouchableOpacity>
       </View>
