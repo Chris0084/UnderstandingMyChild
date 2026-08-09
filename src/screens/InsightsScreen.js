@@ -216,9 +216,8 @@ const InsightsScreen = () => {
         </View>
       );
     }
-
     // --- LOCK SCREEN COVER LAYOUT ---
-    if (stats.rawLogs < logsRequired) {
+    if (stats.totalLogs < logsRequired) {
       const remaining = logsRequired - stats.totalLogs;
       const progressPercent = (stats.totalLogs / logsRequired) * 100;
 

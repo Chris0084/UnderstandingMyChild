@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   saveBtn: {
-    backgroundColor: Colors.button_main || '#2196F3',
+    backgroundColor: '#2196F3',
     marginLeft: 6,
   },
   saveBtnText: {
