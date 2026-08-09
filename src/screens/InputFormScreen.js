@@ -6,6 +6,9 @@ import {
   StyleSheet,
   Alert,
   View,
+  Button,
+  Modal,
+  TextInput,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -26,6 +29,9 @@ import PageHeader from '../components/PageHeader.js';
 import SplitButton from '../components/SplitButton.js';
 import TimeOfDaySelector from '../components/TimeOfDaySelector.js';
 import * as FileSystem from 'expo-file-system/legacy';
+import ChildSelector from '../components/ChildSelector';
+import { debugPrintAllStorage } from '../utils/debugStorage.js';
+import ChildSelectModal from '../components/ChildSelectModal.js';
 
 const getTimeOfDay = () => {
   const hour = new Date().getHours();
@@ -38,7 +44,6 @@ const getTimeOfDay = () => {
 const InputFormScreen = ({ route, navigation }) => {
   const insets = useSafeAreaInsets();
 
-  // Use a local variable to make the code cleaner
   const currentEntryParam = route.params?.existingEntry;
 
   const defaultStrategies = {
@@ -50,6 +55,10 @@ const InputFormScreen = ({ route, navigation }) => {
     'Weighted blanket': 'Not used',
   };
 
+  const [children, setChildren] = useState([]);
+  const [selectedChildId, setSelectedChildId] = useState('');
+  const [isAddChildModalVisible, setIsAddChildModalVisible] = useState(false);
+  const [newChildName, setNewChildName] = useState('');
   const [isFavorite, setIsFavorite] = useState(false);
   const [allLogs, setAllLogs] = useState([]);
   const [where, setWhere] = useState('');
@@ -64,8 +73,137 @@ const InputFormScreen = ({ route, navigation }) => {
   const [strategies, setStrategies] = useState(defaultStrategies);
   const [modalVisible, setModalVisible] = useState(false);
   const [timeOfDay, setTimeOfDay] = useState(getTimeOfDay());
+  const [childModalVisible, setChildModalVisible] = useState(false);
 
-  // Load ALL logs once when component mounts
+  // Find current child name for display on the trigger button
+  const activeChild = children.find(c => c.id == selectedChildId);
+
+  const handleSelectChild = async id => {
+    setSelectedChildId(id);
+
+    // If viewing an existing entry (View Mode), save child update immediately
+    if (!isEditing && currentEntryParam?.id) {
+      try {
+        const savedData = await AsyncStorage.getItem('@app_logs');
+        let currentLogs = savedData ? JSON.parse(savedData) : [];
+
+        currentLogs = currentLogs.map(item =>
+          item.id === currentEntryParam.id ? { ...item, childId: id } : item,
+        );
+
+        await AsyncStorage.setItem('@app_logs', JSON.stringify(currentLogs));
+        setAllLogs(currentLogs);
+      } catch (e) {
+        Alert.alert('Error', 'Could not update child selection.');
+      }
+    }
+  };
+
+  const handleAddChild = () => {
+    setNewChildName('');
+    setIsAddChildModalVisible(true);
+  };
+
+  const handleSaveNewChild = async () => {
+    if (!newChildName.trim()) {
+      Alert.alert('Validation Error', 'Please enter a name for the profile.');
+      return;
+    }
+
+    // Find the highest numeric ID currently in use and increment it
+    const maxId = children.reduce((max, child) => {
+      const num = parseInt(child.id, 10);
+      return !isNaN(num) && num > max ? num : max;
+    }, 0);
+
+    const nextId = (maxId + 1).toString(); // Produces '2', '3', etc.
+
+    const newChild = {
+      id: nextId,
+      name: newChildName.trim(),
+      color: '#D32F2F',
+      isActive: true,
+    };
+
+    const updatedChildren = [...children, newChild];
+
+    try {
+      setChildren(updatedChildren);
+      setSelectedChildId(newChild.id);
+      setIsAddChildModalVisible(false);
+
+      await AsyncStorage.setItem(
+        '@app_children',
+        JSON.stringify(updatedChildren),
+      );
+    } catch (e) {
+      Alert.alert('Error', 'Could not save new child profile.');
+    }
+  };
+
+  const handleRenameChild = async (childId, newName) => {
+    if (!newName.trim()) {
+      Alert.alert('Validation Error', 'Profile name cannot be empty.');
+      return;
+    }
+
+    // Map through children list to update the target child name immutably
+    const updatedChildren = children.map(child => {
+      if (child.id == childId) {
+        return { ...child, name: newName.trim() };
+      }
+      return child;
+    });
+
+    try {
+      // 1. Update component state so the UI updates instantly
+      setChildren(updatedChildren);
+
+      // 2. Persist the updated profiles array to AsyncStorage
+      await AsyncStorage.setItem(
+        '@app_children',
+        JSON.stringify(updatedChildren),
+      );
+    } catch (e) {
+      Alert.alert('Error', 'Could not save updated child profile name.');
+    }
+  };
+
+  // Load children list on mount safely
+  useEffect(() => {
+    const loadChildren = async () => {
+      try {
+        const savedChildren = await AsyncStorage.getItem('@app_children');
+        let parsed = savedChildren ? JSON.parse(savedChildren) : [];
+
+        if (parsed.length === 0) {
+          // Default seed only if storage is empty
+          parsed = [
+            { id: '1', name: 'Child 1', color: '#4A6159', isActive: true },
+          ];
+          await AsyncStorage.setItem('@app_children', JSON.stringify(parsed));
+        }
+
+        setChildren(parsed);
+
+        // Check if there is a globally selected child, else fallback to first in array
+        const savedSelectedId = await AsyncStorage.getItem(
+          '@app_selected_child_id',
+        );
+        const defaultId =
+          savedSelectedId && parsed.some(c => c.id === savedSelectedId)
+            ? savedSelectedId
+            : parsed[0]?.id;
+
+        setSelectedChildId(defaultId);
+      } catch (e) {
+        console.error('Failed to load children profiles', e);
+      }
+    };
+
+    loadChildren();
+  }, []);
+
   useEffect(() => {
     const fetchAllLogs = async () => {
       const savedData = await AsyncStorage.getItem('@app_logs');
@@ -80,17 +218,14 @@ const InputFormScreen = ({ route, navigation }) => {
     fetchAllLogs();
   }, []);
 
-  // Sync the form fields whenever the route param changes (like when using arrows)
   useFocusEffect(
     useCallback(() => {
       const checkPremiumStatus = async () => {
         try {
-          // Evaluates entitlement; opens your configured Paywall automatically if missing 'UMC_subscriber'
           const result = await RevenueCatUI.presentPaywallIfNeeded({
             requiredEntitlementIdentifier: 'UMC_subscriber',
           });
 
-          // If they cancel out or fail the trial transaction, boot them back safely
           if (result === PAYWALL_RESULT.CANCELLED) {
             navigation.goBack();
             return;
@@ -101,13 +236,13 @@ const InputFormScreen = ({ route, navigation }) => {
       };
 
       checkPremiumStatus();
-      // 1. Grab params
       const entry = route.params?.existingEntry;
       const modeParam = route.params?.mode;
 
-      // 2. Logic: If we have an entry, load it. If NOT, we MUST reset everything.
       if (entry && Object.keys(entry).length > 0) {
         setIsFavorite(entry.isFavorite || false);
+        // Fallback dynamically to current selectedChildId or first child in list
+        setSelectedChildId(entry.childId || selectedChildId || children[0]?.id);
         setWhere(entry.where || '');
         setLeadUp(entry.leadUp || '');
         setWhatHappened(entry.whatHappened || '');
@@ -116,11 +251,10 @@ const InputFormScreen = ({ route, navigation }) => {
         setSelectedTags(entry.tags || []);
         setMediaUri(entry.mediaUri || null);
         setStrategies({ ...defaultStrategies, ...entry.strategies });
-        setTimeOfDay(entry.timeOfDay || 'Morning'); // Load from log
-        // If mode is 'renderReportView', show report. Otherwise, show edit form.
+        setTimeOfDay(entry.timeOfDay || 'Morning');
         setIsEditing(modeParam !== 'renderReportView');
       } else {
-        // THIS IS THE FIX: Explicitly clear everything for a New Log
+        // Keep active selectedChildId instead of resetting to '1'
         setWhere('');
         setLeadUp('');
         setWhatHappened('');
@@ -129,12 +263,10 @@ const InputFormScreen = ({ route, navigation }) => {
         setSelectedTags([]);
         setMediaUri(null);
         setStrategies(defaultStrategies);
-        setTimeOfDay(getTimeOfDay()); // Reset to current time for new log
-        setIsEditing(true); // Always show the form for a new log
+        setTimeOfDay(getTimeOfDay());
+        setIsEditing(true);
       }
-
-      // No cleanup function here - it interferes with the Next/Prev arrows
-    }, [route.params]), // Watch the whole params object
+    }, [route.params, children]),
   );
 
   const handleToggleFavorite = async () => {
@@ -148,19 +280,17 @@ const InputFormScreen = ({ route, navigation }) => {
       const savedData = await AsyncStorage.getItem('@app_logs');
       let logs = savedData ? JSON.parse(savedData) : [];
 
-      // Update the favorite status in the full list
       logs = logs.map(log =>
         log.id === currentId ? { ...log, isFavorite: newFavoriteStatus } : log,
       );
 
       await AsyncStorage.setItem('@app_logs', JSON.stringify(logs));
-      setAllLogs(logs); // Keep our navigation list in sync
+      setAllLogs(logs);
     } catch (e) {
       Alert.alert('Error', 'Could not save favorite status.');
     }
   };
 
-  // DELETE LOG
   const handleDeleteLog = () => {
     Alert.alert(
       'Delete Log',
@@ -176,17 +306,16 @@ const InputFormScreen = ({ route, navigation }) => {
               const savedData = await AsyncStorage.getItem('@app_logs');
               let logs = savedData ? JSON.parse(savedData) : [];
 
-              // Filter out the current log
               const updatedLogs = logs.filter(log => log.id !== currentId);
 
               await AsyncStorage.setItem(
                 '@app_logs',
                 JSON.stringify(updatedLogs),
               );
-              setAllLogs(updatedLogs); // Update local list
+              setAllLogs(updatedLogs);
 
               Alert.alert('Deleted', 'Entry removed successfully.');
-              navigation.goBack(); // Take user back to the list
+              navigation.goBack();
             } catch (e) {
               Alert.alert('Error', 'Could not delete entry.');
             }
@@ -204,12 +333,10 @@ const InputFormScreen = ({ route, navigation }) => {
     const currentId = route.params?.existingEntry?.id;
     const currentIndex = allLogs.findIndex(log => log.id === currentId);
 
-    // Direction -1 is Newer (up the array), 1 is Older (down the array)
     const nextIndex = currentIndex + direction;
 
     if (nextIndex >= 0 && nextIndex < allLogs.length) {
       const nextLog = allLogs[nextIndex];
-      // This will trigger the useFocusEffect above to update the UI
       navigation.setParams({ existingEntry: nextLog });
     } else {
       Alert.alert(
@@ -233,12 +360,10 @@ const InputFormScreen = ({ route, navigation }) => {
     if (!tempUri) return null;
 
     try {
-      // 1. Get the extension from the tempUri (e.g., 'mp4' or 'jpg')
       const extension = tempUri.split('.').pop();
       const filename = `journal_${Date.now()}.${extension}`;
       const permanentUri = FileSystem.documentDirectory + filename;
 
-      // 2. Standard check to see if already saved
       if (tempUri.includes(FileSystem.documentDirectory)) {
         return tempUri;
       }
@@ -263,8 +388,13 @@ const InputFormScreen = ({ route, navigation }) => {
 
     try {
       const permanentMediaUri = await saveMediaPermanently(mediaUri);
+
+      // Fallback childId to active selection or first child in list dynamically
+      const targetChildId = selectedChildId || children[0]?.id || '1';
+
       const newEntry = {
         id: currentEntryParam ? currentEntryParam.id : Date.now().toString(),
+        childId: targetChildId,
         where,
         leadUp,
         whatHappened,
@@ -274,7 +404,7 @@ const InputFormScreen = ({ route, navigation }) => {
         tags: selectedTags,
         mediaUri: permanentMediaUri,
         strategies,
-        isFavorite: currentEntryParam ? isFavorite : false, // Save favorite status
+        isFavorite: currentEntryParam ? isFavorite : false,
       };
 
       const existingData = await AsyncStorage.getItem('@app_logs');
@@ -290,7 +420,6 @@ const InputFormScreen = ({ route, navigation }) => {
 
       await AsyncStorage.setItem('@app_logs', JSON.stringify(currentLogs));
 
-      // Update local allLogs list so navigation arrows work with the new data
       const sorted = currentLogs.sort(
         (a, b) => new Date(b.logDate) - new Date(a.logDate),
       );
@@ -319,7 +448,6 @@ const InputFormScreen = ({ route, navigation }) => {
   ];
 
   const renderReportView = () => {
-    // Helper for the icons and colors based on timeOfDay
     const getTimeStyles = time => {
       switch (time) {
         case 'Morning':
@@ -335,6 +463,7 @@ const InputFormScreen = ({ route, navigation }) => {
       }
     };
 
+    const activeChild = children.find(c => c.id === selectedChildId);
     const timeStyles = getTimeStyles(timeOfDay);
 
     return (
@@ -364,19 +493,29 @@ const InputFormScreen = ({ route, navigation }) => {
           </TouchableOpacity>
         </View>
 
-        {/* 2. HEADER SECTION (Stacked Date/Time + Buttons) */}
+        {/* 2. HEADER SECTION */}
         <View style={styles.reportHeader}>
+          {/* Display target child profile name */}
+          {activeChild && (
+            <Text
+              style={{
+                fontSize: 22,
+                fontWeight: '800',
+                color: Colors.primary,
+                marginTop: 2,
+              }}>
+              {activeChild.name}
+            </Text>
+          )}
           <View
             style={{
               flexDirection: 'row',
               justifyContent: 'space-between',
               alignItems: 'flex-start',
             }}>
-            {/* LEFT CONTAINER: Forces Date & Time to stay together and stack */}
             <View style={{ flexDirection: 'column', flex: 1 }}>
               <Text style={styles.reportDate}>{logDate.toDateString()}</Text>
 
-              {/* Time of Day Row - Sitting directly under the Date */}
               <View
                 style={{
                   flexDirection: 'row',
@@ -400,7 +539,6 @@ const InputFormScreen = ({ route, navigation }) => {
               </View>
             </View>
 
-            {/* RIGHT CONTAINER: Favorite and Trash buttons */}
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <TouchableOpacity
                 onPress={handleToggleFavorite}
@@ -545,10 +683,7 @@ const InputFormScreen = ({ route, navigation }) => {
         onChange={setLogDate}
         editable={true}
       />
-      <TimeOfDaySelector
-        onSelect={setTimeOfDay}
-        selectedTime={timeOfDay} // Pass current state so it stays in sync
-      />
+      <TimeOfDaySelector onSelect={setTimeOfDay} selectedTime={timeOfDay} />
       <TagSelector
         label="Observation Categories"
         tags={availableTags}
@@ -565,17 +700,10 @@ const InputFormScreen = ({ route, navigation }) => {
       <SplitButton
         label="Add Support Strategies"
         iconName="help-buoy-outline"
-        // mainColor="#F9A825" // Warm Golden Yellow
-        // accentColor="#F57F17" // Darker Golden for the split
-        leftColor={Colors.button_main} // Your main green
-        rightColor={Colors.support_strat_accent} // A slightly darker green
+        leftColor={Colors.button_main}
+        rightColor={Colors.support_strat_accent}
         onPress={() => setModalVisible(true)}
       />
-      {/* <CustomButton
-        label="Add Support Strategies"
-        color="#2196F3"
-        onPress={() => setModalVisible(true)}
-      /> */}
       <View style={styles.summaryContainer}>
         {Object.entries(strategies).map(
           ([name, value]) =>
@@ -628,11 +756,99 @@ const InputFormScreen = ({ route, navigation }) => {
         />
       </View>
 
-      {/* 2. SCROLLABLE CONTENT: The rest of the form */}
       <ScrollView
         contentContainerStyle={styles.container}
-        // This ensures the scrollview background matches the page
         style={{ backgroundColor: Colors.background }}>
+        {/* Top Child Selector - Interactive in both Edit and View modes */}
+        {!route.params?.existingEntry && (
+          <ChildSelector
+            childrenList={children}
+            selectedChildId={selectedChildId}
+            onSelectChild={handleSelectChild}
+            onAddChild={handleAddChild}
+            onRenameChild={handleRenameChild}
+          />
+        )}
+
+        {/* {Boolean(route.params?.existingEntry) &&
+          isEditing &&
+          children.length > 1 && (
+            <View style={styles.selectorWrapper}>
+              <Text style={styles.fieldLabel}>Child Profile</Text>
+
+              <TouchableOpacity
+                style={styles.triggerButton}
+                onPress={() => setChildModalVisible(true)}>
+                <Text style={styles.triggerText}>
+                  {activeChild ? activeChild.name : 'Select Child'}
+                </Text>
+                <Text style={styles.chevron}>›</Text>
+              </TouchableOpacity>
+
+              <ChildSelectModal
+                visible={childModalVisible}
+                childrenList={children}
+                selectedChildId={selectedChildId}
+                onSelectChild={id => setSelectedChildId(id)}
+                onClose={() => setChildModalVisible(false)}
+              />
+            </View>
+          )} */}
+
+        {Boolean(route.params?.existingEntry) &&
+          isEditing &&
+          children.length > 1 && (
+            <View style={styles.selectorWrapper}>
+              <TouchableOpacity
+                style={styles.childSelectorCard}
+                onPress={() => setChildModalVisible(true)}
+                activeOpacity={0.8}>
+                <View style={styles.childInfoLeft}>
+                  {/* Dynamic background color from activeChild */}
+                  <View
+                    style={[
+                      styles.childAvatarCircle,
+                      {
+                        backgroundColor:
+                          activeChild?.color || Colors.primary || '#2196f3',
+                      },
+                    ]}>
+                    <Text style={styles.childAvatarText}>
+                      {activeChild?.name
+                        ? activeChild.name.charAt(0).toUpperCase()
+                        : '?'}
+                    </Text>
+                  </View>
+
+                  <View style={styles.childMetaText}>
+                    <Text style={styles.childLabel}>Selected Child</Text>
+                    <Text style={styles.childName}>
+                      {activeChild ? activeChild.name : 'Select Child'}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.actionBadge}>
+                  <Text style={styles.actionBadgeText}>Change ▾</Text>
+                </View>
+              </TouchableOpacity>
+
+              <ChildSelectModal
+                visible={childModalVisible}
+                childrenList={children}
+                selectedChildId={selectedChildId}
+                onSelectChild={id => setSelectedChildId(id)}
+                onClose={() => setChildModalVisible(false)}
+              />
+            </View>
+          )}
+
+        {/* <Button
+          title="🔍 Debug Print All Storage"
+          onPress={debugPrintAllStorage}
+          color="#FF9800"
+        /> */}
+
         {isEditing ? renderFormView() : renderReportView()}
 
         <StrategyModal
@@ -648,7 +864,7 @@ const InputFormScreen = ({ route, navigation }) => {
               label="Save"
               iconName="save-outline"
               leftColor={Colors.button_main}
-              rightColor={Colors.save_button_accent} // A slightly darker green
+              rightColor={Colors.save_button_accent}
               onPress={handleSaveEntry}
               style={styles.halfButton}
             />
@@ -656,24 +872,12 @@ const InputFormScreen = ({ route, navigation }) => {
             <SplitButton
               label="Edit"
               iconName="create-outline"
-              leftColor={Colors.button_main} // Your main green
-              rightColor={Colors.edit_button_accent} // A slightly darker green
+              leftColor={Colors.button_main}
+              rightColor={Colors.edit_button_accent}
               onPress={() => setIsEditing(true)}
               style={styles.halfButton}
             />
-            // <CustomButton
-            //   label="Edit"
-            //   color="#FFA000"
-            //   onPress={() => setIsEditing(true)}
-            //   style={styles.halfButton}
-            // />
           )}
-          {/* <CustomButton
-            label="Go Back"
-            color="#757575"
-            onPress={() => navigation.goBack()}
-            style={styles.halfButton}
-          /> */}
           <SplitButton
             label="Back"
             iconName="chevron-back-outline"
@@ -684,11 +888,43 @@ const InputFormScreen = ({ route, navigation }) => {
           />
         </View>
       </ScrollView>
+      <Modal
+        visible={isAddChildModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setIsAddChildModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Add Child Profile</Text>
+
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Child's Name"
+              value={newChildName}
+              onChangeText={setNewChildName}
+              autoFocus={true}
+              maxLength={12}
+            />
+
+            <View style={styles.modalButtonRow}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setIsAddChildModalVisible(false)}>
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalButton, styles.saveButton]}
+                onPress={handleSaveNewChild}>
+                <Text style={styles.saveButtonText}>Add Profile</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
-
-// ... (Your styles remain exactly the same as you had them)
 
 const styles = StyleSheet.create({
   scrollView: {
@@ -696,7 +932,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   container: {
-    justifyContent: 'center',
+    justify: 'center',
     alignItems: 'center',
     backgroundColor: Colors.background,
     paddingBottom: 70,
@@ -715,7 +951,7 @@ const styles = StyleSheet.create({
   summaryContainer: {
     width: '90%',
     flexDirection: 'row',
-    flexWrap: 'wrap', // This allows chips to wrap to the next line
+    flexWrap: 'wrap',
     marginTop: 10,
     padding: 10,
     backgroundColor: '#f5f5f5',
@@ -730,8 +966,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 20,
-    paddingLeft: 10, // Room for the checkmark
-    paddingRight: 5, // Less room here because the bin has its own padding
+    paddingLeft: 10,
+    paddingRight: 5,
     paddingVertical: 6,
     margin: 4,
     elevation: 1,
@@ -741,7 +977,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     marginLeft: 5,
     borderLeftWidth: 1,
-    borderLeftColor: '#eee', // Subtle divider line
+    borderLeftColor: '#eee',
   },
   chipText: {
     fontSize: 12,
@@ -754,12 +990,10 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     padding: 20,
     marginBottom: 20,
-    // Add shadow for iOS
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
-    // Add elevation for Android
     elevation: 4,
     borderWidth: 1,
     borderColor: '#efefef',
@@ -819,7 +1053,7 @@ const styles = StyleSheet.create({
   },
   reportStrategyRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start', // Better for long text wrapping
+    alignItems: 'flex-start',
     marginTop: 10,
     paddingRight: 10,
   },
@@ -851,6 +1085,153 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#999',
     fontWeight: 'bold',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    width: '85%',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 20,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    color: '#333',
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 16,
+    marginBottom: 20,
+  },
+  modalButtonRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+  modalButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    marginLeft: 10,
+  },
+  cancelButton: {
+    backgroundColor: '#f0f0f0',
+  },
+  cancelButtonText: {
+    color: '#666',
+    fontWeight: '600',
+  },
+  saveButton: {
+    backgroundColor: Colors.primary || '#2196F3',
+  },
+  saveButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+  triggerButton: {
+    width: '90%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    marginVertical: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  triggerText: {
+    fontSize: 15,
+    color: '#333',
+    fontWeight: '500',
+  },
+  selectorWrapper: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  childSelectorCard: {
+    width: '90%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#f0f7ff',
+    borderWidth: 1.5,
+    borderColor: Colors.primary || '#2196f3',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginVertical: 10,
+    shadowColor: Colors.primary || '#2196f3',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  childInfoLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  childAvatarCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: Colors.primary || '#2196f3',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  childAvatarText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  childMetaText: {
+    justifyContent: 'center',
+  },
+  childLabel: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#666',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  childName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1a1a1a',
+  },
+  actionBadge: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.primary || '#2196f3',
+  },
+  actionBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.primary || '#2196f3',
   },
 });
 

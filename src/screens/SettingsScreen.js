@@ -6,26 +6,42 @@ import {
   Switch,
   ActivityIndicator,
   TouchableOpacity,
+  ScrollView,
+  Alert,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons'; // structural match with HomeScreen
+import { Ionicons } from '@expo/vector-icons';
 import {
   getAnalytics,
   setAnalyticsCollectionEnabled,
 } from '@react-native-firebase/analytics';
+import ChildSettingsCard from '../components/ChildSettingsCard';
+
+const MAX_CHILDREN = 3;
+const DEFAULT_COLORS = ['#4A6159', '#2196F3', '#E91E63', '#9C27B0', '#FF9800'];
 
 export default function SettingsScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const [isOptedIn, setIsOptedIn] = useState(false);
+  const [children, setChildren] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Load current preference on mount
+  // Load preferences and children profiles on mount
   useEffect(() => {
-    const loadPrivacySetting = async () => {
+    const loadSettings = async () => {
       try {
         const hasAnswered = await AsyncStorage.getItem('@analytics_consent');
         setIsOptedIn(hasAnswered === 'true');
+
+        const savedChildren = await AsyncStorage.getItem('@app_children');
+        if (savedChildren) {
+          const parsed = JSON.parse(savedChildren);
+          const active = parsed.filter(
+            c => !c.archived && !c.isArchived && c.isActive !== false,
+          );
+          setChildren(active);
+        }
       } catch (e) {
         console.error('Error loading settings:', e);
       } finally {
@@ -33,10 +49,138 @@ export default function SettingsScreen({ navigation }) {
       }
     };
 
-    loadPrivacySetting();
+    loadSettings();
   }, []);
 
-  // Handle privacy toggle changes
+  // Update profile in storage
+  const handleUpdateChild = async (childId, updatedChild) => {
+    try {
+      const updatedList = children.map(c =>
+        c.id === childId ? updatedChild : c,
+      );
+      setChildren(updatedList);
+
+      const rawStored = await AsyncStorage.getItem('@app_children');
+      const parsedStored = rawStored ? JSON.parse(rawStored) : [];
+      const merged = parsedStored.map(c =>
+        c.id === childId ? updatedChild : c,
+      );
+
+      await AsyncStorage.setItem('@app_children', JSON.stringify(merged));
+    } catch (e) {
+      console.error('Error saving updated child data:', e);
+    }
+  };
+
+  // Add new child profile
+  const handleAddChild = async () => {
+    if (children.length >= MAX_CHILDREN) return;
+
+    try {
+      const rawStored = await AsyncStorage.getItem('@app_children');
+      const parsedStored = rawStored ? JSON.parse(rawStored) : [];
+
+      // Find highest numeric ID in stored children to compute the next sequential ID
+      const maxId = parsedStored.reduce((max, child) => {
+        // Strip 'child_' prefix if older entries were saved with it
+        const cleanId = String(child.id).replace('child_', '');
+        const num = parseInt(cleanId, 10);
+        return !isNaN(num) && num > max ? num : max;
+      }, 0);
+
+      const nextId = (maxId + 1).toString(); // Produces '2', '3', etc.
+
+      const newChild = {
+        id: nextId,
+        name: `Child ${parsedStored.length + 1}`,
+        color: DEFAULT_COLORS[parsedStored.length % DEFAULT_COLORS.length],
+        isActive: true,
+      };
+
+      const updatedList = [...children, newChild];
+      setChildren(updatedList);
+
+      const updatedStorage = [...parsedStored, newChild];
+      await AsyncStorage.setItem(
+        '@app_children',
+        JSON.stringify(updatedStorage),
+      );
+    } catch (e) {
+      console.error('Error adding new child:', e);
+    }
+  };
+
+  // Show warning pop-up before deleting child profile and data
+  const handlePromptDeleteChild = child => {
+    Alert.alert(
+      'Delete Profile & Data?',
+      `Are you sure you want to delete ${child.name}? This will permanently remove this child's profile and all recorded log entries.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete Permanently',
+          style: 'destructive',
+          onPress: () => handleConfirmDeleteChild(child.id),
+        },
+      ],
+    );
+  };
+
+  // Execute actual deletion of child profile and associated data keys
+  // Execute actual deletion of child profile and associated data
+  const handleConfirmDeleteChild = async childId => {
+    try {
+      // 1. Remove profile from component state
+      const updatedList = children.filter(c => c.id !== childId);
+      setChildren(updatedList);
+
+      // 2. Remove profile from @app_children storage
+      const rawStored = await AsyncStorage.getItem('@app_children');
+      if (rawStored) {
+        const parsedStored = JSON.parse(rawStored);
+        const filteredStorage = parsedStored.filter(c => c.id !== childId);
+        await AsyncStorage.setItem(
+          '@app_children',
+          JSON.stringify(filteredStorage),
+        );
+      }
+
+      // 3. Fallback selected child if active child was deleted
+      const currentSelectedId = await AsyncStorage.getItem(
+        '@app_selected_child_id',
+      );
+      if (currentSelectedId === childId && updatedList.length > 0) {
+        await AsyncStorage.setItem('@app_selected_child_id', updatedList[0].id);
+      }
+
+      // 4. Remove entries belonging to this child from the main logs array
+      // Replace '@app_logs' with your actual storage key if different (e.g., '@journal_entries')
+      const LOGS_STORAGE_KEY = '@app_logs';
+      const rawLogs = await AsyncStorage.getItem(LOGS_STORAGE_KEY);
+
+      if (rawLogs) {
+        const parsedLogs = JSON.parse(rawLogs);
+        const filteredLogs = parsedLogs.filter(log => log.childId !== childId);
+        await AsyncStorage.setItem(
+          LOGS_STORAGE_KEY,
+          JSON.stringify(filteredLogs),
+        );
+      }
+
+      // 5. Clean up any individual keys or cached assets matching child ID
+      const allKeys = await AsyncStorage.getAllKeys();
+      const childKeys = allKeys.filter(
+        key => key.includes(childId) && key !== '@app_children',
+      );
+      if (childKeys.length > 0) {
+        await AsyncStorage.multiRemove(childKeys);
+      }
+    } catch (e) {
+      console.error('Error deleting child profile and data:', e);
+    }
+  };
+
+  // Privacy switch handler
   const handleToggleSwitch = async newValue => {
     try {
       setIsOptedIn(newValue);
@@ -65,7 +209,7 @@ export default function SettingsScreen({ navigation }) {
         styles.container,
         { paddingTop: insets.top, paddingBottom: insets.bottom },
       ]}>
-      {/* --- HEADER WITH BACK BUTTON --- */}
+      {/* Header */}
       <View style={styles.headerRow}>
         <TouchableOpacity
           style={styles.backButton}
@@ -76,10 +220,9 @@ export default function SettingsScreen({ navigation }) {
         <Text style={styles.headerTitle}>Settings</Text>
         <View style={styles.placeholderBlock} />
       </View>
-
-      {/* --- SETTINGS CONTENT --- */}
-      <Text style={styles.sectionTitle}>Privacy Settings</Text>
-
+      <Text style={[styles.sectionTitle, { marginTop: 24 }]}>
+        Privacy Settings
+      </Text>
       <View style={styles.settingRow}>
         <View style={styles.textContainer}>
           <Text style={styles.settingLabel}>Share Anonymous Usage Data</Text>
@@ -98,6 +241,32 @@ export default function SettingsScreen({ navigation }) {
           value={isOptedIn}
         />
       </View>
+
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <Text style={[styles.sectionTitle, { marginTop: 24 }]}>
+          Child Profiles
+        </Text>
+
+        {children.map((child, index) => (
+          <ChildSettingsCard
+            key={child.id}
+            child={child}
+            onSave={handleUpdateChild}
+            onDelete={handlePromptDeleteChild}
+            canDelete={index > 0} // Only index 1 (2nd) and index 2 (3rd) can be deleted
+          />
+        ))}
+
+        {children.length < MAX_CHILDREN && (
+          <TouchableOpacity
+            style={styles.addChildButton}
+            onPress={handleAddChild}
+            activeOpacity={0.7}>
+            <Ionicons name="add-circle-outline" size={22} color="#4A6159" />
+            <Text style={styles.addChildText}>Add Child Profile</Text>
+          </TouchableOpacity>
+        )}
+      </ScrollView>
     </View>
   );
 }
@@ -122,7 +291,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: '#EFEFEF',
     backgroundColor: '#FFFFFF',
-    marginBottom: 25,
+    marginBottom: 16,
   },
   backButton: {
     width: 40,
@@ -138,7 +307,10 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
   placeholderBlock: {
-    width: 40, // Keeps the title perfectly centered
+    width: 40,
+  },
+  scrollContent: {
+    paddingBottom: 24,
   },
   sectionTitle: {
     fontSize: 13,
@@ -148,6 +320,25 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     paddingHorizontal: 20,
     marginBottom: 12,
+  },
+  addChildButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 14,
+    marginHorizontal: 16,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: '#4A6159',
+    borderStyle: 'dashed',
+    marginBottom: 8,
+  },
+  addChildText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#4A6159',
+    marginLeft: 8,
   },
   settingRow: {
     flexDirection: 'row',

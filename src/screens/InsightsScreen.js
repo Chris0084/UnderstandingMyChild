@@ -1,5 +1,13 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions } from 'react-native';
+import React, { useState, useCallback, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Dimensions,
+  ActivityIndicator,
+  RefreshControl,
+} from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TotalIncidents from '../insightComponents/TotalIncidents';
@@ -11,41 +19,68 @@ import PolarAreaChart from '../insightComponents/PolarAreaChart';
 import PageHeader from '../components/PageHeader';
 import Colors from '../constants/Colors';
 import HeatMap from '../insightComponents/HeatMap';
-import { Ionicons } from '@expo/vector-icons'; // Added for placeholder icon
+import { Ionicons } from '@expo/vector-icons';
+import ChildSelector from '../components/ChildSelector';
 
 const { width } = Dimensions.get('window');
 const logsRequired = 15;
 
 const InsightsScreen = () => {
   const insets = useSafeAreaInsets();
+
+  // FIX 1: Matching state variables for ChildSelector
+  const [selectedChildId, setSelectedChildId] = useState('all');
+  const [children, setChildren] = useState([]);
+
   const [stats, setStats] = useState({
     topStrategies: [],
+    leastEffectiveStrategies: [],
     topLocations: [],
+    topTags: [],
+    heatMapData: null,
     totalLogs: 0,
-    heatMapData: null, // Initial state safety
   });
-  const [loading, setLoading] = useState(true); // Stop visual jumps while reading storage
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useFocusEffect(
-    useCallback(() => {
-      calculateInsights();
-    }, []),
-  );
-
-  const calculateInsights = async () => {
+  const calculateInsights = useCallback(async () => {
     try {
+      // FIX 2: Load children profile list for the selector
+      const storedChildren = await AsyncStorage.getItem('@app_children'); // adjust key if needed
+      if (storedChildren) {
+        setChildren(JSON.parse(storedChildren));
+      }
+
       const storedData = await AsyncStorage.getItem('@app_logs');
       if (!storedData) {
         setStats(prev => ({ ...prev, totalLogs: 0 }));
-        setLoading(false);
         return;
       }
-      const logs = JSON.parse(storedData);
+      const rawLogs = JSON.parse(storedData);
 
-      // If there are less than 10 logs, we don't need to do heavy data crunching yet
-      if (logs.length < logsRequired) {
+      // FIX 3: Filter logs based on selectedChildId
+      let logs = rawLogs;
+
+      // Treat 'all', '', null, or undefined as "Show All Children"
+      const isAllSelected =
+        !selectedChildId ||
+        selectedChildId === 'all' ||
+        selectedChildId === 'ALL' ||
+        (typeof selectedChildId === 'object' && selectedChildId?.id === 'all');
+
+      if (!isAllSelected) {
+        logs = rawLogs.filter(log => {
+          // Compare as strings to prevent type mismatch (e.g. number ID vs string ID)
+          const logChildId = String(
+            log.childId ?? log.child ?? log.childName ?? '',
+          );
+          const targetId = String(selectedChildId);
+          return logChildId === targetId;
+        });
+      }
+
+      if (rawLogs.length < logsRequired) {
         setStats(prev => ({ ...prev, totalLogs: logs.length }));
-        setLoading(false);
         return;
       }
 
@@ -76,7 +111,7 @@ const InsightsScreen = () => {
       // --- 2. TALLY LOCATIONS ---
       const locationCounts = {};
       logs.forEach(log => {
-        let rawLoc = log.where || 'Unknown';
+        const rawLoc = log.where || 'Unknown';
         const cleanLoc = rawLoc
           .trim()
           .toLowerCase()
@@ -104,7 +139,7 @@ const InsightsScreen = () => {
 
       logs.forEach(log => {
         (log.tags || []).forEach(tag => {
-          if (tagCounts.hasOwnProperty(tag)) {
+          if (Object.prototype.hasOwnProperty.call(tagCounts, tag)) {
             tagCounts[tag] += 1;
           }
         });
@@ -117,7 +152,7 @@ const InsightsScreen = () => {
 
       // --- 4. HEATMAP LOGIC ---
       const times = ['Morning', 'Afternoon', 'Evening', 'Night time'];
-      let heatMapMatrix = Array.from({ length: 7 }, (_, i) => ({
+      const heatMapMatrix = Array.from({ length: 7 }, (_, i) => ({
         dayIndex: i,
         slots: times.map(t => ({ time: t, count: 0 })),
       }));
@@ -135,12 +170,13 @@ const InsightsScreen = () => {
           }
         }
       });
+
       const maxCount = Math.max(
         ...heatMapMatrix.flatMap(d => d.slots.map(s => s.count)),
         1,
       );
 
-      // --- 5. UPDATE STATE (ONCE) ---
+      // --- 5. UPDATE STATE ---
       setStats({
         topStrategies,
         leastEffectiveStrategies,
@@ -149,63 +185,88 @@ const InsightsScreen = () => {
         heatMapData: { matrix: heatMapMatrix, maxCount },
         totalLogs: logs.length,
       });
-      setLoading(false);
     } catch (e) {
       console.error('Error calculating insights:', e);
+    } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  };
+  }, [selectedChildId]); // FIX 4: Include selectedChildId in calculateInsights useCallback
 
-  // Render function helper to keep code clean
+  useFocusEffect(
+    useCallback(() => {
+      calculateInsights();
+    }, [calculateInsights]),
+  );
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    calculateInsights();
+  }, [calculateInsights]);
+
   const renderContent = () => {
     if (loading) {
       return (
         <View style={styles.centerStage}>
-          <Text style={{ color: '#999' }}>Loading logs...</Text>
+          <ActivityIndicator
+            size="large"
+            color={Colors.trend_theme || '#007AFF'}
+          />
+          <Text style={styles.loadingText}>Loading insights...</Text>
         </View>
       );
     }
 
     // --- LOCK SCREEN COVER LAYOUT ---
-    if (stats.totalLogs < logsRequired) {
+    if (stats.rawLogs < logsRequired) {
       const remaining = logsRequired - stats.totalLogs;
       const progressPercent = (stats.totalLogs / logsRequired) * 100;
 
       return (
-        <View style={styles.lockContainer}>
-          <View style={styles.lockCard}>
-            <View style={styles.iconCircle}>
-              <Ionicons name="lock-closed" size={32} color="#007AFF" />
+        <ScrollView
+          contentContainerStyle={styles.lockScrollContainer}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }>
+          <View style={styles.lockContainer}>
+            <View style={styles.lockCard}>
+              <View style={styles.iconCircle}>
+                <Ionicons name="lock-closed" size={32} color="#007AFF" />
+              </View>
+
+              <Text style={styles.lockTitle}>Almost There</Text>
+              <Text style={styles.lockSubtitle}>
+                Once you've added {logsRequired} logs, your Trend Tracker will
+                reveal helpful patterns and insights.
+              </Text>
+
+              {/* Dynamic Progress Bar */}
+              <View style={styles.progressBarBg}>
+                <View
+                  style={[
+                    styles.progressBarFill,
+                    { width: `${progressPercent}%` },
+                  ]}
+                />
+              </View>
+
+              <Text style={styles.progressText}>
+                {stats.totalLogs} / {logsRequired} Logs Filled • {remaining}{' '}
+                more to go!
+              </Text>
             </View>
-
-            <Text style={styles.lockTitle}>Almost There</Text>
-            <Text style={styles.lockSubtitle}>
-              Once you've added {logsRequired} logs, your Trend Tracker will
-              reveal helpful patterns and insights.
-            </Text>
-
-            {/* Custom Dynamic Progress Bar */}
-            <View style={styles.progressBarBg}>
-              <View
-                style={[
-                  styles.progressBarFill,
-                  { width: `${progressPercent}%` },
-                ]}
-              />
-            </View>
-
-            <Text style={styles.progressText}>
-              {stats.totalLogs} / {logsRequired} Logs Filled • {remaining} more
-              to go!
-            </Text>
           </View>
-        </View>
+        </ScrollView>
       );
     }
 
     // --- FULL CHARTS VISIBLE SECTION ---
     return (
-      <ScrollView style={[styles.innerScroll]}>
+      <ScrollView
+        style={styles.innerScroll}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }>
         <TotalIncidents count={stats.totalLogs} />
         <HeatMap data={stats.heatMapData} />
         <EffectiveTools
@@ -229,11 +290,23 @@ const InsightsScreen = () => {
         { paddingTop: insets.top, paddingBottom: insets.bottom },
       ]}>
       <PageHeader
-        title={'Trend Tracker'}
-        iconName={'sparkles-outline'}
-        iconColor={'#000000'}
+        title="Trend Tracker"
+        iconName="sparkles-outline"
+        iconColor="#000000"
         accentColor={Colors.trend_theme}
       />
+      <View style={styles.selectorContainer}>
+        <ChildSelector
+          childrenList={children}
+          selectedChildId={selectedChildId}
+          onSelectChild={val => {
+            const nextId =
+              typeof val === 'object' && val !== null ? val.id : val;
+            setSelectedChildId(nextId);
+          }}
+          showAllOption={true}
+        />
+      </View>
       {renderContent()}
     </View>
   );
@@ -243,8 +316,13 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   innerScroll: { flex: 1, padding: 10 },
   centerStage: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { marginTop: 10, color: '#666', fontSize: 14 },
 
   // Lock Screen Formatting
+  lockScrollContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
   lockContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -306,6 +384,12 @@ const styles = StyleSheet.create({
     color: '#999',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+  },
+  selectorContainer: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 8,
   },
 });
 

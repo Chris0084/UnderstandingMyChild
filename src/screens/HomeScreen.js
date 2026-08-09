@@ -16,10 +16,23 @@ import {
   setAnalyticsCollectionEnabled,
 } from '@react-native-firebase/analytics';
 import { trackAnalyticsAndExecute } from '../utils/analyticsHelper';
+import { migrateExistingLogsToChildOne } from '../utils/childStorage';
 
 export default function HomeScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const [showConsentPopup, setShowConsentPopup] = React.useState(false);
+
+  useEffect(() => {
+    const initChildDataMigration = async () => {
+      try {
+        await migrateExistingLogsToChildOne();
+      } catch (e) {
+        console.error('Child migration error:', e);
+      }
+    };
+
+    initChildDataMigration();
+  }, []);
 
   useEffect(() => {
     const checkPrivacyConsent = async () => {

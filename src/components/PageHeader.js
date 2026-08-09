@@ -1,6 +1,7 @@
 import React from 'react';
-import { StyleSheet, View, Text } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import Colors from '../constants/Colors';
 
 const PageHeader = ({
@@ -8,22 +9,47 @@ const PageHeader = ({
   iconName,
   iconColor = Colors.primary,
   accentColor,
+  showHomeButton = true,
+  homeRouteName = 'Home', // Change if your main screen route has a different name
+  onHomePress,
 }) => {
+  const navigation = useNavigation();
   const finalAccentColor = accentColor || iconColor || Colors.primary;
+
+  const handleHomePress = () => {
+    if (onHomePress) {
+      onHomePress();
+    } else {
+      navigation.navigate(homeRouteName);
+    }
+  };
 
   return (
     <View style={styles.headerContainer}>
       <View style={styles.titleRow}>
         <Text style={styles.headerText}>{title}</Text>
-        {iconName && (
-          <Ionicons
-            name={iconName}
-            size={48}
-            color={iconColor}
-            style={styles.iconStyle}
-          />
-        )}
+
+        <View style={styles.rightIconsContainer}>
+          {iconName && (
+            <Ionicons
+              name={iconName}
+              size={48}
+              color={iconColor}
+              style={styles.iconStyle}
+            />
+          )}
+          {showHomeButton && (
+            <TouchableOpacity
+              style={styles.homeButton}
+              onPress={handleHomePress}
+              activeOpacity={0.7}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <Ionicons name="home-outline" size={48} color={iconColor} />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
+
       {/* A subtle "Striking" accent line */}
       <View
         style={[styles.accentLine, { backgroundColor: finalAccentColor }]}
@@ -42,44 +68,39 @@ const styles = StyleSheet.create({
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between', // Pushes icon to the right
+    justifyContent: 'space-between',
   },
   headerText: {
-    fontSize: 32, // Large and striking
-    fontWeight: '900', // Extra Bold sans-serif
+    fontSize: 32,
+    fontWeight: '900',
     color: '#333',
-    letterSpacing: -0.5, // Modern, tight kerning
-    textTransform: 'capitalize', // Ensures consistent look
-    flex: 1, // Allows text to wrap if too long
+    letterSpacing: -0.5,
+    textTransform: 'capitalize',
+    flex: 1,
+  },
+  rightIconsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  homeButton: {
+    padding: 6,
+    marginRight: 8,
+    borderRadius: 20,
+    backgroundColor: '#F5F5F5',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   iconStyle: {
-    marginLeft: 15,
-    marginRight: 25,
-    // Add a slight shadow to the icon to make it pop
+    marginLeft: 8,
+    marginRight: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 1,
+    shadowOpacity: 0.1,
     shadowRadius: 2,
-  },
-  iconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25, // Perfect circle
-    backgroundColor: '#FFFFFF', // White base
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 15,
-    marginRight: 20,
-    // High-definition shadow
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
   },
   accentLine: {
     height: 8,
-    width: '70%', // Short, stylish underline
+    width: '70%',
     backgroundColor: Colors.primary || '#528900',
     marginTop: 2,
     borderRadius: 4,

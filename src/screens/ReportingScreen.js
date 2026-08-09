@@ -1,11 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { View, FlatList, Text, StyleSheet } from 'react-native';
+import {
+  View,
+  FlatList,
+  Text,
+  StyleSheet,
+  Alert,
+  TouchableOpacity,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SortButton from '../components/SortButton';
 import * as Clipboard from 'expo-clipboard';
-import { Alert, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
@@ -17,10 +23,98 @@ import CustomButton from '../components/CustomButton';
 import FilterButton from '../components/FilterButton';
 import FilterModal from '../components/FilterModal';
 import PageHeader from '../components/PageHeader.js';
+import ChildSelector from '../components/ChildSelector';
 import Colors from '../constants/Colors.js';
 
 const ReportingScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
+
+  // State Management
+  const [allLogs, setAllLogs] = useState([]); // Master data
+  const [filteredLogs, setFilteredLogs] = useState([]); // Displayed data
+  const [modalVisible, setModalVisible] = useState(false);
+  const [isAscending, setIsAscending] = useState(false); // false = Newest First
+  const [filterMediaOnly, setFilterMediaOnly] = useState(false);
+
+  // Child Profile States
+  const [children, setChildren] = useState([]);
+  const [selectedChildId, setSelectedChildId] = useState('ALL');
+
+  // Filter states
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [filterTags, setFilterTags] = useState([]);
+  const [filterMood, setFilterMood] = useState(null);
+
+  const availableTags = [
+    'Sensory',
+    'Communication',
+    'Routine',
+    'Social Connection',
+    'Self-Regulated',
+    'Executive Function',
+    'Sleep',
+  ];
+
+  // 1. Fetch Functions defined at top scope to fix hoisting/scoping issues
+  const fetchLogs = useCallback(async () => {
+    try {
+      const storedData = await AsyncStorage.getItem('@app_logs');
+      if (storedData) {
+        setAllLogs(JSON.parse(storedData));
+      }
+    } catch (error) {
+      console.error('Error loading logs:', error);
+    }
+  }, []);
+
+  const fetchChildren = useCallback(async () => {
+    try {
+      const savedChildren = await AsyncStorage.getItem('@app_children');
+      if (savedChildren) {
+        const parsed = JSON.parse(savedChildren);
+
+        // Filter out inactive/archived children
+        let activeChildren = parsed.filter(
+          child =>
+            child.isActive !== false &&
+            !child.isArchived &&
+            child.status !== 'inactive',
+        );
+
+        // Ensure at least 1 child is always available
+        if (activeChildren.length === 0 && parsed.length > 0) {
+          activeChildren = [parsed[0]];
+        } else if (activeChildren.length === 0) {
+          activeChildren = [{ id: '1', name: 'Child 1', isActive: true }];
+        }
+
+        setChildren(activeChildren);
+
+        // Ensure selected child ID points to an active profile
+        setSelectedChildId(prevSelectedId => {
+          if (prevSelectedId === 'ALL') return 'ALL';
+          const exists = activeChildren.some(
+            child => child.id === prevSelectedId,
+          );
+          return exists ? prevSelectedId : 'ALL'; // Fallback to 'ALL' instead of child[0]
+        });
+      } else {
+        const initialChildren = [{ id: '1', name: 'Child 1', isActive: true }];
+        setChildren(initialChildren);
+        setSelectedChildId('1');
+      }
+    } catch (error) {
+      console.error('Error loading children profiles:', error);
+    }
+  }, []);
+
+  // Refresh data every time the screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      fetchChildren();
+      fetchLogs();
+    }, [fetchChildren, fetchLogs]),
+  );
 
   const injectSampleData = async () => {
     try {
@@ -76,37 +170,14 @@ const ReportingScreen = ({ navigation }) => {
     }
   };
 
-  // State Management
-  const [allLogs, setAllLogs] = useState([]); // Master data
-  const [filteredLogs, setFilteredLogs] = useState([]); // Displayed data
-  const [modalVisible, setModalVisible] = useState(false);
-  const [isAscending, setIsAscending] = useState(false); // false = Newest First
-  const [filterMediaOnly, setFilterMediaOnly] = useState(false);
-
-  // Filter states
-  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
-  const [filterTags, setFilterTags] = useState([]);
-  const [filterMood, setFilterMood] = useState(null);
-
-  const availableTags = [
-    'Sensory',
-    'Communication',
-    'Routine',
-    'Social Connection',
-    'Self-Regulated',
-    'Executive Function',
-    'Sleep',
-  ];
-
-  // Refresh data every time the screen comes into focus
-  useFocusEffect(
-    useCallback(() => {
-      fetchLogs();
-    }, []),
-  );
   // 2. Apply Filters whenever data or filter choices change
   useEffect(() => {
     let result = [...allLogs];
+
+    // Child Profile Filter (Default to '1' for legacy logs without childId)
+    if (selectedChildId && selectedChildId !== 'ALL') {
+      result = result.filter(log => (log.childId || '1') === selectedChildId);
+    }
 
     if (showFavoritesOnly) {
       result = result.filter(log => log.isFavorite === true);
@@ -117,12 +188,6 @@ const ReportingScreen = ({ navigation }) => {
       result = result.filter(log => log.mediaUri || log.mediaUri);
     }
     // ----------------------
-
-    if (filterTags.length > 0) {
-      result = result.filter(
-        log => log.tags && log.tags.some(t => filterTags.includes(t)),
-      );
-    }
 
     if (filterTags.length > 0) {
       result = result.filter(
@@ -143,23 +208,13 @@ const ReportingScreen = ({ navigation }) => {
     setFilteredLogs(result);
   }, [
     allLogs,
+    selectedChildId,
     filterTags,
     filterMood,
     isAscending,
     showFavoritesOnly,
     filterMediaOnly,
   ]);
-
-  const fetchLogs = async () => {
-    try {
-      const storedData = await AsyncStorage.getItem('@app_logs');
-      if (storedData) {
-        setAllLogs(JSON.parse(storedData));
-      }
-    } catch (error) {
-      console.error('Error loading logs:', error);
-    }
-  };
 
   const resetFilters = () => {
     setFilterTags([]);
@@ -169,8 +224,17 @@ const ReportingScreen = ({ navigation }) => {
   };
 
   const exportFavoritesToPDF = async () => {
-    // 1. Filter only the favorites from your master list
-    const favorites = allLogs.filter(log => log.isFavorite);
+    const favorites = allLogs.filter(log => {
+      const matchesChild =
+        selectedChildId === 'ALL' || (log.childId || '1') === selectedChildId;
+      return log.isFavorite && matchesChild;
+    });
+
+    // Dynamic PDF Header Title
+    const activeChildName =
+      selectedChildId === 'ALL'
+        ? 'All Children'
+        : children.find(c => c.id === selectedChildId)?.name || 'Child';
 
     if (favorites.length === 0) {
       Alert.alert(
@@ -230,13 +294,8 @@ const ReportingScreen = ({ navigation }) => {
         <h1>Starred Observations</h1>
       ${favorites
         .map(log => {
-          // 1. Date Handling
           const logDate = log.logDate ? new Date(log.logDate) : new Date();
-
-          // 2. Title Logic (Using your 'where' key from debug)
           const displayTitle = log.where ? log.where : 'Observation';
-
-          // 3. Strategies Handling
           const strategies = log.strategies || {};
           const strategyEntries = Object.entries(strategies).filter(
             ([_, v]) => v !== 'Not used',
@@ -310,7 +369,6 @@ const ReportingScreen = ({ navigation }) => {
     </html>
   `;
 
-    // 3. Generate PDF and Launch Sharing Menu
     try {
       const { uri } = await Print.printToFileAsync({
         html: htmlContent,
@@ -328,7 +386,6 @@ const ReportingScreen = ({ navigation }) => {
     }
   };
 
-  // --- THE RETURN STATEMENT ---
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <PageHeader
@@ -370,6 +427,14 @@ const ReportingScreen = ({ navigation }) => {
             </Text>
           </TouchableOpacity>
         </View>
+        <View style={styles.selectorContainer}>
+          <ChildSelector
+            childrenList={children}
+            selectedChildId={selectedChildId}
+            onSelectChild={setSelectedChildId}
+            showAllOption={true}
+          />
+        </View>
       </View>
 
       <FlatList
@@ -378,7 +443,6 @@ const ReportingScreen = ({ navigation }) => {
         renderItem={({ item, index }) => (
           <LogCard entry={item} isAlternate={index % 2 === 0} />
         )}
-        // Combine the static styles with the dynamic inset value here
         contentContainerStyle={[
           styles.listContent,
           { paddingBottom: insets.bottom + 100 },
@@ -442,29 +506,25 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   buttonRow: {
-    // flexDirection: 'row',
-    // justifyContent: 'space-between',
-    // alignItems: 'center',
     paddingHorizontal: 20,
     marginBottom: 10,
   },
   actionButtons: {
     flexDirection: 'row',
     alignItems: 'center',
-    flexWrap: 'wrap', // <--- THIS IS THE KEY
-    rowGap: 10, // Adds space between rows when it wraps
-    columnGap: 8, // Adds space between buttons horizontally
-    justifyContent: 'flex-start', // Keeps everything to the left
+    flexWrap: 'wrap',
+    rowGap: 10,
+    columnGap: 8,
+    justifyContent: 'flex-start',
   },
   exportLabelButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E3F2FD', // Light blue background
+    backgroundColor: '#E3F2FD',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
     marginRight: 8,
-    // Matching the shadow/elevation of your other buttons
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -478,7 +538,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginLeft: 6,
   },
-  // Add this new style
   iconCircle: {
     width: 40,
     height: 40,
@@ -486,8 +545,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 8, // Space between star and sort
-    // Shadow/Elevation to match Sort/Filter buttons
+    marginRight: 8,
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -495,7 +553,7 @@ const styles = StyleSheet.create({
     shadowRadius: 1.41,
   },
   halfButton: {
-    width: '35%', // Shrink the Back button slightly to make room
+    width: '35%',
     marginVertical: 0,
   },
   listContent: {},
@@ -518,6 +576,12 @@ const styles = StyleSheet.create({
     color: '#007AFF',
     fontWeight: 'bold',
     marginLeft: 8,
+  },
+  selectorContainer: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 8,
   },
 });
 

@@ -1,5 +1,6 @@
 export const SAMPLE_LOGS = [
   {
+    childId: '1',
     id: '1741896001000',
     where: 'Supermarket',
     timeOfDay: 'Morning',
@@ -19,6 +20,7 @@ export const SAMPLE_LOGS = [
     },
   },
   {
+    childId: '1',
     id: '1741896002000',
     where: 'Bedroom',
     timeOfDay: 'Evening',
@@ -39,6 +41,7 @@ export const SAMPLE_LOGS = [
     },
   },
   {
+    childId: '1',
     id: '1741896003000',
     where: 'School Gates',
     timeOfDay: 'Morning',
@@ -58,6 +61,7 @@ export const SAMPLE_LOGS = [
     },
   },
   {
+    childId: '1',
     id: '1741896004000',
     where: 'Kitchen',
     timeOfDay: 'Morning',
@@ -77,6 +81,7 @@ export const SAMPLE_LOGS = [
     },
   },
   {
+    childId: '2',
     id: '1741896005000',
     where: 'Park',
     timeOfDay: 'Afternoon',
@@ -94,6 +99,7 @@ export const SAMPLE_LOGS = [
     },
   },
   {
+    childId: '2',
     id: '1741896006000',
     where: 'Living Room',
     timeOfDay: 'Evening',
@@ -112,6 +118,7 @@ export const SAMPLE_LOGS = [
     },
   },
   {
+    childId: '2',
     id: '1741896007000',
     where: 'Bedroom',
     timeOfDay: 'Morning',
@@ -131,6 +138,7 @@ export const SAMPLE_LOGS = [
     },
   },
   {
+    childId: '2',
     id: '1741896008000',
     where: 'Hallway',
     timeOfDay: 'Morning',
@@ -149,6 +157,7 @@ export const SAMPLE_LOGS = [
     },
   },
   {
+    childId: '2',
     id: '1741896009000',
     where: 'Dining Room',
     timeOfDay: 'Afternoon',
@@ -167,6 +176,7 @@ export const SAMPLE_LOGS = [
     },
   },
   {
+    childId: '2',
     id: '1741896010000',
     where: 'Car',
     timeOfDay: 'Afternoon',
@@ -185,6 +195,7 @@ export const SAMPLE_LOGS = [
     },
   },
   {
+    childId: '1',
     id: '1741896011000',
     where: 'Bathroom',
     timeOfDay: 'Evening',
@@ -202,6 +213,7 @@ export const SAMPLE_LOGS = [
     },
   },
   {
+    childId: '1',
     id: '1741896012000',
     where: 'Playground',
     timeOfDay: 'Morning',
@@ -220,6 +232,7 @@ export const SAMPLE_LOGS = [
     },
   },
   {
+    childId: '1',
     id: '1741896013000',
     where: 'Kitchen',
     timeOfDay: 'Evening',
@@ -239,6 +252,7 @@ export const SAMPLE_LOGS = [
     },
   },
   {
+    childId: '2',
     id: '1741896014000',
     where: 'Library',
     timeOfDay: 'Morning',
@@ -273,6 +287,7 @@ export const SAMPLE_LOGS = [
     },
   },
   {
+    childId: '1',
     id: '1741896016000',
     where: 'Kitchen',
     timeOfDay: 'Evening',
@@ -291,6 +306,7 @@ export const SAMPLE_LOGS = [
     },
   },
   {
+    childId: '1',
     id: '1741896017000',
     where: 'Classroom',
     timeOfDay: 'Morning',
@@ -310,6 +326,7 @@ export const SAMPLE_LOGS = [
     },
   },
   {
+    childId: '1',
     id: '1741896018000',
     where: 'Hallway',
     timeOfDay: 'Afternoon',
@@ -328,6 +345,7 @@ export const SAMPLE_LOGS = [
     },
   },
   {
+    childId: '1',
     id: '1741896019000',
     where: 'Doctor Office',
     timeOfDay: 'Morning',
@@ -346,6 +364,7 @@ export const SAMPLE_LOGS = [
     },
   },
   {
+    childId: '1',
     id: '1741896020000',
     where: 'Living Room',
     timeOfDay: 'Afternoon',
@@ -364,6 +383,7 @@ export const SAMPLE_LOGS = [
     },
   },
   {
+    childId: '2',
     id: '1741896021000',
     where: 'Bedroom',
     timeOfDay: 'Night time',
@@ -381,6 +401,7 @@ export const SAMPLE_LOGS = [
     },
   },
   {
+    childId: '2',
     id: '1741896022000',
     where: 'School Hall',
     timeOfDay: 'Morning',
@@ -399,6 +420,7 @@ export const SAMPLE_LOGS = [
     },
   },
   {
+    childId: '1',
     id: '1741896023000',
     where: 'Kitchen',
     timeOfDay: 'Afternoon',
@@ -416,6 +438,7 @@ export const SAMPLE_LOGS = [
     },
   },
   {
+    childId: '1',
     id: '1741896024000',
     where: 'Supermarket',
     timeOfDay: 'Afternoon',
@@ -432,6 +455,7 @@ export const SAMPLE_LOGS = [
     },
   },
   {
+    childId: '1',
     id: '1741896025000',
     where: 'Living Room',
     timeOfDay: 'Evening',
