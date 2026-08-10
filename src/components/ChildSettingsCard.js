@@ -21,7 +21,7 @@ const PRESET_COLORS = [
   '#ff0000', // Default Sage
   '#ff8700', // Blue
   '#ffd300', // Pink
-  '#deff0a', // Purple
+  '#58ff0a', // Purple
   '#0aefff', // Green
   '#580aff', // Green
   '#be0aff', // Green
