@@ -209,40 +209,40 @@ export default function SettingsScreen({ navigation }) {
         styles.container,
         { paddingTop: insets.top, paddingBottom: insets.bottom },
       ]}>
-      {/* Header */}
-      <View style={styles.headerRow}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-          activeOpacity={0.7}>
-          <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Settings</Text>
-        <View style={styles.placeholderBlock} />
-      </View>
-      <Text style={[styles.sectionTitle, { marginTop: 24 }]}>
-        Privacy Settings
-      </Text>
-      <View style={styles.settingRow}>
-        <View style={styles.textContainer}>
-          <Text style={styles.settingLabel}>Share Anonymous Usage Data</Text>
-          <Text style={styles.settingDescription}>
-            Help us improve your app experience with anonymous analytics. Your
-            journal entries, text logs, and personal inputs remain 100% private
-            and invisible to developers.
-          </Text>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Header */}
+        <View style={styles.headerRow}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+            activeOpacity={0.7}>
+            <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Settings</Text>
+          <View style={styles.placeholderBlock} />
+        </View>
+        <Text style={[styles.sectionTitle, { marginTop: 24 }]}>
+          Privacy Settings
+        </Text>
+        <View style={styles.settingRow}>
+          <View style={styles.textContainer}>
+            <Text style={styles.settingLabel}>Share Anonymous Usage Data</Text>
+            <Text style={styles.settingDescription}>
+              Help us improve your app experience with anonymous analytics. Your
+              journal entries, text logs, and personal inputs remain 100%
+              private and invisible to developers.
+            </Text>
+          </View>
+
+          <Switch
+            trackColor={{ false: '#D1D1D6', true: '#A2B5AF' }}
+            thumbColor={isOptedIn ? '#4A6159' : '#F4F4F4'}
+            ios_backgroundColor="#D1D1D6"
+            onValueChange={handleToggleSwitch}
+            value={isOptedIn}
+          />
         </View>
 
-        <Switch
-          trackColor={{ false: '#D1D1D6', true: '#A2B5AF' }}
-          thumbColor={isOptedIn ? '#4A6159' : '#F4F4F4'}
-          ios_backgroundColor="#D1D1D6"
-          onValueChange={handleToggleSwitch}
-          value={isOptedIn}
-        />
-      </View>
-
-      <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={[styles.sectionTitle, { marginTop: 24 }]}>
           Child Profiles
         </Text>

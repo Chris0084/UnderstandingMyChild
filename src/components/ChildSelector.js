@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   selectedCircle: {
-    borderWidth: 4,
+    borderWidth: 2,
     borderColor: '#f32121',
   },
   unselectedCircle: {
