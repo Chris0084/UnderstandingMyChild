@@ -935,7 +935,7 @@ const styles = StyleSheet.create({
     justify: 'center',
     alignItems: 'center',
     backgroundColor: Colors.background,
-    paddingBottom: 70,
+    paddingBottom: 300,
   },
   text: { fontSize: 20, marginBottom: 20 },
   buttonContainer: {
