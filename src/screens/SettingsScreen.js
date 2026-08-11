@@ -8,6 +8,10 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  KeyboardAvoidingView,
+  TouchableWithoutFeedback,
+  Keyboard,
+  Platform,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -80,15 +84,13 @@ export default function SettingsScreen({ navigation }) {
       const rawStored = await AsyncStorage.getItem('@app_children');
       const parsedStored = rawStored ? JSON.parse(rawStored) : [];
 
-      // Find highest numeric ID in stored children to compute the next sequential ID
       const maxId = parsedStored.reduce((max, child) => {
-        // Strip 'child_' prefix if older entries were saved with it
         const cleanId = String(child.id).replace('child_', '');
         const num = parseInt(cleanId, 10);
         return !isNaN(num) && num > max ? num : max;
       }, 0);
 
-      const nextId = (maxId + 1).toString(); // Produces '2', '3', etc.
+      const nextId = (maxId + 1).toString();
 
       const newChild = {
         id: nextId,
@@ -110,7 +112,7 @@ export default function SettingsScreen({ navigation }) {
     }
   };
 
-  // Show warning pop-up before deleting child profile and data
+  // Show warning pop-up before deleting child profile
   const handlePromptDeleteChild = child => {
     Alert.alert(
       'Delete Profile & Data?',
@@ -126,15 +128,12 @@ export default function SettingsScreen({ navigation }) {
     );
   };
 
-  // Execute actual deletion of child profile and associated data keys
-  // Execute actual deletion of child profile and associated data
+  // Execute deletion of child profile
   const handleConfirmDeleteChild = async childId => {
     try {
-      // 1. Remove profile from component state
       const updatedList = children.filter(c => c.id !== childId);
       setChildren(updatedList);
 
-      // 2. Remove profile from @app_children storage
       const rawStored = await AsyncStorage.getItem('@app_children');
       if (rawStored) {
         const parsedStored = JSON.parse(rawStored);
@@ -145,7 +144,6 @@ export default function SettingsScreen({ navigation }) {
         );
       }
 
-      // 3. Fallback selected child if active child was deleted
       const currentSelectedId = await AsyncStorage.getItem(
         '@app_selected_child_id',
       );
@@ -153,8 +151,6 @@ export default function SettingsScreen({ navigation }) {
         await AsyncStorage.setItem('@app_selected_child_id', updatedList[0].id);
       }
 
-      // 4. Remove entries belonging to this child from the main logs array
-      // Replace '@app_logs' with your actual storage key if different (e.g., '@journal_entries')
       const LOGS_STORAGE_KEY = '@app_logs';
       const rawLogs = await AsyncStorage.getItem(LOGS_STORAGE_KEY);
 
@@ -167,7 +163,6 @@ export default function SettingsScreen({ navigation }) {
         );
       }
 
-      // 5. Clean up any individual keys or cached assets matching child ID
       const allKeys = await AsyncStorage.getAllKeys();
       const childKeys = allKeys.filter(
         key => key.includes(childId) && key !== '@app_children',
@@ -204,70 +199,82 @@ export default function SettingsScreen({ navigation }) {
   }
 
   return (
-    <View
-      style={[
-        styles.container,
-        { paddingTop: insets.top, paddingBottom: insets.bottom },
-      ]}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Header */}
-        <View style={styles.headerRow}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-            activeOpacity={0.7}>
-            <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Settings</Text>
-          <View style={styles.placeholderBlock} />
-        </View>
-        <Text style={[styles.sectionTitle, { marginTop: 24 }]}>
-          Privacy Settings
-        </Text>
-        <View style={styles.settingRow}>
-          <View style={styles.textContainer}>
-            <Text style={styles.settingLabel}>Share Anonymous Usage Data</Text>
-            <Text style={styles.settingDescription}>
-              Help us improve your app experience with anonymous analytics. Your
-              journal entries, text logs, and personal inputs remain 100%
-              private and invisible to developers.
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View
+          style={[
+            styles.container,
+            { paddingTop: insets.top, paddingBottom: insets.bottom },
+          ]}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled">
+            {/* Header */}
+            <View style={styles.headerRow}>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => navigation.goBack()}
+                activeOpacity={0.7}>
+                <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
+              </TouchableOpacity>
+              <Text style={styles.headerTitle}>Settings</Text>
+              <View style={styles.placeholderBlock} />
+            </View>
+
+            <Text style={[styles.sectionTitle, { marginTop: 24 }]}>
+              Privacy Settings
             </Text>
-          </View>
+            <View style={styles.settingRow}>
+              <View style={styles.textContainer}>
+                <Text style={styles.settingLabel}>
+                  Share Anonymous Usage Data
+                </Text>
+                <Text style={styles.settingDescription}>
+                  Help us improve your app experience with anonymous analytics.
+                  Your journal entries, text logs, and personal inputs remain
+                  100% private and invisible to developers.
+                </Text>
+              </View>
 
-          <Switch
-            trackColor={{ false: '#D1D1D6', true: '#A2B5AF' }}
-            thumbColor={isOptedIn ? '#4A6159' : '#F4F4F4'}
-            ios_backgroundColor="#D1D1D6"
-            onValueChange={handleToggleSwitch}
-            value={isOptedIn}
-          />
+              <Switch
+                trackColor={{ false: '#D1D1D6', true: '#A2B5AF' }}
+                thumbColor={isOptedIn ? '#4A6159' : '#F4F4F4'}
+                ios_backgroundColor="#D1D1D6"
+                onValueChange={handleToggleSwitch}
+                value={isOptedIn}
+              />
+            </View>
+
+            <Text style={[styles.sectionTitle, { marginTop: 24 }]}>
+              Child Profiles
+            </Text>
+
+            {children.map((child, index) => (
+              <ChildSettingsCard
+                key={child.id}
+                child={child}
+                onSave={handleUpdateChild}
+                onDelete={handlePromptDeleteChild}
+                canDelete={index > 0}
+              />
+            ))}
+
+            {children.length < MAX_CHILDREN && (
+              <TouchableOpacity
+                style={styles.addChildButton}
+                onPress={handleAddChild}
+                activeOpacity={0.7}>
+                <Ionicons name="add-circle-outline" size={22} color="#4A6159" />
+                <Text style={styles.addChildText}>Add Child Profile</Text>
+              </TouchableOpacity>
+            )}
+          </ScrollView>
         </View>
-
-        <Text style={[styles.sectionTitle, { marginTop: 24 }]}>
-          Child Profiles
-        </Text>
-
-        {children.map((child, index) => (
-          <ChildSettingsCard
-            key={child.id}
-            child={child}
-            onSave={handleUpdateChild}
-            onDelete={handlePromptDeleteChild}
-            canDelete={index > 0} // Only index 1 (2nd) and index 2 (3rd) can be deleted
-          />
-        ))}
-
-        {children.length < MAX_CHILDREN && (
-          <TouchableOpacity
-            style={styles.addChildButton}
-            onPress={handleAddChild}
-            activeOpacity={0.7}>
-            <Ionicons name="add-circle-outline" size={22} color="#4A6159" />
-            <Text style={styles.addChildText}>Add Child Profile</Text>
-          </TouchableOpacity>
-        )}
-      </ScrollView>
-    </View>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -310,7 +317,7 @@ const styles = StyleSheet.create({
     width: 40,
   },
   scrollContent: {
-    paddingBottom: 24,
+    paddingBottom: 500, // High bottom padding ensures scroll space when keyboard opens
   },
   sectionTitle: {
     fontSize: 13,
