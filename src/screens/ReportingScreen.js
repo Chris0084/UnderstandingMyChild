@@ -56,11 +56,29 @@ const ReportingScreen = ({ navigation }) => {
   ];
 
   // 1. Fetch Functions defined at top scope to fix hoisting/scoping issues
+  // const fetchLogs = useCallback(async () => {
+  //   try {
+  //     const storedData = await AsyncStorage.getItem('@app_logs');
+  //     if (storedData) {
+  //       setAllLogs(JSON.parse(storedData));
+  //     }
+  //   } catch (error) {
+  //     console.error('Error loading logs:', error);
+  //   }
+  // }, []);
+
   const fetchLogs = useCallback(async () => {
     try {
       const storedData = await AsyncStorage.getItem('@app_logs');
+
+      // --- CONSOLE LOG DATABASE ---
+      console.log('--- 📦 RAW ASYNC STORAGE (@app_logs) ---', storedData);
       if (storedData) {
-        setAllLogs(JSON.parse(storedData));
+        const parsedData = JSON.parse(storedData);
+        console.log('--- 📋 PARSED LOGS DATABASE ---', parsedData);
+        setAllLogs(parsedData);
+      } else {
+        console.log('--- ⚠️ No logs found in @app_logs ---');
       }
     } catch (error) {
       console.error('Error loading logs:', error);

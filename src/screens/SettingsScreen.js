@@ -16,10 +16,28 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+
+// Firebase Imports
+import firestore from '@react-native-firebase/firestore';
 import {
   getAnalytics,
   setAnalyticsCollectionEnabled,
 } from '@react-native-firebase/analytics';
+import { getAuth, onAuthStateChanged } from '@react-native-firebase/auth';
+
+// Services
+import {
+  createHousehold,
+  joinHouseholdWithCode,
+  migrateLocalDataToCloud,
+  pullCloudDataToLocal,
+  saveOrUpdateChild,
+} from '../services/firestoreService';
+import { signInUser, signOutUser, registerUser } from '../services/authService';
+
+// Custom Components
+import HouseholdInviteModal from '../components/HouseholdInviteModal';
+import AccountSyncSection from '../components/AccountSyncSection';
 import ChildSettingsCard from '../components/ChildSettingsCard';
 
 const MAX_CHILDREN = 3;
@@ -30,7 +48,51 @@ export default function SettingsScreen({ navigation }) {
   const [isOptedIn, setIsOptedIn] = useState(false);
   const [children, setChildren] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isInviteModalVisible, setIsInviteModalVisible] = useState(false);
+  const [inviteModalTab, setInviteModalTab] = useState('share'); // 'share' | 'join'
+  const [currentUser, setCurrentUser] = useState(null);
+  const [householdId, setHouseholdId] = useState(null);
+  const [inviteCode, setInviteCode] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
+  useEffect(() => {
+    const authInstance = getAuth();
+
+    const unsubscribe = onAuthStateChanged(authInstance, async user => {
+      setCurrentUser(user);
+
+      if (user) {
+        try {
+          const userDoc = await firestore()
+            .collection('users')
+            .doc(user.uid)
+            .get();
+
+          if (userDoc.exists() && userDoc.data()?.householdId) {
+            const hId = userDoc.data().householdId;
+            setHouseholdId(hId);
+
+            const hDoc = await firestore()
+              .collection('households')
+              .doc(hId)
+              .get();
+
+            if (hDoc.exists()) {
+              setInviteCode(hDoc.data()?.inviteCode || '');
+            }
+          }
+        } catch (e) {
+          console.error('Error loading cloud user profile:', e);
+        }
+      } else {
+        setHouseholdId(null);
+        setInviteCode('');
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
   // Load preferences and children profiles on mount
   useEffect(() => {
     const loadSettings = async () => {
@@ -55,22 +117,148 @@ export default function SettingsScreen({ navigation }) {
 
     loadSettings();
   }, []);
+  // ✅ Add missing modal handler referenced in AccountSyncSection
+  const handleOpenInviteModal = tab => {
+    setInviteModalTab(tab);
+    setIsInviteModalVisible(true);
+  };
 
-  // Update profile in storage
+  // 1. SIGN IN (Existing Account)
+  const handleSignIn = async () => {
+    const cleanEmail = email ? email.trim() : '';
+    const cleanPassword = password ? password.trim() : '';
+
+    if (!cleanEmail || !cleanPassword) {
+      Alert.alert('Missing Info', 'Please enter both an email and password.');
+      return;
+    }
+
+    try {
+      const user = await signInUser(cleanEmail, cleanPassword);
+
+      // Get existing household ID
+      const userDoc = await firestore().collection('users').doc(user.uid).get();
+      let currentHId = userDoc.exists ? userDoc.data()?.householdId : null;
+
+      if (!currentHId) {
+        const result = await createHousehold(user.uid);
+        currentHId = result.householdId;
+      }
+
+      setHouseholdId(currentHId);
+      await AsyncStorage.setItem('@user_household_id', currentHId);
+
+      // Pull Firestore records and write directly to @app_children & @app_logs
+      const result = await pullCloudDataToLocal(currentHId);
+
+      setPassword('');
+      Alert.alert(
+        'Signed In',
+        `Synced \({result.logsCount} log(s) and\){result.childrenCount} child profile(s)!`,
+      );
+    } catch (e) {
+      Alert.alert('Sign In Failed', e.message);
+    }
+  };
+
+  // 2. CREATE ACCOUNT (New Account)
+  const handleRegister = async () => {
+    const cleanEmail = email ? email.trim() : '';
+    const cleanPassword = password ? password.trim() : '';
+
+    console.log('--- STARTING MIGRATION ---');
+    const rawChildren = await AsyncStorage.getItem('@app_children');
+    const rawLogs = await AsyncStorage.getItem('@app_logs');
+    console.log('Local Children found:', rawChildren);
+    console.log('Local Logs found:', rawLogs);
+
+    if (!cleanEmail || !cleanPassword) {
+      Alert.alert('Missing Info', 'Please enter both an email and password.');
+      return;
+    }
+
+    try {
+      const user = await registerUser(cleanEmail, cleanPassword);
+
+      // Create a new household for the new user
+      const result = await createHousehold(user.uid);
+      setHouseholdId(result.householdId);
+      setInviteCode(result.inviteCode);
+
+      await migrateLocalDataToCloud(result.householdId);
+      setPassword('');
+      Alert.alert('Success', 'Account created successfully!');
+    } catch (e) {
+      Alert.alert('Registration Failed', e.message);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOutUser();
+
+      // Wipe AsyncStorage so navigating to reporting/edit pages won't show old logs
+      await AsyncStorage.removeItem('@app_logs');
+      await AsyncStorage.removeItem('@app_children');
+      await AsyncStorage.removeItem('@user_household_id');
+
+      Alert.alert('Signed Out', 'You have been signed out.');
+    } catch (e) {
+      Alert.alert('Sign Out Failed', e.message);
+    }
+  };
+
+  const handleJoinCodeSubmit = async enteredCode => {
+    if (!currentUser) {
+      Alert.alert(
+        'Sign In Required',
+        'Please sign in before joining a household.',
+      );
+      return;
+    }
+    if (!enteredCode || enteredCode.length < 6) {
+      Alert.alert('Invalid Code', 'Please enter a valid 6-character code.');
+      return;
+    }
+
+    try {
+      // 1. Delegate database lookup & membership update to firestoreService
+      const { householdId: targetHouseholdId, inviteCode: validCode } =
+        await joinHouseholdWithCode(currentUser.uid, enteredCode);
+
+      // 2. Update local state
+      setHouseholdId(targetHouseholdId);
+      setInviteCode(validCode);
+
+      // 3. Sync local data to the newly joined household
+      await migrateLocalDataToCloud(targetHouseholdId);
+
+      // 4. Close modal & alert success
+      setIsInviteModalVisible(false);
+      Alert.alert('Connected!', 'Successfully joined the shared household!');
+    } catch (e) {
+      Alert.alert('Error Joining Household', e.message);
+    }
+  };
+  // Update profile in storage & sync to Firestore
   const handleUpdateChild = async (childId, updatedChild) => {
     try {
-      const updatedList = children.map(c =>
-        c.id === childId ? updatedChild : c,
-      );
-      setChildren(updatedList);
+      // 1. Fetch cached household ID
+      const activeHouseholdId =
+        await AsyncStorage.getItem('@user_household_id');
 
+      // 2. Delegate local AsyncStorage save + Firestore cloud sync
+      await saveOrUpdateChild(updatedChild, activeHouseholdId);
+
+      // 3. Keep local screen state in sync
       const rawStored = await AsyncStorage.getItem('@app_children');
-      const parsedStored = rawStored ? JSON.parse(rawStored) : [];
-      const merged = parsedStored.map(c =>
-        c.id === childId ? updatedChild : c,
-      );
-
-      await AsyncStorage.setItem('@app_children', JSON.stringify(merged));
+      if (rawStored) {
+        const parsedStored = JSON.parse(rawStored);
+        const active = parsedStored.filter(
+          c => !c.archived && !c.isArchived && c.isActive !== false,
+        );
+        setChildren(active);
+      }
     } catch (e) {
       console.error('Error saving updated child data:', e);
     }
@@ -99,14 +287,13 @@ export default function SettingsScreen({ navigation }) {
         isActive: true,
       };
 
-      const updatedList = [...children, newChild];
-      setChildren(updatedList);
+      // Retrieve cached household ID for offline/online sync
+      const activeHouseholdId =
+        await AsyncStorage.getItem('@user_household_id');
 
-      const updatedStorage = [...parsedStored, newChild];
-      await AsyncStorage.setItem(
-        '@app_children',
-        JSON.stringify(updatedStorage),
-      );
+      // Save locally and sync in background
+      const updatedList = await saveOrUpdateChild(newChild, activeHouseholdId);
+      setChildren(updatedList);
     } catch (e) {
       console.error('Error adding new child:', e);
     }
@@ -128,12 +315,13 @@ export default function SettingsScreen({ navigation }) {
     );
   };
 
-  // Execute deletion of child profile
   const handleConfirmDeleteChild = async childId => {
     try {
+      // 1. Update React local state
       const updatedList = children.filter(c => c.id !== childId);
       setChildren(updatedList);
 
+      // 2. Remove child from local AsyncStorage
       const rawStored = await AsyncStorage.getItem('@app_children');
       if (rawStored) {
         const parsedStored = JSON.parse(rawStored);
@@ -144,6 +332,7 @@ export default function SettingsScreen({ navigation }) {
         );
       }
 
+      // 3. Fallback selected child selection
       const currentSelectedId = await AsyncStorage.getItem(
         '@app_selected_child_id',
       );
@@ -151,6 +340,7 @@ export default function SettingsScreen({ navigation }) {
         await AsyncStorage.setItem('@app_selected_child_id', updatedList[0].id);
       }
 
+      // 4. Remove child logs from local AsyncStorage
       const LOGS_STORAGE_KEY = '@app_logs';
       const rawLogs = await AsyncStorage.getItem(LOGS_STORAGE_KEY);
 
@@ -163,12 +353,45 @@ export default function SettingsScreen({ navigation }) {
         );
       }
 
+      // 5. Remove any leftover child-specific keys from AsyncStorage
       const allKeys = await AsyncStorage.getAllKeys();
       const childKeys = allKeys.filter(
         key => key.includes(childId) && key !== '@app_children',
       );
       if (childKeys.length > 0) {
         await AsyncStorage.multiRemove(childKeys);
+      }
+
+      // -------------------------------------------------------------
+      // 6. FIRESTORE SYNC (React Native Firebase)
+      // -------------------------------------------------------------
+      const activeHouseholdId =
+        await AsyncStorage.getItem('@user_household_id');
+
+      if (activeHouseholdId && childId) {
+        // A. Delete Child document
+        await firestore()
+          .collection('households')
+          .doc(activeHouseholdId)
+          .collection('children')
+          .doc(childId)
+          .delete();
+
+        // B. Query and Batch Delete all logs linked to this child
+        const logsSnapshot = await firestore()
+          .collection('households')
+          .doc(activeHouseholdId)
+          .collection('logs')
+          .where('childId', '==', childId)
+          .get();
+
+        if (!logsSnapshot.empty) {
+          const batch = firestore().batch();
+          logsSnapshot.forEach(doc => {
+            batch.delete(doc.ref);
+          });
+          await batch.commit();
+        }
       }
     } catch (e) {
       console.error('Error deleting child profile and data:', e);
@@ -224,6 +447,24 @@ export default function SettingsScreen({ navigation }) {
               <View style={styles.placeholderBlock} />
             </View>
 
+            {/* Account & Cloud Sync Section */}
+            <Text style={[styles.sectionTitle, { marginTop: 16 }]}>
+              Account & Sync
+            </Text>
+            <AccountSyncSection
+              user={currentUser}
+              email={email}
+              setEmail={setEmail}
+              password={password}
+              setPassword={setPassword}
+              onSignInPress={handleSignIn}
+              onRegisterPress={handleRegister}
+              onSignOutPress={handleSignOut}
+              onInvitePartnerPress={() => handleOpenInviteModal('share')}
+              onEnterInviteCodePress={() => handleOpenInviteModal('join')}
+            />
+
+            {/* Privacy Settings Section */}
             <Text style={[styles.sectionTitle, { marginTop: 24 }]}>
               Privacy Settings
             </Text>
@@ -248,6 +489,7 @@ export default function SettingsScreen({ navigation }) {
               />
             </View>
 
+            {/* Child Profiles Section */}
             <Text style={[styles.sectionTitle, { marginTop: 24 }]}>
               Child Profiles
             </Text>
@@ -274,6 +516,15 @@ export default function SettingsScreen({ navigation }) {
           </ScrollView>
         </View>
       </TouchableWithoutFeedback>
+
+      {/* Household Invite Modal */}
+      <HouseholdInviteModal
+        visible={isInviteModalVisible}
+        initialTab={inviteModalTab}
+        onClose={() => setIsInviteModalVisible(false)}
+        inviteCode={inviteCode || 'N/A'}
+        onJoinCodeSubmit={handleJoinCodeSubmit}
+      />
     </KeyboardAvoidingView>
   );
 }
@@ -317,7 +568,7 @@ const styles = StyleSheet.create({
     width: 40,
   },
   scrollContent: {
-    paddingBottom: 500, // High bottom padding ensures scroll space when keyboard opens
+    paddingBottom: 40,
   },
   sectionTitle: {
     fontSize: 13,

@@ -32,6 +32,11 @@ import * as FileSystem from 'expo-file-system/legacy';
 import ChildSelector from '../components/ChildSelector';
 import { debugPrintAllStorage } from '../utils/debugStorage.js';
 import ChildSelectModal from '../components/ChildSelectModal.js';
+import firestore from '@react-native-firebase/firestore';
+import { getAuth } from '@react-native-firebase/auth';
+import { saveOrUpdateLog } from '../services/firestoreService';
+import { deleteLog } from '../services/firestoreService';
+import { saveOrUpdateChild } from '../services/firestoreService';
 
 const getTimeOfDay = () => {
   const hour = new Date().getHours();
@@ -110,13 +115,12 @@ const InputFormScreen = ({ route, navigation }) => {
       return;
     }
 
-    // Find the highest numeric ID currently in use and increment it
     const maxId = children.reduce((max, child) => {
       const num = parseInt(child.id, 10);
       return !isNaN(num) && num > max ? num : max;
     }, 0);
 
-    const nextId = (maxId + 1).toString(); // Produces '2', '3', etc.
+    const nextId = (maxId + 1).toString();
 
     const newChild = {
       id: nextId,
@@ -125,18 +129,22 @@ const InputFormScreen = ({ route, navigation }) => {
       isActive: true,
     };
 
-    const updatedChildren = [...children, newChild];
-
     try {
+      const activeHouseholdId =
+        await AsyncStorage.getItem('@user_household_id');
+
+      // Save locally and sync to cloud
+      const updatedChildren = await saveOrUpdateChild(
+        newChild,
+        activeHouseholdId,
+      );
+
       setChildren(updatedChildren);
       setSelectedChildId(newChild.id);
       setIsAddChildModalVisible(false);
-
-      await AsyncStorage.setItem(
-        '@app_children',
-        JSON.stringify(updatedChildren),
-      );
+      setNewChildName('');
     } catch (e) {
+      console.error('Error saving new child profile:', e);
       Alert.alert('Error', 'Could not save new child profile.');
     }
   };
@@ -174,6 +182,10 @@ const InputFormScreen = ({ route, navigation }) => {
     const loadChildren = async () => {
       try {
         const savedChildren = await AsyncStorage.getItem('@app_children');
+        console.log(
+          '--- 📦 RAW ASYNC CHILD STORAGE (@app_children) ---',
+          savedChildren,
+        );
         let parsed = savedChildren ? JSON.parse(savedChildren) : [];
 
         if (parsed.length === 0) {
@@ -225,7 +237,8 @@ const InputFormScreen = ({ route, navigation }) => {
           const result = await RevenueCatUI.presentPaywallIfNeeded({
             requiredEntitlementIdentifier: 'UMC_subscriber',
           });
-
+          //  const result = 'NOT_PRESENTED';
+          console.log('RevenueCat Paywall result:', result);
           if (result === PAYWALL_RESULT.CANCELLED) {
             navigation.goBack();
             return;
@@ -303,20 +316,34 @@ const InputFormScreen = ({ route, navigation }) => {
           onPress: async () => {
             try {
               const currentId = route.params?.existingEntry?.id;
+              if (!currentId) return;
+
+              // 1. Get householdId if authenticated
+              let activeHouseholdId = null;
+              const currentUser = getAuth().currentUser;
+
+              if (currentUser) {
+                const userDoc = await firestore()
+                  .collection('users')
+                  .doc(currentUser.uid)
+                  .get();
+                activeHouseholdId = userDoc.exists
+                  ? userDoc.data()?.householdId
+                  : null;
+              }
+
+              // 2. Delete locally from @app_logs AND from Firestore
+              await deleteLog(currentId, activeHouseholdId);
+
+              // 3. Update local screen state
               const savedData = await AsyncStorage.getItem('@app_logs');
-              let logs = savedData ? JSON.parse(savedData) : [];
-
-              const updatedLogs = logs.filter(log => log.id !== currentId);
-
-              await AsyncStorage.setItem(
-                '@app_logs',
-                JSON.stringify(updatedLogs),
-              );
+              const updatedLogs = savedData ? JSON.parse(savedData) : [];
               setAllLogs(updatedLogs);
 
               Alert.alert('Deleted', 'Entry removed successfully.');
               navigation.goBack();
             } catch (e) {
+              console.error('Delete log error:', e);
               Alert.alert('Error', 'Could not delete entry.');
             }
           },
@@ -380,6 +407,63 @@ const InputFormScreen = ({ route, navigation }) => {
     }
   };
 
+  // const handleSaveEntry = async () => {
+  //   if (!where.trim()) {
+  //     Alert.alert('Missing Info', "Please fill in the 'WHERE' field.");
+  //     return;
+  //   }
+
+  //   try {
+  //     const permanentMediaUri = await saveMediaPermanently(mediaUri);
+
+  //     // Fallback childId to active selection or first child in list dynamically
+  //     const targetChildId = selectedChildId || children[0]?.id || '1';
+
+  //     const newEntry = {
+  //       id: currentEntryParam ? currentEntryParam.id : Date.now().toString(),
+  //       childId: targetChildId,
+  //       where,
+  //       leadUp,
+  //       whatHappened,
+  //       after,
+  //       logDate: logDate.toISOString(),
+  //       timeOfDay,
+  //       tags: selectedTags,
+  //       mediaUri: permanentMediaUri,
+  //       strategies,
+  //       isFavorite: currentEntryParam ? isFavorite : false,
+  //     };
+
+  //     const existingData = await AsyncStorage.getItem('@app_logs');
+  //     let currentLogs = existingData ? JSON.parse(existingData) : [];
+
+  //     if (currentEntryParam) {
+  //       currentLogs = currentLogs.map(item =>
+  //         item.id === currentEntryParam.id ? newEntry : item,
+  //       );
+  //     } else {
+  //       currentLogs.push(newEntry);
+  //     }
+
+  //     await AsyncStorage.setItem('@app_logs', JSON.stringify(currentLogs));
+
+  //     const sorted = currentLogs.sort(
+  //       (a, b) => new Date(b.logDate) - new Date(a.logDate),
+  //     );
+  //     setAllLogs(sorted);
+
+  //     Alert.alert('Saved', 'Your entry has been recorded!', [
+  //       {
+  //         text: 'OK',
+  //         onPress: () =>
+  //           navigation.navigate('MainApp', { screen: 'Reporting' }),
+  //       },
+  //     ]);
+  //   } catch (e) {
+  //     Alert.alert('Error', 'Could not save entry.');
+  //   }
+  // };
+
   const handleSaveEntry = async () => {
     if (!where.trim()) {
       Alert.alert('Missing Info', "Please fill in the 'WHERE' field.");
@@ -388,9 +472,16 @@ const InputFormScreen = ({ route, navigation }) => {
 
     try {
       const permanentMediaUri = await saveMediaPermanently(mediaUri);
-
-      // Fallback childId to active selection or first child in list dynamically
       const targetChildId = selectedChildId || children[0]?.id || '1';
+
+      // Clean strategies filter
+      const activeStrategies = Array.isArray(strategies)
+        ? strategies.filter(item => item.status && item.status !== 'Not used')
+        : Object.fromEntries(
+            Object.entries(strategies || {}).filter(
+              ([_, value]) => value && value !== 'Not used',
+            ),
+          );
 
       const newEntry = {
         id: currentEntryParam ? currentEntryParam.id : Date.now().toString(),
@@ -403,28 +494,35 @@ const InputFormScreen = ({ route, navigation }) => {
         timeOfDay,
         tags: selectedTags,
         mediaUri: permanentMediaUri,
-        strategies,
+        strategies: activeStrategies,
         isFavorite: currentEntryParam ? isFavorite : false,
       };
 
-      const existingData = await AsyncStorage.getItem('@app_logs');
-      let currentLogs = existingData ? JSON.parse(existingData) : [];
+      // Retrieve active householdId locally from AsyncStorage or auth state
+      // so we don't block the UI with a network request
+      const currentUser = getAuth().currentUser;
+      let activeHouseholdId = null;
 
-      if (currentEntryParam) {
-        currentLogs = currentLogs.map(item =>
-          item.id === currentEntryParam.id ? newEntry : item,
-        );
-      } else {
-        currentLogs.push(newEntry);
+      if (currentUser) {
+        // Pull cached household ID stored locally during sign-in
+        activeHouseholdId = await AsyncStorage.getItem('@user_household_id');
       }
 
-      await AsyncStorage.setItem('@app_logs', JSON.stringify(currentLogs));
+      // 1. Save locally and queue/sync to Firestore asynchronously
+      // Don't let Firestore network latency block the UI return
+      saveOrUpdateLog(newEntry, activeHouseholdId).catch(err =>
+        console.log('Background sync queue note:', err.message),
+      );
 
-      const sorted = currentLogs.sort(
+      // 2. Immediately update local UI state from @app_logs
+      const existingData = await AsyncStorage.getItem('@app_logs');
+      const updatedLogs = existingData ? JSON.parse(existingData) : [];
+      const sorted = updatedLogs.sort(
         (a, b) => new Date(b.logDate) - new Date(a.logDate),
       );
       setAllLogs(sorted);
 
+      // 3. Prompt user & navigate back immediately
       Alert.alert('Saved', 'Your entry has been recorded!', [
         {
           text: 'OK',
@@ -433,6 +531,7 @@ const InputFormScreen = ({ route, navigation }) => {
         },
       ]);
     } catch (e) {
+      console.error('Save entry error:', e);
       Alert.alert('Error', 'Could not save entry.');
     }
   };

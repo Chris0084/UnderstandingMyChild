@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Purchases, { LOG_LEVEL } from 'react-native-purchases';
+import firestore from '@react-native-firebase/firestore';
 import { trackAnalyticsAndExecute } from './src/utils/analyticsHelper';
 
 import HomeScreen from './src/screens/HomeScreen';
@@ -17,6 +18,14 @@ import InformationScreen from './src/screens/InformationScreen';
 import InsightsScreen from './src/screens/InsightsScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import EHCPTimeline from './src/screens/EHCPTimeline';
+
+try {
+  firestore().settings({
+    persistence: true,
+  });
+} catch (e) {
+  console.log('Firestore persistence initialization notice:', e.message);
+}
 
 const REVENUECAT_API_KEY_ANDROID = 'goog_IWwoiEXBtmlKnyOAttqtyASFHeP';
 const REVENUECAT_API_KEY_IOS = 'appl_ZPpTExksxWvIRwWfNBToxzoSvFo';

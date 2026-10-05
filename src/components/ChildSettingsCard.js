@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -8,23 +8,14 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-// const PRESET_COLORS = [
-//   '#4A6159', // Default Sage
-//   '#2196F3', // Blue
-//   '#E91E63', // Pink
-//   '#9C27B0', // Purple
-//   '#FF9800', // Orange
-//   '#4CAF50', // Green
-// ];
-
 const PRESET_COLORS = [
-  '#ff0000', // Default Sage
-  '#ff8700', // Blue
-  '#ffd300', // Pink
-  '#58ff0a', // Purple
-  '#0aefff', // Green
-  '#580aff', // Green
-  '#be0aff', // Green
+  '#ff0000', // Red
+  '#ff8700', // Orange
+  '#ffd300', // Yellow
+  '#58ff0a', // Bright Green
+  '#0aefff', // Cyan
+  '#580aff', // Indigo
+  '#be0aff', // Purple
 ];
 
 export default function ChildSettingsCard({
@@ -33,22 +24,39 @@ export default function ChildSettingsCard({
   onDelete,
   canDelete,
 }) {
-  const [name, setName] = useState(child.name || '');
+  const [name, setName] = useState(child?.name || '');
   const [selectedColor, setSelectedColor] = useState(
-    child.color || PRESET_COLORS[0],
+    child?.color || PRESET_COLORS[0],
   );
 
+  // Keep local state in sync if child props change externally
+  useEffect(() => {
+    if (child) {
+      setName(child.name || '');
+      setSelectedColor(child.color || PRESET_COLORS[0]);
+    }
+  }, [child?.name, child?.color]);
+
+  // Update local state as the user types (no Firestore call)
   const handleNameChange = text => {
     setName(text);
-    onSave(child.id, { ...child, name: text, color: selectedColor });
   };
 
+  // Trigger Firestore / AsyncStorage save only when typing is finished
+  const handleNameSubmit = () => {
+    const trimmedName = name.trim();
+    if (trimmedName && trimmedName !== child?.name) {
+      onSave(child.id, { ...child, name: trimmedName, color: selectedColor });
+    }
+  };
+
+  // Color selection still saves immediately on tap
   const handleColorSelect = color => {
     setSelectedColor(color);
-    onSave(child.id, { ...child, name, color });
+    onSave(child.id, { ...child, name: name.trim(), color });
   };
 
-  const initial = name ? name.charAt(0).toUpperCase() : '?';
+  const initial = name.trim() ? name.trim().charAt(0).toUpperCase() : '?';
 
   return (
     <View style={styles.card}>
@@ -65,13 +73,16 @@ export default function ChildSettingsCard({
             style={styles.textInput}
             value={name}
             onChangeText={handleNameChange}
+            onEndEditing={handleNameSubmit}
+            onBlur={handleNameSubmit}
             placeholder="Enter child name"
             placeholderTextColor="#AAA"
             maxLength={12}
+            returnKeyType="done"
           />
         </View>
 
-        {/* Delete Icon Button (Only rendered for 2nd and 3rd child) */}
+        {/* Delete Icon Button */}
         {canDelete && (
           <TouchableOpacity
             style={styles.deleteButton}
