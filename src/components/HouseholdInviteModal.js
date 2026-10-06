@@ -1,248 +1,161 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Modal,
   View,
   Text,
-  TouchableOpacity,
   TextInput,
+  TouchableOpacity,
   StyleSheet,
 } from 'react-native';
 
-const HouseholdInviteModal = ({
+export default function HouseholdInviteModal({
   visible,
+  initialTab = 'share',
   onClose,
   inviteCode,
   onJoinCodeSubmit,
-  initialTab = 'share', // DEFAULT TO 'share', BUT ACCEPT 'share' | 'join'
-}) => {
-  const [activeTab, setActiveTab] = useState(initialTab); // 'share' | 'join'
-  const [enteredCode, setEnteredCode] = useState('');
+}) {
+  const [activeTab, setActiveTab] = useState(initialTab);
+  const [code, setCode] = useState('');
 
-  // RESET ACTIVE TAB WHEN MODAL BECOMES VISIBLE
-  useEffect(() => {
-    if (visible) {
-      setActiveTab(initialTab);
-      setEnteredCode('');
-    }
-  }, [visible, initialTab]);
+  const handleJoin = () => {
+    onJoinCodeSubmit(code);
+  };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
-      <View style={modalStyles.overlay}>
-        <View style={modalStyles.modalContent}>
-          {/* TAB HEADER */}
-          <View style={modalStyles.tabRow}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}>
+      <View style={styles.overlay}>
+        <View style={styles.modalContent}>
+          <View style={styles.tabContainer}>
             <TouchableOpacity
-              style={[
-                modalStyles.tab,
-                activeTab === 'share' && modalStyles.activeTab,
-              ]}
+              style={[styles.tab, activeTab === 'share' && styles.activeTab]}
               onPress={() => setActiveTab('share')}>
-              <Text style={modalStyles.tabText}>Invite Partner</Text>
+              <Text style={styles.tabText}>Share Code</Text>
             </TouchableOpacity>
-
             <TouchableOpacity
-              style={[
-                modalStyles.tab,
-                activeTab === 'join' && modalStyles.activeTab,
-              ]}
+              style={[styles.tab, activeTab === 'join' && styles.activeTab]}
               onPress={() => setActiveTab('join')}>
-              <Text style={modalStyles.tabText}>Join Household</Text>
+              <Text style={styles.tabText}>Join Household</Text>
             </TouchableOpacity>
           </View>
 
           {activeTab === 'share' ? (
-            /* TAB 1: SHARE CODE */
-            <View style={modalStyles.body}>
-              <Text style={modalStyles.label}>
-                Share this code with your partner or co-parent so they can join
-                your family account:
-              </Text>
-              <View style={modalStyles.codeBox}>
-                <Text style={modalStyles.codeText}>
-                  {inviteCode || '--------'}
-                </Text>
-              </View>
-              <Text style={modalStyles.helperText}>
-                When they enter this code on their phone, both your apps will
-                share the same child profiles and entry logs.
-              </Text>
+            <View style={styles.body}>
+              <Text style={styles.label}>Your Household Invite Code:</Text>
+              <Text style={styles.codeText}>{inviteCode}</Text>
             </View>
           ) : (
-            /* TAB 2: JOIN HOUSEHOLD */
-            <View style={modalStyles.body}>
-              <Text style={modalStyles.label}>
-                Enter the 6-character code generated on your partner's phone:
-              </Text>
+            <View style={styles.body}>
+              <Text style={styles.label}>Enter 8-Digit Invite Code:</Text>
               <TextInput
-                style={modalStyles.input}
-                placeholder="e.g. XY789Z"
-                value={enteredCode}
-                onChangeText={text => setEnteredCode(text.toUpperCase())}
-                maxLength={6}
+                style={styles.input}
+                value={code}
+                onChangeText={setCode}
+                placeholder="e.g. A1b2C3d9"
                 autoCapitalize="characters"
+                maxLength={8}
               />
+
               <TouchableOpacity
-                style={modalStyles.submitButton}
-                onPress={() => onJoinCodeSubmit(enteredCode)}>
-                <Text style={modalStyles.submitButtonText}>
-                  Connect Household
-                </Text>
+                style={styles.submitButton}
+                onPress={handleJoin}>
+                <Text style={styles.submitButtonText}>Join Household</Text>
               </TouchableOpacity>
             </View>
           )}
 
-          <TouchableOpacity style={modalStyles.closeButton} onPress={onClose}>
-            <Text style={modalStyles.closeButtonText}>Close</Text>
+          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+            <Text style={styles.closeButtonText}>Close</Text>
           </TouchableOpacity>
         </View>
       </View>
     </Modal>
   );
-};
+}
 
-const modalStyles = StyleSheet.create({
+const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-
     backgroundColor: 'rgba(0,0,0,0.5)',
-
     justifyContent: 'center',
-
-    padding: 20,
+    alignItems: 'center',
   },
-
   modalContent: {
+    width: '85%',
     backgroundColor: '#FFF',
-
-    borderRadius: 16,
-
+    borderRadius: 20,
     padding: 20,
   },
-
-  tabRow: {
+  tabContainer: {
     flexDirection: 'row',
-
     borderBottomWidth: 1,
-
-    borderBottomColor: '#E5E7EB',
-
+    borderColor: '#EFEFEF',
     marginBottom: 16,
   },
-
   tab: {
     flex: 1,
-
     paddingVertical: 10,
-
     alignItems: 'center',
   },
-
   activeTab: {
     borderBottomWidth: 2,
-
-    borderBottomColor: '#2563EB',
+    borderColor: '#4A6159',
   },
-
   tabText: {
-    fontWeight: '600',
-
-    color: '#1F2937',
+    fontWeight: '700',
+    color: '#1A1A1A',
   },
-
   body: {
-    marginVertical: 12,
+    alignItems: 'center',
   },
-
   label: {
     fontSize: 14,
-
-    color: '#4B5563',
-
+    color: '#666',
     marginBottom: 12,
   },
-
-  codeBox: {
-    backgroundColor: '#F3F4F6',
-
-    borderRadius: 8,
-
-    paddingVertical: 16,
-
-    alignItems: 'center',
-
-    borderWidth: 1,
-
-    borderColor: '#E5E7EB',
-
-    borderStyle: 'dashed',
-  },
-
   codeText: {
     fontSize: 28,
-
-    fontWeight: '700',
-
-    letterSpacing: 4,
-
-    color: '#1D4ED8',
-  },
-
-  helperText: {
-    fontSize: 12,
-
-    color: '#9CA3AF',
-
-    marginTop: 10,
-
-    textAlign: 'center',
-  },
-
-  input: {
-    borderWidth: 1,
-
-    borderColor: '#D1D5DB',
-
-    borderRadius: 8,
-
-    padding: 12,
-
-    fontSize: 18,
-
-    textAlign: 'center',
-
+    fontWeight: '800',
+    color: '#4A6159',
     letterSpacing: 2,
-
-    marginBottom: 16,
+    marginVertical: 12,
   },
-
-  submitButton: {
-    backgroundColor: '#2563EB',
-
-    borderRadius: 8,
-
+  input: {
+    width: '100%',
+    backgroundColor: '#F8F9FA',
+    borderWidth: 1,
+    borderColor: '#EFEFEF',
+    borderRadius: 12,
+    paddingHorizontal: 14,
     paddingVertical: 12,
-
-    alignItems: 'center',
+    fontSize: 16,
+    textAlign: 'center',
+    letterSpacing: 2,
+    marginBottom: 10,
+    color: '#1A1A1A',
   },
-
+  submitButton: {
+    width: '100%',
+    backgroundColor: '#4A6159',
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 8,
+  },
   submitButtonText: {
     color: '#FFF',
-
-    fontWeight: '600',
+    fontWeight: '700',
   },
-
   closeButton: {
     marginTop: 16,
-
     alignItems: 'center',
   },
-
   closeButtonText: {
-    color: '#6B7280',
-
-    fontWeight: '500',
+    color: '#888',
+    fontWeight: '600',
   },
 });
-
-export default HouseholdInviteModal;

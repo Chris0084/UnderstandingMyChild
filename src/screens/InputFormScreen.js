@@ -506,6 +506,27 @@ const InputFormScreen = ({ route, navigation }) => {
       if (currentUser) {
         // Pull cached household ID stored locally during sign-in
         activeHouseholdId = await AsyncStorage.getItem('@user_household_id');
+
+        // FALLBACK: If AsyncStorage missed it, fetch from user document in Firestore
+        if (!activeHouseholdId) {
+          try {
+            const userDoc = await firestore()
+              .collection('users')
+              .doc(currentUser.uid)
+              .get();
+            const userData = userDoc.exists ? userDoc.data() : null;
+            if (userData?.householdId) {
+              activeHouseholdId = userData.householdId;
+              // Save to AsyncStorage so subsequent calls are fast
+              await AsyncStorage.setItem(
+                '@user_household_id',
+                activeHouseholdId,
+              );
+            }
+          } catch (err) {
+            console.log('Error fetching fallback householdId:', err);
+          }
+        }
       }
 
       // 1. Save locally and queue/sync to Firestore asynchronously

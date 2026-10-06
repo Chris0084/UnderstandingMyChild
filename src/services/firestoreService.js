@@ -46,17 +46,17 @@ export const pullCloudDataToLocal = async householdId => {
   }
 };
 
-// Helper function to generate a unique 6-character invite code
+// Helper function to generate a unique 8-character invite code
 const generateInviteCode = () => {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Omit easily confused characters like O, 0, I, 1
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz23456789'; // Omit easily confused characters
   let result = '';
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < 8; i++) {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return result;
 };
 
-// 1. CREATE A NEW HOUSEHOLD
+// 1. CREATE A NEW HOUSEHOLD (Owner)
 export const createHousehold = async userId => {
   const inviteCode = generateInviteCode();
   const householdRef = firestore().collection('households').doc();
@@ -70,21 +70,24 @@ export const createHousehold = async userId => {
     createdAt: firestore.FieldValue.serverTimestamp(),
   });
 
-  // Link household ID to user profile
+  // Link household ID & role to user profile
   await firestore().collection('users').doc(userId).set(
     {
       householdId: householdId,
+      role: 'owner',
       updatedAt: firestore.FieldValue.serverTimestamp(),
     },
     { merge: true },
   );
 
+  await AsyncStorage.setItem('@user_household_id', householdId);
+
   return { householdId, inviteCode };
 };
 
-// 2. JOIN AN EXISTING HOUSEHOLD WITH A 6-CHAR CODE
+// 2. JOIN AN EXISTING HOUSEHOLD WITH A 8-CHAR CODE (Contributor)
 export const joinHouseholdWithCode = async (userId, code) => {
-  const cleanCode = code.trim().toUpperCase();
+  const cleanCode = code.trim();
 
   // Find household document matching the invite code
   const snapshot = await firestore()
@@ -107,10 +110,11 @@ export const joinHouseholdWithCode = async (userId, code) => {
       members: firestore.FieldValue.arrayUnion(userId),
     });
 
-  // Link household ID to the user's document
+  // Link household ID & role to the user's document
   await firestore().collection('users').doc(userId).set(
     {
       householdId: householdId,
+      role: 'contributor',
       updatedAt: firestore.FieldValue.serverTimestamp(),
     },
     { merge: true },
@@ -124,7 +128,7 @@ export const migrateLocalDataToCloud = async householdId => {
   try {
     if (!householdId) return;
 
-    // 1. Read local children using your app's key
+    // 1. Read local children
     const rawChildren = await AsyncStorage.getItem('@app_children');
     const localChildren = rawChildren ? JSON.parse(rawChildren) : [];
 
@@ -138,7 +142,7 @@ export const migrateLocalDataToCloud = async householdId => {
         .set(child, { merge: true });
     }
 
-    // 2. Read local logs using your app's key
+    // 2. Read local logs
     const rawLogs = await AsyncStorage.getItem('@app_logs');
     const localLogs = rawLogs ? JSON.parse(rawLogs) : [];
 
@@ -153,7 +157,7 @@ export const migrateLocalDataToCloud = async householdId => {
     }
 
     console.log(
-      `Migrated \({localChildren.length} children and\){localLogs.length} logs to cloud.`,
+      `Migrated ${localChildren.length} children and ${localLogs.length} logs to cloud.`,
     );
   } catch (error) {
     console.error('Error migrating local data to cloud:', error);
@@ -167,7 +171,6 @@ export const saveOrUpdateLog = async (logData, householdId) => {
     const rawLogs = await AsyncStorage.getItem('@app_logs');
     let currentLogs = rawLogs ? JSON.parse(rawLogs) : [];
 
-    // Ensure the log has a valid unique string ID
     const logId = logData.id ? String(logData.id) : String(Date.now());
     const updatedLog = {
       ...logData,
@@ -194,7 +197,7 @@ export const saveOrUpdateLog = async (logData, householdId) => {
         .doc(logId)
         .set(updatedLog, { merge: true });
 
-      console.log(`Log \({logId} synced to cloud household\){householdId}`);
+      console.log(`Log ${logId} synced to cloud household ${householdId}`);
     }
 
     return updatedLog;
@@ -237,7 +240,6 @@ export const saveOrUpdateChild = async (childData, householdId) => {
     const rawStored = await AsyncStorage.getItem('@app_children');
     let currentChildren = rawStored ? JSON.parse(rawStored) : [];
 
-    // Ensure valid string ID
     const childId = String(childData.id);
     const cleanChild = { ...childData, id: childId };
 
@@ -250,16 +252,15 @@ export const saveOrUpdateChild = async (childData, householdId) => {
       currentChildren.push(cleanChild);
     }
 
-    // 1. Save locally to @app_children
+    // 1. Save locally
     await AsyncStorage.setItem(
       '@app_children',
       JSON.stringify(currentChildren),
     );
 
-    // 2. Queue write to Firestore if authenticated & householdId exists
+    // 2. Queue write to Firestore
     const currentUser = getAuth().currentUser;
     if (currentUser && householdId) {
-      // Clean undefined fields before Firestore upload
       const cleanData = JSON.parse(JSON.stringify(cleanChild));
 
       await firestore()

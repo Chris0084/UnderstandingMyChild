@@ -23,7 +23,11 @@ import {
   getAnalytics,
   setAnalyticsCollectionEnabled,
 } from '@react-native-firebase/analytics';
-import { getAuth, onAuthStateChanged } from '@react-native-firebase/auth';
+import {
+  getAuth,
+  onAuthStateChanged,
+  signInAnonymously,
+} from '@react-native-firebase/auth';
 
 // Services
 import {
@@ -55,6 +59,7 @@ export default function SettingsScreen({ navigation }) {
   const [inviteCode, setInviteCode] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [userRole, setUserRole] = useState(null);
 
   useEffect(() => {
     const authInstance = getAuth();
@@ -68,18 +73,24 @@ export default function SettingsScreen({ navigation }) {
             .collection('users')
             .doc(user.uid)
             .get();
+          const userData = userDoc.exists ? userDoc.data() : null;
 
-          if (userDoc.exists() && userDoc.data()?.householdId) {
-            const hId = userDoc.data().householdId;
+          if (userData && userData.householdId) {
+            const hId = userData.householdId;
             setHouseholdId(hId);
+
+            // Track whether user is owner or contributor
+            setUserRole(
+              userData.role || (userData.isOwner ? 'owner' : 'contributor'),
+            );
 
             const hDoc = await firestore()
               .collection('households')
               .doc(hId)
               .get();
-
-            if (hDoc.exists()) {
-              setInviteCode(hDoc.data()?.inviteCode || '');
+            const hData = hDoc.exists ? hDoc.data() : null;
+            if (hData) {
+              setInviteCode(hData.inviteCode || '');
             }
           }
         } catch (e) {
@@ -88,6 +99,7 @@ export default function SettingsScreen({ navigation }) {
       } else {
         setHouseholdId(null);
         setInviteCode('');
+        setUserRole(null);
       }
     });
 
@@ -154,7 +166,7 @@ export default function SettingsScreen({ navigation }) {
       setPassword('');
       Alert.alert(
         'Signed In',
-        `Synced \({result.logsCount} log(s) and\){result.childrenCount} child profile(s)!`,
+        `Synced \({result?.logsCount || 0} log(s) and\){result?.childrenCount || 0} child profile(s)!`,
       );
     } catch (e) {
       Alert.alert('Sign In Failed', e.message);
@@ -166,30 +178,33 @@ export default function SettingsScreen({ navigation }) {
     const cleanEmail = email ? email.trim() : '';
     const cleanPassword = password ? password.trim() : '';
 
-    console.log('--- STARTING MIGRATION ---');
-    const rawChildren = await AsyncStorage.getItem('@app_children');
-    const rawLogs = await AsyncStorage.getItem('@app_logs');
-    console.log('Local Children found:', rawChildren);
-    console.log('Local Logs found:', rawLogs);
-
     if (!cleanEmail || !cleanPassword) {
-      Alert.alert('Missing Info', 'Please enter both an email and password.');
+      Alert.alert('Missing Info', 'Please enter an email and password.');
       return;
     }
 
     try {
-      const user = await registerUser(cleanEmail, cleanPassword);
+      // 1. Register new account in Firebase Auth
+      const newUser = await registerUser(cleanEmail, cleanPassword);
+      setCurrentUser(newUser);
 
-      // Create a new household for the new user
-      const result = await createHousehold(user.uid);
-      setHouseholdId(result.householdId);
-      setInviteCode(result.inviteCode);
+      // 2. Create the household doc and link user as owner
+      const { householdId: newHouseholdId, inviteCode: newInviteCode } =
+        await createHousehold(newUser.uid);
 
-      await migrateLocalDataToCloud(result.householdId);
+      // 3. CRITICAL: Immediately force state updates so UI re-renders as Owner
+      setHouseholdId(newHouseholdId);
+      setInviteCode(newInviteCode);
+      setUserRole('owner'); // Flips display to Owner and renders "Invite Contributor" button
+
+      // 4. Reset inputs & pull cloud data
       setPassword('');
-      Alert.alert('Success', 'Account created successfully!');
+      await pullCloudDataToLocal(newHouseholdId);
+
+      Alert.alert('Success!', 'Account created and household set up!');
     } catch (e) {
-      Alert.alert('Registration Failed', e.message);
+      console.error('Registration error:', e);
+      Alert.alert('Registration Error', e.message);
     }
   };
 
@@ -209,35 +224,83 @@ export default function SettingsScreen({ navigation }) {
   };
 
   const handleJoinCodeSubmit = async enteredCode => {
-    if (!currentUser) {
-      Alert.alert(
-        'Sign In Required',
-        'Please sign in before joining a household.',
-      );
+    const cleanCode = enteredCode ? enteredCode.trim() : '';
+
+    if (!cleanCode || cleanCode.length !== 8) {
+      Alert.alert('Invalid Code', 'Please enter a valid 8-character code.');
       return;
     }
-    if (!enteredCode || enteredCode.length < 6) {
-      Alert.alert('Invalid Code', 'Please enter a valid 6-character code.');
-      return;
-    }
+
+    let tempUserCreated = null;
+    const authInstance = getAuth();
 
     try {
-      // 1. Delegate database lookup & membership update to firestoreService
-      const { householdId: targetHouseholdId, inviteCode: validCode } =
-        await joinHouseholdWithCode(currentUser.uid, enteredCode);
+      let targetUser = currentUser;
 
-      // 2. Update local state
+      // 1. Authenticate anonymously if not logged in
+      if (!targetUser) {
+        const userCredential = await signInAnonymously(authInstance);
+        targetUser = userCredential.user;
+        tempUserCreated = targetUser; // Track user instance to delete if code is invalid
+      }
+
+      // 2. Query Firestore (now authorized because targetUser exists)
+      const householdSnapshot = await firestore()
+        .collection('households')
+        .where('inviteCode', '==', cleanCode)
+        .limit(1)
+        .get();
+
+      if (householdSnapshot.empty) {
+        // Code is invalid — throw custom error to trigger cleanup in catch block
+        throw new Error('INVALID_INVITE_CODE');
+      }
+
+      const targetHouseholdDoc = householdSnapshot.docs[0];
+      const targetHouseholdId = targetHouseholdDoc.id;
+
+      // 3. Complete join logic
+      const { inviteCode: validCode } = await joinHouseholdWithCode(
+        targetUser.uid,
+        cleanCode,
+      );
+
+      // 4. Save local state
+      await AsyncStorage.setItem('@user_household_id', targetHouseholdId);
       setHouseholdId(targetHouseholdId);
       setInviteCode(validCode);
+      setUserRole('contributor');
 
-      // 3. Sync local data to the newly joined household
-      await migrateLocalDataToCloud(targetHouseholdId);
+      await pullCloudDataToLocal(targetHouseholdId);
 
-      // 4. Close modal & alert success
+      if (typeof refreshLocalChildren === 'function') {
+        await refreshLocalChildren();
+      }
+
       setIsInviteModalVisible(false);
       Alert.alert('Connected!', 'Successfully joined the shared household!');
     } catch (e) {
-      Alert.alert('Error Joining Household', e.message);
+      console.error('Error joining household:', e);
+
+      // CLEANUP: Delete the temporary anonymous account if the code failed
+      if (tempUserCreated) {
+        try {
+          await tempUserCreated.delete(); // Completely deletes user from Firebase Auth
+        } catch (deleteError) {
+          console.log('Error purging temp user:', deleteError.message);
+        }
+        setCurrentUser(null);
+        setHouseholdId(null);
+        setInviteCode('');
+        setUserRole(null);
+      }
+
+      const errorMessage =
+        e.message === 'INVALID_INVITE_CODE'
+          ? 'Invalid code. Please check and try again.'
+          : e.message;
+
+      Alert.alert('Error Joining Household', errorMessage);
     }
   };
   // Update profile in storage & sync to Firestore
@@ -385,9 +448,9 @@ export default function SettingsScreen({ navigation }) {
           .where('childId', '==', childId)
           .get();
 
-        if (!logsSnapshot.empty) {
+        if (logsSnapshot && !logsSnapshot.empty) {
           const batch = firestore().batch();
-          logsSnapshot.forEach(doc => {
+          logsSnapshot.docs.forEach(doc => {
             batch.delete(doc.ref);
           });
           await batch.commit();
@@ -453,6 +516,7 @@ export default function SettingsScreen({ navigation }) {
             </Text>
             <AccountSyncSection
               user={currentUser}
+              userRole={userRole}
               email={email}
               setEmail={setEmail}
               password={password}
