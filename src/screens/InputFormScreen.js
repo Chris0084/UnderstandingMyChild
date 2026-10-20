@@ -34,9 +34,12 @@ import { debugPrintAllStorage } from '../utils/debugStorage.js';
 import ChildSelectModal from '../components/ChildSelectModal.js';
 import firestore from '@react-native-firebase/firestore';
 import { getAuth } from '@react-native-firebase/auth';
-import { saveOrUpdateLog } from '../services/firestoreService';
-import { deleteLog } from '../services/firestoreService';
-import { saveOrUpdateChild } from '../services/firestoreService';
+import {
+  saveOrUpdateLog,
+  deleteLog,
+  saveOrUpdateChild,
+  pullCloudDataToLocal,
+} from '../services/firestoreService';
 
 const getTimeOfDay = () => {
   const hour = new Date().getHours();
@@ -79,9 +82,46 @@ const InputFormScreen = ({ route, navigation }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [timeOfDay, setTimeOfDay] = useState(getTimeOfDay());
   const [childModalVisible, setChildModalVisible] = useState(false);
+  const [userRole, setUserRole] = useState(null);
 
   // Find current child name for display on the trigger button
   const activeChild = children.find(c => c.id == selectedChildId);
+
+  const syncAndLoadChildren = useCallback(async () => {
+    try {
+      // 1. Instant load from local storage so UI doesn't delay
+      const saved = await AsyncStorage.getItem('@app_children');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.length > 0) {
+          setChildren(parsed);
+          setSelectedChildId(prev => (prev ? prev : parsed[0].id));
+        }
+      }
+
+      // 2. Check cloud using your existing pullCloudDataToLocal
+      const householdId = await AsyncStorage.getItem('@user_household_id');
+      const userRole = await AsyncStorage.getItem('@user_role');
+      setUserRole(userRole);
+
+      if (householdId) {
+        await pullCloudDataToLocal(householdId, userRole || 'contributor');
+
+        // 3. Update state with fresh cloud data
+        const fresh = await AsyncStorage.getItem('@app_children');
+        if (fresh) {
+          const parsedFresh = JSON.parse(fresh);
+          setChildren(parsedFresh);
+          setSelectedChildId(prev => {
+            const exists = parsedFresh.some(c => c.id === prev);
+            return exists ? prev : parsedFresh[0]?.id || '1';
+          });
+        }
+      }
+    } catch (e) {
+      console.error('Error refreshing children in InputFormScreen:', e);
+    }
+  }, []);
 
   const handleSelectChild = async id => {
     setSelectedChildId(id);
@@ -105,6 +145,7 @@ const InputFormScreen = ({ route, navigation }) => {
   };
 
   const handleAddChild = () => {
+    if (userRole === 'contributor') return; // 👈 Guard
     setNewChildName('');
     setIsAddChildModalVisible(true);
   };
@@ -150,6 +191,7 @@ const InputFormScreen = ({ route, navigation }) => {
   };
 
   const handleRenameChild = async (childId, newName) => {
+    if (userRole === 'contributor') return; // 👈 Guard
     if (!newName.trim()) {
       Alert.alert('Validation Error', 'Profile name cannot be empty.');
       return;
@@ -232,8 +274,15 @@ const InputFormScreen = ({ route, navigation }) => {
 
   useFocusEffect(
     useCallback(() => {
+      syncAndLoadChildren();
       const checkPremiumStatus = async () => {
         try {
+          // 1. Check if the active user is a contributor
+          const userRole = await AsyncStorage.getItem('@user_role');
+          if (userRole === 'contributor') {
+            console.log('Contributor detected: bypassing paywall check.');
+            return; // Skip presenting the paywall completely!
+          }
           const result = await RevenueCatUI.presentPaywallIfNeeded({
             requiredEntitlementIdentifier: 'UMC_subscriber',
           });
@@ -279,7 +328,7 @@ const InputFormScreen = ({ route, navigation }) => {
         setTimeOfDay(getTimeOfDay());
         setIsEditing(true);
       }
-    }, [route.params, children]),
+    }, [route.params, syncAndLoadChildren]),
   );
 
   const handleToggleFavorite = async () => {
@@ -816,6 +865,7 @@ const InputFormScreen = ({ route, navigation }) => {
         mediaUri={mediaUri}
         onMediaSelected={setMediaUri}
         editable={true}
+        isContributor={userRole === 'contributor'}
       />
       <SplitButton
         label="Add Support Strategies"
@@ -885,8 +935,10 @@ const InputFormScreen = ({ route, navigation }) => {
             childrenList={children}
             selectedChildId={selectedChildId}
             onSelectChild={handleSelectChild}
-            onAddChild={handleAddChild}
-            onRenameChild={handleRenameChild}
+            onAddChild={userRole !== 'contributor' ? handleAddChild : undefined} // 👈 Only owner can add
+            onRenameChild={
+              userRole !== 'contributor' ? handleRenameChild : undefined
+            } // 👈 Only owner can rename
           />
         )}
 

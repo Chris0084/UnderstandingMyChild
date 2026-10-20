@@ -1,110 +1,155 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
+  ActivityIndicator,
+  Platform,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function AccountSyncSection({
   user,
   userRole, // 'owner' | 'contributor' | null
-  email,
-  setEmail,
-  password,
-  setPassword,
-  onSignInPress,
-  onRegisterPress,
+  onGoogleSignInPress,
+  onAppleSignInPress,
   onSignOutPress,
   onInvitePartnerPress,
   onEnterInviteCodePress,
 }) {
+  const [authLoading, setAuthLoading] = useState(false);
+
+  const handleGoogle = async () => {
+    if (authLoading) return;
+    setAuthLoading(true);
+    try {
+      await onGoogleSignInPress();
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleApple = async () => {
+    if (authLoading) return;
+    setAuthLoading(true);
+    try {
+      await onAppleSignInPress();
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  // -------------------------------------------------------------
   // STATE 1: NOT LOGGED IN
+  // -------------------------------------------------------------
   if (!user) {
     return (
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Sign In or Create Account</Text>
+        <Text style={styles.cardTitle}>Sign In to Sync</Text>
         <Text style={styles.cardSubtitle}>
-          Sync your data across devices or join an existing household using a
-          code.
+          Sign in with your Google or Apple account to sync your logs or join a
+          shared household.
         </Text>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Email address"
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
+        {authLoading ? (
+          <ActivityIndicator
+            size="small"
+            color="#4A6159"
+            style={styles.loader}
+          />
+        ) : (
+          <View style={styles.buttonStack}>
+            {/* Google Sign In */}
+            <TouchableOpacity
+              style={styles.googleButton}
+              onPress={handleGoogle}
+              activeOpacity={0.8}>
+              <Ionicons
+                name="logo-google"
+                size={18}
+                color="#EA4335"
+                style={styles.buttonIcon}
+              />
+              <Text style={styles.googleButtonText}>Continue with Google</Text>
+            </TouchableOpacity>
 
-        <View style={styles.buttonRow}>
-          <TouchableOpacity
-            style={styles.primaryButton}
-            onPress={onSignInPress}>
-            <Text style={styles.primaryButtonText}>Sign In</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={onRegisterPress}>
-            <Text style={styles.secondaryButtonText}>Register</Text>
-          </TouchableOpacity>
-        </View>
+            {/* Apple Sign In (iOS Only) */}
+            {Platform.OS === 'ios' && (
+              <TouchableOpacity
+                style={styles.appleButton}
+                onPress={handleApple}
+                activeOpacity={0.8}>
+                <Ionicons
+                  name="logo-apple"
+                  size={20}
+                  color="#FFFFFF"
+                  style={styles.buttonIcon}
+                />
+                <Text style={styles.appleButtonText}>Sign in with Apple</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
 
         <View style={styles.dividerContainer}>
           <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>OR</Text>
+          <Text style={styles.dividerText}>HAVE AN INVITE CODE?</Text>
           <View style={styles.dividerLine} />
         </View>
 
-        {/* Unauthenticated users can join a household directly */}
         <TouchableOpacity
           style={styles.outlineButton}
-          onPress={onEnterInviteCodePress}>
+          onPress={onEnterInviteCodePress}
+          activeOpacity={0.8}>
           <Text style={styles.outlineButtonText}>Join Household with Code</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
+  // -------------------------------------------------------------
   // STATE 2: LOGGED IN AS PRIMARY (OWNER)
+  // -------------------------------------------------------------
   if (userRole === 'owner') {
     return (
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Account & Household</Text>
-        <Text style={styles.userEmail}>{user.email}</Text>
+        <Text style={styles.userEmail}>{user.displayName || user.email}</Text>
         <Text style={styles.roleBadge}>Primary Household Owner</Text>
 
         <TouchableOpacity
           style={styles.actionButton}
-          onPress={onInvitePartnerPress}>
-          <Text style={styles.actionButtonText}>Invite Contributor</Text>
+          onPress={onInvitePartnerPress}
+          activeOpacity={0.8}>
+          <Text style={styles.actionButtonText}>
+            Invite/Manage Contributors
+          </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.dangerButton} onPress={onSignOutPress}>
+        <TouchableOpacity
+          style={styles.dangerButton}
+          onPress={onSignOutPress}
+          activeOpacity={0.8}>
           <Text style={styles.dangerButtonText}>Sign Out</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
+  // -------------------------------------------------------------
   // STATE 3: LOGGED IN AS CONTRIBUTOR
+  // -------------------------------------------------------------
   return (
     <View style={styles.card}>
       <Text style={styles.cardTitle}>Account & Household</Text>
-      <Text style={styles.userEmail}>{user.email}</Text>
+      <Text style={styles.userEmail}>{user.displayName || user.email}</Text>
       <Text style={styles.roleBadge}>Contributor</Text>
 
-      <TouchableOpacity style={styles.dangerButton} onPress={onSignOutPress}>
+      <TouchableOpacity
+        style={styles.dangerButton}
+        onPress={onSignOutPress}
+        activeOpacity={0.8}>
         <Text style={styles.dangerButtonText}>Sign Out</Text>
       </TouchableOpacity>
     </View>
@@ -130,6 +175,44 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#666666',
     marginBottom: 16,
+    lineHeight: 18,
+  },
+  loader: {
+    marginVertical: 20,
+  },
+  buttonStack: {
+    gap: 10,
+  },
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    paddingVertical: 13,
+    borderRadius: 12,
+  },
+  googleButtonText: {
+    color: '#374151',
+    fontWeight: '700',
+    fontSize: 15,
+  },
+  appleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#000000',
+    paddingVertical: 13,
+    borderRadius: 12,
+  },
+  appleButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 15,
+  },
+  buttonIcon: {
+    marginRight: 10,
   },
   userEmail: {
     fontSize: 15,
@@ -144,46 +227,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 16,
-  },
-  input: {
-    backgroundColor: '#F8F9FA',
-    borderWidth: 1,
-    borderColor: '#EFEFEF',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 14,
-    marginBottom: 10,
-    color: '#1A1A1A',
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 6,
-  },
-  primaryButton: {
-    flex: 1,
-    backgroundColor: '#4A6159',
-    paddingVertical: 12,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  primaryButtonText: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-    fontSize: 14,
-  },
-  secondaryButton: {
-    flex: 1,
-    backgroundColor: '#EAEAEA',
-    paddingVertical: 12,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  secondaryButtonText: {
-    color: '#1A1A1A',
-    fontWeight: '700',
-    fontSize: 14,
   },
   dividerContainer: {
     flexDirection: 'row',

@@ -14,7 +14,13 @@ import { Ionicons } from '@expo/vector-icons';
 
 const { width, height } = Dimensions.get('window');
 
-const MediaSelector = ({ label, mediaUri, onMediaSelected, editable }) => {
+const MediaSelector = ({
+  label,
+  mediaUri,
+  onMediaSelected,
+  editable,
+  isContributor = false, // 👈 1. Added isContributor prop
+}) => {
   const [fullscreen, setFullscreen] = useState(false);
 
   // Helper to check if the file is a video
@@ -24,7 +30,7 @@ const MediaSelector = ({ label, mediaUri, onMediaSelected, editable }) => {
     mediaUri?.toLowerCase().endsWith('.m4v');
 
   const pickMedia = async () => {
-    if (!editable) return;
+    if (!editable || isContributor) return;
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       alert('Permission needed to access your gallery.');
@@ -32,7 +38,7 @@ const MediaSelector = ({ label, mediaUri, onMediaSelected, editable }) => {
     }
 
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images', 'videos'], // Allows both
+      mediaTypes: ['images', 'videos'],
       allowsEditing: false,
       quality: 0.7,
     });
@@ -43,12 +49,34 @@ const MediaSelector = ({ label, mediaUri, onMediaSelected, editable }) => {
   };
 
   const handlePress = () => {
-    if (editable) {
+    if (editable && !isContributor) {
       pickMedia();
     } else if (mediaUri) {
       setFullscreen(true);
     }
   };
+
+  // 👈 2. IF CONTRIBUTOR: Render friendly info card instead of upload button
+  if (isContributor) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.label}>{label}</Text>
+        <View style={styles.contributorNoticeCard}>
+          <Ionicons
+            name="information-circle-outline"
+            size={22}
+            color="#4A6159"
+            style={{ marginRight: 10 }}
+          />
+          <Text style={styles.contributorNoticeText}>
+            As a household contributor, you cannot attach media. You can send
+            photos or videos directly to the primary owner for them to attach to
+            this log.
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -68,9 +96,8 @@ const MediaSelector = ({ label, mediaUri, onMediaSelected, editable }) => {
                     style={styles.thumbnail}
                     resizeMode={ResizeMode.COVER}
                     shouldPlay={false}
-                    positionMillis={500} // Shows a frame from 0.5s in
+                    positionMillis={500}
                   />
-                  {/* Overlay play icon so user knows it's a video */}
                   <View style={styles.playIconOverlay}>
                     <Ionicons name="play" size={16} color="white" />
                   </View>
@@ -234,6 +261,23 @@ const styles = StyleSheet.create({
   },
   fullImage: { width: width, height: height * 0.8 },
   closeFull: { position: 'absolute', top: 50, right: 20, zIndex: 10 },
+
+  // 👈 3. Notice styling
+  contributorNoticeCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0F4F2',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#D4E2DC',
+    padding: 14,
+  },
+  contributorNoticeText: {
+    flex: 1,
+    fontSize: 13,
+    color: '#3B4F48',
+    lineHeight: 18,
+  },
 });
 
 export default MediaSelector;

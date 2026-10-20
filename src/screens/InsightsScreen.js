@@ -21,11 +21,12 @@ import Colors from '../constants/Colors';
 import HeatMap from '../insightComponents/HeatMap';
 import { Ionicons } from '@expo/vector-icons';
 import ChildSelector from '../components/ChildSelector';
+import ContributorGate from '../components/ContributorGate';
 
 const { width } = Dimensions.get('window');
 const logsRequired = 15;
 
-const InsightsScreen = () => {
+const InsightsScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
 
   // FIX 1: Matching state variables for ChildSelector
@@ -283,31 +284,33 @@ const InsightsScreen = () => {
   };
 
   return (
-    <View
-      style={[
-        styles.container,
-        { paddingTop: insets.top, paddingBottom: insets.bottom },
-      ]}>
-      <PageHeader
-        title="Trend Tracker"
-        iconName="sparkles-outline"
-        iconColor="#000000"
-        accentColor={Colors.trend_theme}
-      />
-      <View style={styles.selectorContainer}>
-        <ChildSelector
-          childrenList={children}
-          selectedChildId={selectedChildId}
-          onSelectChild={val => {
-            const nextId =
-              typeof val === 'object' && val !== null ? val.id : val;
-            setSelectedChildId(nextId);
-          }}
-          showAllOption={true}
+    <ContributorGate navigation={navigation} screenTitle="Trend Tracker">
+      <View
+        style={[
+          styles.container,
+          { paddingTop: insets.top, paddingBottom: insets.bottom },
+        ]}>
+        <PageHeader
+          title="Trend Tracker"
+          iconName="sparkles-outline"
+          iconColor="#000000"
+          accentColor={Colors.trend_theme}
         />
+        <View style={styles.selectorContainer}>
+          <ChildSelector
+            childrenList={children}
+            selectedChildId={selectedChildId}
+            onSelectChild={val => {
+              const nextId =
+                typeof val === 'object' && val !== null ? val.id : val;
+              setSelectedChildId(nextId);
+            }}
+            showAllOption={true}
+          />
+        </View>
+        {renderContent()}
       </View>
-      {renderContent()}
-    </View>
+    </ContributorGate>
   );
 };
 

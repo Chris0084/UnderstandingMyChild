@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Alert,
   TouchableOpacity,
+  RefreshControl,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -16,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { SAMPLE_LOGS } from '../constants/sampleData';
+import { pullCloudDataToLocal } from '../services/firestoreService';
 
 // Component Imports
 import LogCard from '../components/LogCard';
@@ -25,6 +27,7 @@ import FilterModal from '../components/FilterModal';
 import PageHeader from '../components/PageHeader.js';
 import ChildSelector from '../components/ChildSelector';
 import Colors from '../constants/Colors.js';
+import ContributorGate from '../components/ContributorGate';
 
 const ReportingScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
@@ -32,6 +35,7 @@ const ReportingScreen = ({ navigation }) => {
   // State Management
   const [allLogs, setAllLogs] = useState([]); // Master data
   const [filteredLogs, setFilteredLogs] = useState([]); // Displayed data
+  const [refreshing, setRefreshing] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [isAscending, setIsAscending] = useState(false); // false = Newest First
   const [filterMediaOnly, setFilterMediaOnly] = useState(false);
@@ -66,6 +70,41 @@ const ReportingScreen = ({ navigation }) => {
   //     console.error('Error loading logs:', error);
   //   }
   // }, []);
+
+  const syncAndFetchLogs = useCallback(async () => {
+    try {
+      const householdId = await AsyncStorage.getItem('@user_household_id');
+
+      // If the user belongs to a household, silently pull any new contributor logs
+      if (householdId) {
+        await pullCloudDataToLocal(householdId);
+      }
+
+      // Read updated local storage into state
+      const storedData = await AsyncStorage.getItem('@app_logs');
+      if (storedData) {
+        setAllLogs(JSON.parse(storedData));
+      } else {
+        setAllLogs([]);
+      }
+    } catch (error) {
+      console.error('Error syncing logs:', error);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchChildren();
+      syncAndFetchLogs();
+    }, [fetchChildren, syncAndFetchLogs]),
+  );
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await syncAndFetchLogs();
+    await fetchChildren();
+    setRefreshing(false);
+  };
 
   const fetchLogs = useCallback(async () => {
     try {
@@ -405,91 +444,101 @@ const ReportingScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <PageHeader
-        title={'Journal'}
-        iconName={'book-outline'}
-        iconColor={'#000000'}
-        accentColor={Colors.journal_theme}></PageHeader>
+    <ContributorGate navigation={navigation} screenTitle="Journal">
+      <View style={[styles.container, { paddingTop: insets.top }]}>
+        <PageHeader
+          title={'Journal'}
+          iconName={'book-outline'}
+          iconColor={'#000000'}
+          accentColor={Colors.journal_theme}
+        />
 
-      <View style={styles.buttonRow}>
-        <View style={styles.actionButtons}>
-          <TouchableOpacity
-            onPress={() => setShowFavoritesOnly(!showFavoritesOnly)}
-            style={styles.iconCircle}>
-            <Ionicons
-              name={showFavoritesOnly ? 'star' : 'star-outline'}
-              size={22}
-              color={showFavoritesOnly ? Colors.starred_theme : '#555'}
+        <View style={styles.buttonRow}>
+          <View style={styles.actionButtons}>
+            <TouchableOpacity
+              onPress={() => setShowFavoritesOnly(!showFavoritesOnly)}
+              style={styles.iconCircle}>
+              <Ionicons
+                name={showFavoritesOnly ? 'star' : 'star-outline'}
+                size={22}
+                color={showFavoritesOnly ? Colors.starred_theme : '#555'}
+              />
+            </TouchableOpacity>
+            <SortButton
+              ascending={isAscending}
+              onPress={() => setIsAscending(!isAscending)}
             />
-          </TouchableOpacity>
-          <SortButton
-            ascending={isAscending}
-            onPress={() => setIsAscending(!isAscending)}
-          />
-          <FilterButton
-            onPress={() => setModalVisible(true)}
-            activeFiltersCount={
-              filterTags.length +
-              (filterMood ? 1 : 0) +
-              (showFavoritesOnly ? 1 : 0) +
-              (filterMediaOnly ? 1 : 0)
-            }
-          />
-          <TouchableOpacity
-            onPress={exportFavoritesToPDF}
-            style={styles.exportLabelButton}>
-            <Ionicons name="share-outline" size={18} color="#007AFF" />
-            <Text style={styles.exportLabelText}>
-              Export/Share Starred Logs
-            </Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.selectorContainer}>
-          <ChildSelector
-            childrenList={children}
-            selectedChildId={selectedChildId}
-            onSelectChild={setSelectedChildId}
-            showAllOption={true}
-          />
-        </View>
-      </View>
-
-      <FlatList
-        data={filteredLogs}
-        keyExtractor={item => item.id}
-        renderItem={({ item, index }) => (
-          <LogCard entry={item} isAlternate={index % 2 === 0} />
-        )}
-        contentContainerStyle={[
-          styles.listContent,
-          { paddingBottom: insets.bottom + 100 },
-        ]}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text>No entries match these filters.</Text>
+            <FilterButton
+              onPress={() => setModalVisible(true)}
+              activeFiltersCount={
+                filterTags.length +
+                (filterMood ? 1 : 0) +
+                (showFavoritesOnly ? 1 : 0) +
+                (filterMediaOnly ? 1 : 0)
+              }
+            />
+            <TouchableOpacity
+              onPress={exportFavoritesToPDF}
+              style={styles.exportLabelButton}>
+              <Ionicons name="share-outline" size={18} color="#007AFF" />
+              <Text style={styles.exportLabelText}>
+                Export/Share Starred Logs
+              </Text>
+            </TouchableOpacity>
           </View>
-        }
-      />
+          <View style={styles.selectorContainer}>
+            <ChildSelector
+              childrenList={children}
+              selectedChildId={selectedChildId}
+              onSelectChild={setSelectedChildId}
+              showAllOption={true}
+            />
+          </View>
+        </View>
 
-      <FilterModal
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-        tags={availableTags}
-        selectedTags={filterTags}
-        onToggleTag={tag =>
-          setFilterTags(prev =>
-            prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag],
-          )
-        }
-        filterMediaOnly={filterMediaOnly}
-        onToggleMediaFilter={() => setFilterMediaOnly(!filterMediaOnly)}
-        selectedMood={filterMood}
-        onSelectMood={setFilterMood}
-        onReset={resetFilters}
-      />
+        <FlatList
+          data={filteredLogs}
+          keyExtractor={item => item.id}
+          renderItem={({ item, index }) => (
+            <LogCard entry={item} isAlternate={index % 2 === 0} />
+          )}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingBottom: insets.bottom + 100 },
+          ]}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text>No entries match these filters.</Text>
+            </View>
+          }
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor="#4A6159" // iOS spinner color
+              colors={['#4A6159']} // Android spinner color
+            />
+          }
+        />
 
-      {/* <TouchableOpacity
+        <FilterModal
+          visible={modalVisible}
+          onClose={() => setModalVisible(false)}
+          tags={availableTags}
+          selectedTags={filterTags}
+          onToggleTag={tag =>
+            setFilterTags(prev =>
+              prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag],
+            )
+          }
+          filterMediaOnly={filterMediaOnly}
+          onToggleMediaFilter={() => setFilterMediaOnly(!filterMediaOnly)}
+          selectedMood={filterMood}
+          onSelectMood={setFilterMood}
+          onReset={resetFilters}
+        />
+
+        {/* <TouchableOpacity
         style={styles.exportButton}
         onPress={exportFilteredData}>
         <Ionicons name="copy-outline" size={18} color="#007AFF" />
@@ -507,7 +556,8 @@ const ReportingScreen = ({ navigation }) => {
           Inject Demo Data
         </Text>
       </TouchableOpacity> */}
-    </View>
+      </View>
+    </ContributorGate>
   );
 };
 

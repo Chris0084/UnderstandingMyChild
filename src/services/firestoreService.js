@@ -2,11 +2,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import firestore from '@react-native-firebase/firestore';
 import { getAuth } from '@react-native-firebase/auth';
 
-export const pullCloudDataToLocal = async householdId => {
+export const MAX_CONTRIBUTORS = 3;
+
+export const pullCloudDataToLocal = async (householdId, userRole = 'owner') => {
   try {
     if (!householdId) return { childrenCount: 0, logsCount: 0 };
 
-    // 1. Fetch children records from Firestore
+    // 1. Fetch children records (Both Owners & Contributors need this to select which child to log for)
     const childrenSnapshot = await firestore()
       .collection('households')
       .doc(householdId)
@@ -18,10 +20,18 @@ export const pullCloudDataToLocal = async householdId => {
       ...doc.data(),
     }));
 
-    // Save into @app_children
     await AsyncStorage.setItem('@app_children', JSON.stringify(remoteChildren));
 
-    // 2. Fetch log entries from Firestore
+    // 2. PRIVACY GUARD: If Contributor, DO NOT pull down household logs!
+    if (userRole === 'contributor') {
+      await AsyncStorage.setItem('@app_logs', JSON.stringify([]));
+      return {
+        childrenCount: remoteChildren.length,
+        logsCount: 0,
+      };
+    }
+
+    // 3. For Primary Owner: Fetch all household log entries
     const logsSnapshot = await firestore()
       .collection('households')
       .doc(householdId)
@@ -33,7 +43,6 @@ export const pullCloudDataToLocal = async householdId => {
       ...doc.data(),
     }));
 
-    // Save into @app_logs
     await AsyncStorage.setItem('@app_logs', JSON.stringify(remoteLogs));
 
     return {
@@ -46,9 +55,9 @@ export const pullCloudDataToLocal = async householdId => {
   }
 };
 
-// Helper function to generate a unique 8-character invite code
+// Helper to generate a unique 8-character single-use invite code
 const generateInviteCode = () => {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz23456789'; // Omit easily confused characters
+  const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'; // Omit easily confused characters like 0/O, 1/I
   let result = '';
   for (let i = 0; i < 8; i++) {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
@@ -58,19 +67,18 @@ const generateInviteCode = () => {
 
 // 1. CREATE A NEW HOUSEHOLD (Owner)
 export const createHousehold = async userId => {
-  const inviteCode = generateInviteCode();
   const householdRef = firestore().collection('households').doc();
   const householdId = householdRef.id;
 
-  // Create household document
+  // Create household document with an empty invites map
   await householdRef.set({
     createdBy: userId,
     members: [userId],
-    inviteCode: inviteCode,
+    invites: {}, // Keyed by invite code: { [code]: { assignedToName, claimed, ... } }
     createdAt: firestore.FieldValue.serverTimestamp(),
   });
 
-  // Link household ID & role to user profile
+  // Link household ID & role to owner user profile
   await firestore().collection('users').doc(userId).set(
     {
       householdId: householdId,
@@ -82,7 +90,138 @@ export const createHousehold = async userId => {
 
   await AsyncStorage.setItem('@user_household_id', householdId);
 
-  return { householdId, inviteCode };
+  return { householdId };
+};
+
+/**
+ * Creates a named, single-use invite code for a specific contributor.
+ * Enforces a maximum limit of contributors per household.
+ */
+export const createNamedInvite = async (householdId, contributorName) => {
+  const cleanName = contributorName ? contributorName.trim() : 'Contributor';
+
+  // 1. Fetch current household to check current contributor count
+  const householdDoc = await firestore()
+    .collection('households')
+    .doc(householdId)
+    .get();
+  if (!householdDoc.exists) {
+    throw new Error('Household does not exist.');
+  }
+
+  const invitesMap = householdDoc.data()?.invites || {};
+  const currentCount = Object.keys(invitesMap).length;
+
+  if (currentCount >= MAX_CONTRIBUTORS) {
+    throw new Error(
+      `Contributor limit reached. A household can have a maximum of ${MAX_CONTRIBUTORS} contributors. Please delete an existing or unused invite first.`,
+    );
+  }
+
+  // 2. Generate unique code and save
+  const code = generateInviteCode();
+
+  await firestore()
+    .collection('households')
+    .doc(householdId)
+    .update({
+      [`invites.${code}`]: {
+        assignedToName: cleanName,
+        claimed: false,
+        claimedByUid: null,
+        createdAt: new Date().toISOString(),
+      },
+    });
+
+  return { code, assignedToName: cleanName };
+};
+
+// 3. CLAIM SINGLE-USE INVITE CODE (Contributor)
+export const claimNamedInviteCode = async (user, code) => {
+  const cleanCode = code ? code.trim().toUpperCase() : '';
+
+  if (!cleanCode || cleanCode.length !== 8) {
+    throw new Error('Please enter a valid 8-character code.');
+  }
+
+  // Find the household that contains this invite code
+  const snapshot = await firestore()
+    .collection('households')
+    .where(`invites.${cleanCode}.claimed`, '==', false)
+    .limit(1)
+    .get();
+
+  if (snapshot.empty) {
+    throw new Error('This code is invalid, expired, or has already been used.');
+  }
+
+  const householdDoc = snapshot.docs[0];
+  const householdId = householdDoc.id;
+  const householdData = householdDoc.data();
+  const inviteInfo = householdData.invites[cleanCode];
+
+  // Batch write: Mark invite as claimed and add contributor to members
+  const batch = firestore().batch();
+
+  // Update household document
+  batch.update(householdDoc.ref, {
+    [`invites.${cleanCode}.claimed`]: true,
+    [`invites.${cleanCode}.claimedByUid`]: user.uid,
+    members: firestore.FieldValue.arrayUnion(user.uid),
+  });
+
+  // Update contributor user document
+  const userRef = firestore().collection('users').doc(user.uid);
+  batch.set(
+    userRef,
+    {
+      householdId: householdId,
+      role: 'contributor',
+      displayName:
+        inviteInfo?.assignedToName || user.displayName || 'Contributor',
+      inviteCode: cleanCode,
+      updatedAt: firestore.FieldValue.serverTimestamp(),
+    },
+    { merge: true },
+  );
+
+  await batch.commit();
+
+  // Cache household locally for offline sync
+  await AsyncStorage.setItem('@user_household_id', householdId);
+  await AsyncStorage.setItem('@user_role', 'contributor');
+
+  return { householdId, assignedToName: inviteInfo?.assignedToName };
+};
+
+// 4. GET ALL INVITES & CONTRIBUTORS FOR A HOUSEHOLD (Owner UI)
+export const getHouseholdInvites = async householdId => {
+  if (!householdId) return [];
+
+  const doc = await firestore().collection('households').doc(householdId).get();
+  if (!doc.exists) return [];
+
+  const data = doc.data();
+  const invitesMap = data.invites || {};
+
+  // Convert map to an array for easy rendering in the UI
+  return Object.keys(invitesMap).map(code => ({
+    code,
+    ...invitesMap[code],
+  }));
+};
+
+// 5. REMOVE / REVOKE A CONTRIBUTOR OR UNCLAIMED CODE (Owner)
+export const removeContributor = async (householdId, code, contributorUid) => {
+  const householdRef = firestore().collection('households').doc(householdId);
+
+  // Remove the invite code and remove the member from the household
+  await householdRef.update({
+    [`invites.${code}`]: firestore.FieldValue.delete(),
+    ...(contributorUid
+      ? { members: firestore.FieldValue.arrayRemove(contributorUid) }
+      : {}),
+  });
 };
 
 // 2. JOIN AN EXISTING HOUSEHOLD WITH A 8-CHAR CODE (Contributor)
@@ -126,39 +265,94 @@ export const joinHouseholdWithCode = async (userId, code) => {
 // 3. MIGRATE ASYNCSTORAGE DATA TO FIRESTORE
 export const migrateLocalDataToCloud = async householdId => {
   try {
-    if (!householdId) return;
+    if (!householdId) return { childrenCount: 0, logsCount: 0 };
+    const currentUser = getAuth().currentUser;
 
-    // 1. Read local children
+    // ---------------------------------------------------------
+    // 1. MIGRATE CHILDREN
+    // ---------------------------------------------------------
     const rawChildren = await AsyncStorage.getItem('@app_children');
-    const localChildren = rawChildren ? JSON.parse(rawChildren) : [];
+    let localChildren = rawChildren ? JSON.parse(rawChildren) : [];
 
-    for (const child of localChildren) {
-      if (!child.id) continue;
+    console.log('--- 🔄 MIGRATING CHILDREN TO CLOUD ---', localChildren);
+
+    // SAFETY FALLBACK: If local storage has logs but no child profile was ever saved,
+    // generate a default Child 1 profile so the cloud household has a child to log against!
+    if (!localChildren || localChildren.length === 0) {
+      localChildren = [
+        { id: '1', name: 'Child 1', color: '#4A6159', isActive: true },
+      ];
+      await AsyncStorage.setItem(
+        '@app_children',
+        JSON.stringify(localChildren),
+      );
+    }
+
+    let childrenUploadedCount = 0;
+
+    for (let index = 0; index < localChildren.length; index++) {
+      const child = localChildren[index];
+      const childId = String(child.id || index + 1);
+
+      // Clean undefined values so Firestore doesn't reject the write
+      const cleanChild = JSON.parse(
+        JSON.stringify({
+          ...child,
+          id: childId,
+          name: child.name || `Child ${index + 1}`,
+          color: child.color || '#4A6159',
+          isActive: child.isActive !== false,
+          updatedAt: new Date().toISOString(),
+        }),
+      );
+
+      // Save to households/{householdId}/children/{childId}
       await firestore()
         .collection('households')
         .doc(householdId)
         .collection('children')
-        .doc(String(child.id))
-        .set(child, { merge: true });
+        .doc(childId)
+        .set(cleanChild, { merge: true });
+
+      childrenUploadedCount++;
+      console.log(
+        `✅ Uploaded child ${cleanChild.name} (${childId}) to cloud.`,
+      );
     }
 
-    // 2. Read local logs
+    // ---------------------------------------------------------
+    // 2. MIGRATE LOGS
+    // ---------------------------------------------------------
     const rawLogs = await AsyncStorage.getItem('@app_logs');
     const localLogs = rawLogs ? JSON.parse(rawLogs) : [];
 
     for (const log of localLogs) {
       if (!log.id) continue;
+      const cleanLog = JSON.parse(
+        JSON.stringify({
+          ...log,
+          createdByUid: log.createdByUid || currentUser?.uid || null,
+          createdByName:
+            log.createdByName || currentUser?.displayName || 'Primary Owner',
+        }),
+      );
+
       await firestore()
         .collection('households')
         .doc(householdId)
         .collection('logs')
         .doc(String(log.id))
-        .set(log, { merge: true });
+        .set(cleanLog, { merge: true });
     }
 
     console.log(
-      `Migrated ${localChildren.length} children and ${localLogs.length} logs to cloud.`,
+      `🎉 Migration complete: ${childrenUploadedCount} child(ren) and ${localLogs.length} logs uploaded.`,
     );
+
+    return {
+      childrenCount: childrenUploadedCount,
+      logsCount: localLogs.length,
+    };
   } catch (error) {
     console.error('Error migrating local data to cloud:', error);
     throw error;

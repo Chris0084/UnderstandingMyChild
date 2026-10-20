@@ -17,6 +17,13 @@
       "googleServicesFile": "./GoogleService-Info.plist",
       "supportsTablet": true,
       "infoPlist": {
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": [
+              "com.googleusercontent.apps.500833231264-7mg47jdb4uhen8ovdamf4us34nqdm1m5"
+            ]
+          }
+        ],
         "NSMicrophoneUsageDescription": "This app uses the microphone to allow you to dictate journal entries via speech-to-text.",
         "NSSpeechRecognitionUsageDescription": "This app uses speech recognition to convert your voice into text for your journal entries.",
         "NSPhotoLibraryUsageDescription": "This app requires access to your photo library so you can select and attach photos or videos directly to your journal entries.",
@@ -57,7 +64,8 @@
             "buildReactNativeFromSource": true
           }
         }
-      ]
+      ],
+      "@react-native-google-signin/google-signin"
     ],
     "extra": {
       "eas": {
