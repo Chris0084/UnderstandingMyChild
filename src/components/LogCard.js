@@ -14,11 +14,9 @@ const LogCard = ({ entry, isAlternate }) => {
     year: 'numeric',
   });
 
-  // --- STRATEGY LOGIC ---
-  // Get all strategies that are NOT "Not used"
   const activeStrategies = Object.entries(entry.strategies || {})
     .filter(([_, value]) => value !== 'Not used')
-    .map(([name, value]) => ({ name, value })); // Return an object with both
+    .map(([name, value]) => ({ name, value }));
 
   const displayStrategies = activeStrategies.slice(0, 3);
   const remainingCount = activeStrategies.length - 3;
@@ -44,7 +42,6 @@ const LogCard = ({ entry, isAlternate }) => {
       style={[
         styles.card,
         { backgroundColor: isAlternate ? '#FFFFFF' : '#eaf7fa' },
-        // Add this line to highlight the left edge of favorite cards
         entry.isFavorite && {
           borderLeftWidth: 5,
           borderLeftColor: Colors.starred_theme,
@@ -62,7 +59,7 @@ const LogCard = ({ entry, isAlternate }) => {
               <Ionicons
                 name="star"
                 size={14}
-                color={Colors.starred_theme} // Using a bright red/orange to match your favorite color
+                color={Colors.starred_theme}
                 style={{ marginRight: 6 }}
               />
             )}
@@ -70,7 +67,6 @@ const LogCard = ({ entry, isAlternate }) => {
 
             {entry.timeOfDay && (
               <View style={styles.timePill}>
-                {/* Render the icon based on the label */}
                 <Ionicons
                   name={TIME_ICONS[entry.timeOfDay] || 'time-outline'}
                   size={10}
@@ -85,6 +81,14 @@ const LogCard = ({ entry, isAlternate }) => {
           <Text style={styles.headerText}>
             Where: {entry.where.slice(0, 15)}
           </Text>
+
+          {/* 👈 LOGGED BY BADGE */}
+          <View style={styles.authorRow}>
+            <Ionicons name="person-circle-outline" size={13} color="#4A6159" />
+            <Text style={styles.authorText}>
+              Logged by: {entry.createdByName || 'Primary Owner'}
+            </Text>
+          </View>
         </View>
 
         {/* --- MEDIA INDICATOR --- */}
@@ -118,7 +122,7 @@ const LogCard = ({ entry, isAlternate }) => {
         {entry.whatHappened}
       </Text>
 
-      {/* Bottom section for Tags and Impact */}
+      {/* Bottom section for Tags and Strategies */}
       <View style={styles.footer}>
         <View style={styles.tagContainer}>
           {entry.tags?.slice(0, 6).map((tag, index) => (
@@ -135,10 +139,7 @@ const LogCard = ({ entry, isAlternate }) => {
             return (
               <View
                 key={index}
-                style={[
-                  styles.strategyPill,
-                  isNotEffective && styles.pillRed, // Apply red background if not effective
-                ]}>
+                style={[styles.strategyPill, isNotEffective && styles.pillRed]}>
                 <Ionicons
                   name={
                     isNotEffective ? 'thumbs-down-sharp' : 'thumbs-up-sharp'
@@ -189,28 +190,39 @@ const styles = StyleSheet.create({
   },
   headerText: { fontWeight: 'bold', color: '#333', fontSize: 13 },
 
+  // 👈 New author styles
+  authorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  authorText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#4A6159',
+    marginLeft: 4,
+  },
+
   mediaBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 20, // Full rounded pill
-    backgroundColor: 'rgba(0,0,0,0.05)', // Super subtle gray
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.05)',
   },
   mediaText: {
     fontSize: 9,
     fontWeight: '800',
-    color: '#4CAF50', // Green text
+    color: '#4CAF50',
     marginLeft: 2,
   },
-
   labelRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 5,
   },
-
   label: {
     fontSize: 11,
     fontWeight: '700',
@@ -218,9 +230,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   value: { fontSize: 14, color: '#444', marginBottom: 10 },
-
   pillButton: {
-    backgroundColor: '#E3F2FD', // Light blue background
+    backgroundColor: '#E3F2FD',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 15,
@@ -232,7 +243,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: 'bold',
   },
-
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -250,17 +260,11 @@ const styles = StyleSheet.create({
     fontSize: 9,
     marginRight: 4,
   },
-  impactText: {
-    fontWeight: '700',
-    color: '#f44336',
-    fontSize: 10,
-    textTransform: 'uppercase',
-  },
   strategyContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    flex: 1.5, // Give strategies more room than tags
+    flex: 1.5,
   },
   strategyPill: {
     flexDirection: 'row',
@@ -285,8 +289,8 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   timePill: {
-    flexDirection: 'row', // Added this
-    alignItems: 'center', // Added this
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#F5F5F5',
     paddingHorizontal: 6,
     paddingVertical: 2,

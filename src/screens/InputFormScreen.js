@@ -523,6 +523,19 @@ const InputFormScreen = ({ route, navigation }) => {
       const permanentMediaUri = await saveMediaPermanently(mediaUri);
       const targetChildId = selectedChildId || children[0]?.id || '1';
 
+      // const currentUser = getAuth().currentUser;
+      const storedRole = await AsyncStorage.getItem('@user_role');
+      const storedName = await AsyncStorage.getItem('@user_name');
+
+      let authorName = 'Primary Owner';
+      if (storedRole === 'contributor') {
+        // For contributors: strictly use the name given by the primary owner
+        authorName = storedName || 'Contributor';
+      } else {
+        // For primary owners: use their name or 'Primary Owner'
+        authorName = storedName || currentUser?.displayName || 'Primary Owner';
+      }
+
       // Clean strategies filter
       const activeStrategies = Array.isArray(strategies)
         ? strategies.filter(item => item.status && item.status !== 'Not used')
@@ -545,6 +558,9 @@ const InputFormScreen = ({ route, navigation }) => {
         mediaUri: permanentMediaUri,
         strategies: activeStrategies,
         isFavorite: currentEntryParam ? isFavorite : false,
+        createdByUid:
+          currentEntryParam?.createdByUid || currentUser?.uid || null,
+        createdByName: currentEntryParam?.createdByName || authorName,
       };
 
       // Retrieve active householdId locally from AsyncStorage or auth state

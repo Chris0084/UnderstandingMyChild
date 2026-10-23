@@ -98,6 +98,9 @@ export default function SettingsScreen({ navigation }) {
                 '@user_role',
                 userData.role || 'contributor',
               );
+              if (userData.displayName) {
+                await AsyncStorage.setItem('@user_name', userData.displayName);
+              }
             } else {
               // Access was revoked by the Owner! Clean up local cache
               setHouseholdId(null);
@@ -294,6 +297,7 @@ export default function SettingsScreen({ navigation }) {
         '@app_children',
         '@user_household_id',
         '@user_role',
+        '@user_name',
       ]);
       setHouseholdId(null);
       setUserRole(null);
@@ -322,13 +326,19 @@ export default function SettingsScreen({ navigation }) {
         tempUserCreated = targetUser;
       }
 
-      const { householdId: joinedHId, assignedToName } =
-        await claimNamedInviteCode(targetUser, enteredCode);
+      // 👈 Use explicit claimResult object
+      const claimResult = await claimNamedInviteCode(targetUser, enteredCode);
+      const joinedHId = claimResult.householdId;
+      const joinedName = claimResult.assignedToName || 'Contributor';
 
       setHouseholdId(joinedHId);
       setUserRole('contributor');
       setCurrentUser(targetUser);
       setIsInviteModalVisible(false);
+
+      await AsyncStorage.setItem('@user_household_id', joinedHId);
+      await AsyncStorage.setItem('@user_role', 'contributor');
+      await AsyncStorage.setItem('@user_name', joinedName);
 
       // Pass 'contributor' so it ONLY pulls children profiles, NOT household logs!
       const result = await pullCloudDataToLocal(joinedHId, 'contributor');
@@ -341,7 +351,7 @@ export default function SettingsScreen({ navigation }) {
 
       Alert.alert(
         'Connected!',
-        `Joined as ${assignedToName || 'Contributor'}! Loaded ${result?.childrenCount || 0} child profile(s).`,
+        `Joined as ${joinedName}! Loaded ${result?.childrenCount || 0} child profile(s).`,
       );
     } catch (e) {
       console.error('Error claiming invite code:', e);

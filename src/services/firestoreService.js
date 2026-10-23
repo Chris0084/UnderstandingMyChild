@@ -137,6 +137,7 @@ export const createNamedInvite = async (householdId, contributorName) => {
 };
 
 // 3. CLAIM SINGLE-USE INVITE CODE (Contributor)
+// 3. CLAIM SINGLE-USE INVITE CODE (Contributor)
 export const claimNamedInviteCode = async (user, code) => {
   const cleanCode = code ? code.trim().toUpperCase() : '';
 
@@ -158,7 +159,13 @@ export const claimNamedInviteCode = async (user, code) => {
   const householdDoc = snapshot.docs[0];
   const householdId = householdDoc.id;
   const householdData = householdDoc.data();
-  const inviteInfo = householdData.invites[cleanCode];
+  const inviteInfo = householdData.invites
+    ? householdData.invites[cleanCode]
+    : null;
+  const displayName =
+    inviteInfo && inviteInfo.assignedToName
+      ? inviteInfo.assignedToName
+      : 'Contributor';
 
   // Batch write: Mark invite as claimed and add contributor to members
   const batch = firestore().batch();
@@ -177,8 +184,7 @@ export const claimNamedInviteCode = async (user, code) => {
     {
       householdId: householdId,
       role: 'contributor',
-      displayName:
-        inviteInfo?.assignedToName || user.displayName || 'Contributor',
+      displayName: displayName,
       inviteCode: cleanCode,
       updatedAt: firestore.FieldValue.serverTimestamp(),
     },
@@ -190,8 +196,12 @@ export const claimNamedInviteCode = async (user, code) => {
   // Cache household locally for offline sync
   await AsyncStorage.setItem('@user_household_id', householdId);
   await AsyncStorage.setItem('@user_role', 'contributor');
+  await AsyncStorage.setItem('@user_name', displayName);
 
-  return { householdId, assignedToName: inviteInfo?.assignedToName };
+  return {
+    householdId: householdId,
+    assignedToName: displayName,
+  };
 };
 
 // 4. GET ALL INVITES & CONTRIBUTORS FOR A HOUSEHOLD (Owner UI)
