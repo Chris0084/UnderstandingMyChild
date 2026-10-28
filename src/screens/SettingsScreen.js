@@ -37,6 +37,7 @@ import {
   pullCloudDataToLocal,
   saveOrUpdateChild,
   migrateLocalDataToCloud,
+  verifyHouseholdMembership,
 } from '../services/firestoreService';
 import {
   configureGoogleSignIn,
@@ -74,6 +75,17 @@ export default function SettingsScreen({ navigation }) {
 
       if (user) {
         try {
+          const isValid = await verifyHouseholdMembership(() => {
+            setHouseholdId(null);
+            setUserRole(null);
+            setCurrentUser(null);
+            setChildren([
+              { id: '1', name: 'Child 1', color: '#4A6159', isActive: true },
+            ]);
+          });
+
+          if (!isValid) return; // Booted out!
+
           const userDoc = await firestore()
             .collection('users')
             .doc(user.uid)
@@ -81,39 +93,8 @@ export default function SettingsScreen({ navigation }) {
           const userData = userDoc.exists ? userDoc.data() : null;
 
           if (userData && userData.householdId) {
-            const hId = userData.householdId;
-
-            // Verify the user is still in the household's members list
-            const hDoc = await firestore()
-              .collection('households')
-              .doc(hId)
-              .get();
-
-            if (hDoc.exists && hDoc.data()?.members?.includes(user.uid)) {
-              // Still an active member!
-              setHouseholdId(hId);
-              setUserRole(userData.role || 'contributor');
-              await AsyncStorage.setItem('@user_household_id', hId);
-              await AsyncStorage.setItem(
-                '@user_role',
-                userData.role || 'contributor',
-              );
-              if (userData.displayName) {
-                await AsyncStorage.setItem('@user_name', userData.displayName);
-              }
-            } else {
-              // Access was revoked by the Owner! Clean up local cache
-              setHouseholdId(null);
-              setUserRole(null);
-              await AsyncStorage.multiRemove([
-                '@user_household_id',
-                '@user_role',
-              ]);
-              Alert.alert(
-                'Access Removed',
-                'You are no longer a member of this household.',
-              );
-            }
+            setHouseholdId(userData.householdId);
+            setUserRole(userData.role || 'contributor');
           }
         } catch (e) {
           console.error('Error loading cloud user profile:', e);
@@ -158,13 +139,20 @@ export default function SettingsScreen({ navigation }) {
   };
 
   // 1. SETUP AFTER PRIMARY GOOGLE/APPLE SIGN IN
-  const handlePostAuthSetup = async user => {
+  const handlePostAuthSetup = async (user, displayNameOverride = null) => {
     try {
       setLoading(true);
+      const userDocRef = firestore().collection('users').doc(user.uid);
+      // Determine the best available display name
+      // (Firebase auth user.displayName, or Apple's first-time name, or fallback)
+      const resolvedDisplayName =
+        user.displayName || displayNameOverride || 'User';
 
       // A. Check user's Firestore document
       const userDoc = await firestore().collection('users').doc(user.uid).get();
       let currentHId = userDoc.exists ? userDoc.data()?.householdId : null;
+
+      await AsyncStorage.setItem('@user_name', resolvedDisplayName);
 
       // Read local storage
       const rawLocalLogs = await AsyncStorage.getItem('@app_logs');
@@ -183,6 +171,19 @@ export default function SettingsScreen({ navigation }) {
         setHouseholdId(currentHId);
         await AsyncStorage.setItem('@user_household_id', currentHId);
 
+        // Save user profile document in Firestore including display name
+        await userDocRef.set(
+          {
+            uid: user.uid,
+            email: user.email || '',
+            displayName: resolvedDisplayName,
+            householdId: currentHId,
+            role: 'owner',
+            createdAt: firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true },
+        );
+
         // Upload any existing local logs & children to the new cloud household
         if (hasLocalData) {
           const migration = await migrateLocalDataToCloud(currentHId);
@@ -200,6 +201,11 @@ export default function SettingsScreen({ navigation }) {
       setUserRole(userDoc.data()?.role || 'owner');
       setHouseholdId(currentHId);
       await AsyncStorage.setItem('@user_household_id', currentHId);
+
+      // If existing user doc doesn't have a name saved yet, fill it in
+      if (!userDoc.data()?.displayName && resolvedDisplayName) {
+        await userDocRef.update({ displayName: resolvedDisplayName });
+      }
 
       const cloudLogsSnapshot = await firestore()
         .collection('households')
@@ -283,7 +289,7 @@ export default function SettingsScreen({ navigation }) {
   const handleAppleSignIn = async () => {
     const result = await signInWithApple();
     if (result.success) {
-      await handlePostAuthSetup(result.user);
+      await handlePostAuthSetup(result.user, result.displayName);
     } else if (result.error) {
       Alert.alert('Apple Sign-In Failed', result.error);
     }

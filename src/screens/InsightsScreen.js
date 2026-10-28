@@ -22,6 +22,7 @@ import HeatMap from '../insightComponents/HeatMap';
 import { Ionicons } from '@expo/vector-icons';
 import ChildSelector from '../components/ChildSelector';
 import ContributorGate from '../components/ContributorGate';
+import { AVAILABLE_TAGS } from '../constants/consts.js';
 
 const { width } = Dimensions.get('window');
 const logsRequired = 15;
@@ -128,15 +129,7 @@ const InsightsScreen = ({ navigation }) => {
         .slice(0, 3);
 
       // --- 3. TALLY TAGS (Polar Chart) ---
-      const tagCounts = {
-        Sensory: 0,
-        Communication: 0,
-        Routine: 0,
-        'Social Connection': 0,
-        'Self-Regulated': 0,
-        'Executive Function': 0,
-        Sleep: 0,
-      };
+      const tagCounts = Object.fromEntries(AVAILABLE_TAGS.map(tag => [tag, 0]));
 
       logs.forEach(log => {
         (log.tags || []).forEach(tag => {

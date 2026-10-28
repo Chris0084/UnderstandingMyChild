@@ -124,8 +124,8 @@ export default function HouseholdInviteModal({
   const handleJoin = () => {
     Keyboard.dismiss();
     const clean = joinCodeInput.trim().toUpperCase();
-    if (!clean || clean.length !== 8) {
-      Alert.alert('Invalid Code', 'Please enter a valid 8-character code.');
+    if (!clean || clean.length !== 10) {
+      Alert.alert('Invalid Code', 'Please enter a valid 10-character code.');
       return;
     }
     onJoinCodeSubmit(clean);
@@ -275,11 +275,11 @@ export default function HouseholdInviteModal({
 
                 <TextInput
                   style={[styles.input, styles.codeInput]}
-                  placeholder="e.g. 8A3X9K2L"
+                  placeholder="e.g. 8A3X9K2GL7"
                   value={joinCodeInput}
                   onChangeText={setJoinCodeInput}
                   autoCapitalize="characters"
-                  maxLength={8}
+                  maxLength={10}
                   placeholderTextColor="#999"
                 />
 

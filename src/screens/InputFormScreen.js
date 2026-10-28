@@ -14,6 +14,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
+import { AVAILABLE_TAGS } from '../constants/consts.js';
 
 import RevenueCatUI, { PAYWALL_RESULT } from 'react-native-purchases-ui';
 
@@ -39,6 +40,7 @@ import {
   deleteLog,
   saveOrUpdateChild,
   pullCloudDataToLocal,
+  verifyHouseholdMembership,
 } from '../services/firestoreService';
 
 const getTimeOfDay = () => {
@@ -99,13 +101,14 @@ const InputFormScreen = ({ route, navigation }) => {
         }
       }
 
-      // 2. Check cloud using your existing pullCloudDataToLocal
+      // 2. Check cloud using pullCloudDataToLocal
+      const currentUser = getAuth().currentUser;
       const householdId = await AsyncStorage.getItem('@user_household_id');
       const userRole = await AsyncStorage.getItem('@user_role');
       setUserRole(userRole);
 
-      if (householdId) {
-        await pullCloudDataToLocal(householdId, userRole || 'contributor');
+      if (currentUser && householdId) {
+        await pullCloudDataToLocal(householdId, userRole || 'owner');
 
         // 3. Update state with fresh cloud data
         const fresh = await AsyncStorage.getItem('@app_children');
@@ -137,7 +140,37 @@ const InputFormScreen = ({ route, navigation }) => {
         );
 
         await AsyncStorage.setItem('@app_logs', JSON.stringify(currentLogs));
-        setAllLogs(currentLogs);
+        const sorted = currentLogs.sort(
+          (a, b) => new Date(b.logDate) - new Date(a.logDate),
+        );
+        setAllLogs(sorted);
+
+        navigation.setParams({
+          existingEntry: {
+            ...route.params?.existingEntry,
+            childId: id,
+          },
+        });
+
+        let householdId = await AsyncStorage.getItem('@user_household_id');
+        const currentUser = getAuth().currentUser;
+
+        if (!householdId && currentUser) {
+          const userDoc = await firestore()
+            .collection('users')
+            .doc(currentUser.uid)
+            .get();
+          householdId = userDoc.exists ? userDoc.data()?.householdId : null;
+        }
+
+        if (householdId) {
+          await firestore()
+            .collection('households')
+            .doc(householdId)
+            .collection('logs')
+            .doc(String(currentEntryParam.id))
+            .set({ childId: id }, { merge: true });
+        }
       } catch (e) {
         Alert.alert('Error', 'Could not update child selection.');
       }
@@ -274,7 +307,16 @@ const InputFormScreen = ({ route, navigation }) => {
 
   useFocusEffect(
     useCallback(() => {
-      syncAndLoadChildren();
+      const checkAccess = async () => {
+        const isValid = await verifyHouseholdMembership();
+        if (!isValid) {
+          navigation.navigate('Home'); // Kick them out if revoked!
+          return;
+        }
+        syncAndLoadChildren();
+      };
+
+      checkAccess();
       const checkPremiumStatus = async () => {
         try {
           // 1. Check if the active user is a contributor
@@ -347,7 +389,37 @@ const InputFormScreen = ({ route, navigation }) => {
       );
 
       await AsyncStorage.setItem('@app_logs', JSON.stringify(logs));
-      setAllLogs(logs);
+      const sorted = logs.sort(
+        (a, b) => new Date(b.logDate) - new Date(a.logDate),
+      );
+      setAllLogs(sorted);
+
+      navigation.setParams({
+        existingEntry: {
+          ...route.params?.existingEntry,
+          isFavorite: newFavoriteStatus,
+        },
+      });
+
+      let householdId = await AsyncStorage.getItem('@user_household_id');
+      const currentUser = getAuth().currentUser;
+
+      if (!householdId && currentUser) {
+        const userDoc = await firestore()
+          .collection('users')
+          .doc(currentUser.uid)
+          .get();
+        householdId = userDoc.exists ? userDoc.data()?.householdId : null;
+      }
+
+      if (householdId) {
+        await firestore()
+          .collection('households')
+          .doc(householdId)
+          .collection('logs')
+          .doc(String(currentId))
+          .set({ isFavorite: newFavoriteStatus }, { merge: true });
+      }
     } catch (e) {
       Alert.alert('Error', 'Could not save favorite status.');
     }
@@ -387,7 +459,10 @@ const InputFormScreen = ({ route, navigation }) => {
               // 3. Update local screen state
               const savedData = await AsyncStorage.getItem('@app_logs');
               const updatedLogs = savedData ? JSON.parse(savedData) : [];
-              setAllLogs(updatedLogs);
+              const sorted = updatedLogs.sort(
+                (a, b) => new Date(b.logDate) - new Date(a.logDate),
+              );
+              setAllLogs(sorted);
 
               Alert.alert('Deleted', 'Entry removed successfully.');
               navigation.goBack();
@@ -612,8 +687,13 @@ const InputFormScreen = ({ route, navigation }) => {
       Alert.alert('Saved', 'Your entry has been recorded!', [
         {
           text: 'OK',
-          onPress: () =>
-            navigation.navigate('MainApp', { screen: 'Reporting' }),
+          onPress: () => {
+            if (storedRole === 'contributor') {
+              navigation.navigate('Home');
+            } else {
+              navigation.navigate('MainApp', { screen: 'Reporting' });
+            }
+          },
         },
       ]);
     } catch (e) {
@@ -621,16 +701,6 @@ const InputFormScreen = ({ route, navigation }) => {
       Alert.alert('Error', 'Could not save entry.');
     }
   };
-
-  const availableTags = [
-    'Sensory',
-    'Communication',
-    'Routine',
-    'Social Connection',
-    'Self-Regulated',
-    'Executive Function',
-    'Sleep',
-  ];
 
   const renderReportView = () => {
     const getTimeStyles = time => {
@@ -871,7 +941,7 @@ const InputFormScreen = ({ route, navigation }) => {
       <TimeOfDaySelector onSelect={setTimeOfDay} selectedTime={timeOfDay} />
       <TagSelector
         label="Observation Categories"
-        tags={availableTags}
+        tags={AVAILABLE_TAGS}
         selectedTags={selectedTags}
         onToggle={handleTagToggle}
         editable={true}

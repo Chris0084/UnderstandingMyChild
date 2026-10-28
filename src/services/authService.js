@@ -11,6 +11,7 @@ import {
   statusCodes,
 } from '@react-native-google-signin/google-signin';
 import { appleAuth } from '@invertase/react-native-apple-authentication';
+import * as Crypto from 'expo-crypto';
 
 /**
  * Configure Google Sign-In on app launch.
@@ -63,28 +64,49 @@ export const signInWithGoogle = async () => {
 
 /**
  * Apple Sign-In (iOS only)
+ *
  */
+
 export const signInWithApple = async () => {
   if (Platform.OS !== 'ios') {
     return { success: false, error: 'Apple Sign-In is only available on iOS.' };
   }
 
   try {
+    const rawNonce = Math.random().toString(36).substring(2, 10);
+    const hashedNonce = Crypto.digestStringSync(
+      Crypto.CryptoDigestAlgorithm.SHA256,
+      rawNonce,
+    );
+
     const appleAuthRequestResponse = await appleAuth.performRequest({
       requestedOperation: appleAuth.Operation.LOGIN,
       requestedScopes: [appleAuth.Scope.EMAIL, appleAuth.Scope.FULL_NAME],
+      nonce: hashedNonce,
     });
 
-    const { identityToken, nonce } = appleAuthRequestResponse;
+    const { identityToken, fullName } = appleAuthRequestResponse;
     if (!identityToken) {
       throw new Error('Apple Sign-In failed - no identity token returned.');
     }
 
     const authInstance = getAuth();
-    const credential = AppleAuthProvider.credential(identityToken, nonce);
+    const credential = AppleAuthProvider.credential(identityToken, rawNonce);
     const userCredential = await signInWithCredential(authInstance, credential);
 
-    return { success: true, user: userCredential.user };
+    // Format the full name if provided by Apple
+    let appleDisplayName = null;
+    if (fullName && (fullName.givenName || fullName.familyName)) {
+      appleDisplayName = [fullName.givenName, fullName.familyName]
+        .filter(Boolean)
+        .join(' ');
+    }
+
+    return {
+      success: true,
+      user: userCredential.user,
+      displayName: appleDisplayName, // 👈 Send captured name to caller
+    };
   } catch (error) {
     if (error.code === appleAuth.Error.CANCELED) {
       return { success: false, cancelled: true };
@@ -93,6 +115,35 @@ export const signInWithApple = async () => {
     return { success: false, error: error.message };
   }
 };
+// export const signInWithApple = async () => {
+//   if (Platform.OS !== 'ios') {
+//     return { success: false, error: 'Apple Sign-In is only available on iOS.' };
+//   }
+
+//   try {
+//     const appleAuthRequestResponse = await appleAuth.performRequest({
+//       requestedOperation: appleAuth.Operation.LOGIN,
+//       requestedScopes: [appleAuth.Scope.EMAIL, appleAuth.Scope.FULL_NAME],
+//     });
+
+//     const { identityToken, nonce } = appleAuthRequestResponse;
+//     if (!identityToken) {
+//       throw new Error('Apple Sign-In failed - no identity token returned.');
+//     }
+
+//     const authInstance = getAuth();
+//     const credential = AppleAuthProvider.credential(identityToken, nonce);
+//     const userCredential = await signInWithCredential(authInstance, credential);
+
+//     return { success: true, user: userCredential.user };
+//   } catch (error) {
+//     if (error.code === appleAuth.Error.CANCELED) {
+//       return { success: false, cancelled: true };
+//     }
+//     console.error('Apple Sign-In Error:', error);
+//     return { success: false, error: error.message };
+//   }
+// };
 
 /**
  * Sign Out

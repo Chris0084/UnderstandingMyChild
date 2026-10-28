@@ -1,12 +1,17 @@
+import { Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import firestore from '@react-native-firebase/firestore';
-import { getAuth } from '@react-native-firebase/auth';
+import { getAuth, signOut } from '@react-native-firebase/auth';
 
 export const MAX_CONTRIBUTORS = 3;
 
-export const pullCloudDataToLocal = async (householdId, userRole = 'owner') => {
+export const pullCloudDataToLocal = async (householdId, userRole) => {
   try {
-    if (!householdId) return { childrenCount: 0, logsCount: 0 };
+    const currentUser = getAuth().currentUser;
+    if (!currentUser || !householdId) return { childrenCount: 0, logsCount: 0 };
+
+    const effectiveRole =
+      userRole || (await AsyncStorage.getItem('@user_role')) || 'owner';
 
     // 1. Fetch children records (Both Owners & Contributors need this to select which child to log for)
     const childrenSnapshot = await firestore()
@@ -55,11 +60,11 @@ export const pullCloudDataToLocal = async (householdId, userRole = 'owner') => {
   }
 };
 
-// Helper to generate a unique 8-character single-use invite code
+// Helper to generate a unique 10-character single-use invite code
 const generateInviteCode = () => {
   const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'; // Omit easily confused characters like 0/O, 1/I
   let result = '';
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < 10; i++) {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return result;
@@ -141,8 +146,8 @@ export const createNamedInvite = async (householdId, contributorName) => {
 export const claimNamedInviteCode = async (user, code) => {
   const cleanCode = code ? code.trim().toUpperCase() : '';
 
-  if (!cleanCode || cleanCode.length !== 8) {
-    throw new Error('Please enter a valid 8-character code.');
+  if (!cleanCode || cleanCode.length !== 10) {
+    throw new Error('Please enter a valid 10-character code.');
   }
 
   // Find the household that contains this invite code
@@ -234,7 +239,7 @@ export const removeContributor = async (householdId, code, contributorUid) => {
   });
 };
 
-// 2. JOIN AN EXISTING HOUSEHOLD WITH A 8-CHAR CODE (Contributor)
+// 2. JOIN AN EXISTING HOUSEHOLD WITH A 10-CHAR CODE (Contributor)
 export const joinHouseholdWithCode = async (userId, code) => {
   const cleanCode = code.trim();
 
@@ -481,5 +486,78 @@ export const saveOrUpdateChild = async (childData, householdId) => {
   } catch (error) {
     console.error('Error saving or updating child:', error);
     throw error;
+  }
+};
+
+/**
+ * Reusable check to verify if the active user is still a member of the household.
+ * If access was revoked by the owner:
+ * - Signs user out of Firebase Auth
+ * - Wipes all local household storage
+ * - Displays an alert popup
+ * - Calls optional onRevoked callback to reset screen states
+ *
+ * @param {Function} onRevoked Optional callback for screen state resets
+ * @returns {Promise<boolean>} true if active, false if revoked
+ */
+export const verifyHouseholdMembership = async onRevoked => {
+  try {
+    const authInstance = getAuth();
+    const currentUser = authInstance.currentUser;
+
+    // Not logged in -> nothing to revoke
+    if (!currentUser) return true;
+
+    const householdId = await AsyncStorage.getItem('@user_household_id');
+    const userRole = await AsyncStorage.getItem('@user_role');
+
+    // Only users associated with a household need to be checked
+    if (!householdId) return true;
+
+    // Fetch the household doc to check members array
+    const householdDoc = await firestore()
+      .collection('households')
+      .doc(householdId)
+      .get();
+
+    const isMember =
+      householdDoc.exists &&
+      householdDoc.data()?.members?.includes(currentUser.uid);
+
+    if (!isMember) {
+      console.log('Revoked membership detected for user:', currentUser.uid);
+
+      // 1. Sign out of Firebase Auth
+      await signOut(authInstance);
+
+      // 2. Wipe all household local storage
+      await AsyncStorage.multiRemove([
+        '@app_logs',
+        '@app_children',
+        '@user_household_id',
+        '@user_role',
+        '@user_name',
+      ]);
+
+      // 3. Reset screen state if callback provided
+      if (typeof onRevoked === 'function') {
+        onRevoked();
+      }
+
+      // 4. Alert user
+      Alert.alert(
+        'Access Removed',
+        'Your access to this household has been revoked by the primary owner. You have been signed out.',
+        [{ text: 'OK' }],
+      );
+
+      return false; // Access was revoked!
+    }
+
+    return true; // Still active
+  } catch (error) {
+    // If offline / network error, don't boot them prematurely
+    console.error('Error verifying household membership:', error);
+    return true;
   }
 };

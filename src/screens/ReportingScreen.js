@@ -18,6 +18,7 @@ import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { SAMPLE_LOGS } from '../constants/sampleData';
 import { pullCloudDataToLocal } from '../services/firestoreService';
+import { AVAILABLE_TAGS } from '../constants/consts.js';
 
 // Component Imports
 import LogCard from '../components/LogCard';
@@ -49,16 +50,6 @@ const ReportingScreen = ({ navigation }) => {
   const [filterTags, setFilterTags] = useState([]);
   const [filterMood, setFilterMood] = useState(null);
 
-  const availableTags = [
-    'Sensory',
-    'Communication',
-    'Routine',
-    'Social Connection',
-    'Self-Regulated',
-    'Executive Function',
-    'Sleep',
-  ];
-
   // 1. Fetch Functions defined at top scope to fix hoisting/scoping issues
   // const fetchLogs = useCallback(async () => {
   //   try {
@@ -73,6 +64,13 @@ const ReportingScreen = ({ navigation }) => {
 
   const syncAndFetchLogs = useCallback(async () => {
     try {
+      const userRole = await AsyncStorage.getItem('@user_role');
+
+      // 👈 Don't even attempt to pull logs if contributor!
+      if (userRole === 'contributor') {
+        setAllLogs([]);
+        return;
+      }
       const householdId = await AsyncStorage.getItem('@user_household_id');
 
       // If the user belongs to a household, silently pull any new contributor logs
@@ -164,14 +162,6 @@ const ReportingScreen = ({ navigation }) => {
       console.error('Error loading children profiles:', error);
     }
   }, []);
-
-  // Refresh data every time the screen comes into focus
-  useFocusEffect(
-    useCallback(() => {
-      fetchChildren();
-      fetchLogs();
-    }, [fetchChildren, fetchLogs]),
-  );
 
   const injectSampleData = async () => {
     try {
@@ -524,7 +514,7 @@ const ReportingScreen = ({ navigation }) => {
         <FilterModal
           visible={modalVisible}
           onClose={() => setModalVisible(false)}
-          tags={availableTags}
+          tags={AVAILABLE_TAGS}
           selectedTags={filterTags}
           onToggleTag={tag =>
             setFilterTags(prev =>

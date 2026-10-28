@@ -238,10 +238,9 @@ export default function HomeScreen({ navigation }) {
         <View style={styles.consentBanner}>
           <Text style={styles.consentHeader}>Privacy & Analytics</Text>
           <Text style={styles.consentText}>
-            To help us improve your user experience, we collect anonymous usage
-            analytics. Rest assured, all data is completely anonymized, and
-            absolutely no personal logs, journal text, or user inputs are
-            collected or ever seen by the developers.{' '}
+            We collect anonymous interaction data—like button clicks—solely to
+            help us improve the app. Absolutely no personal logs, journal
+            entries, or media are ever tracked or included in our analytics.{' '}
             <Text style={{ fontWeight: '700', color: '#1A1A1A' }}>
               You can update this preference at any time in the app settings.
             </Text>
