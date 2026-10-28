@@ -3,7 +3,7 @@ import {
   getAuth,
   signInWithCredential,
   GoogleAuthProvider,
-  AppleAuthProvider,
+  appleAuthProvider,
   signOut,
 } from '@react-native-firebase/auth';
 import {
@@ -74,7 +74,7 @@ export const signInWithApple = async () => {
 
   try {
     const rawNonce = Math.random().toString(36).substring(2, 10);
-    const hashedNonce = Crypto.digestStringSync(
+    const hashedNonce = await Crypto.digestStringSync(
       Crypto.CryptoDigestAlgorithm.SHA256,
       rawNonce,
     );
@@ -91,7 +91,7 @@ export const signInWithApple = async () => {
     }
 
     const authInstance = getAuth();
-    const credential = AppleAuthProvider.credential(identityToken, rawNonce);
+    const credential = appleAuthProvider.credential(identityToken, rawNonce);
     const userCredential = await signInWithCredential(authInstance, credential);
 
     // Format the full name if provided by Apple
@@ -132,7 +132,7 @@ export const signInWithApple = async () => {
 //     }
 
 //     const authInstance = getAuth();
-//     const credential = AppleAuthProvider.credential(identityToken, nonce);
+//     const credential = appleAuthProvider.credential(identityToken, nonce);
 //     const userCredential = await signInWithCredential(authInstance, credential);
 
 //     return { success: true, user: userCredential.user };
