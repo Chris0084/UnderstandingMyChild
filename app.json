@@ -15,6 +15,9 @@
     "ios": {
       "bundleIdentifier": "com.jstarapps.UnderstandingMyChild",
       "googleServicesFile": "./GoogleService-Info.plist",
+      "entitlements": {
+         "com.apple.developer.applesignin": ["Default"]
+  },
       "supportsTablet": true,
       "infoPlist": {
         "CFBundleURLTypes": [
@@ -56,6 +59,7 @@
       ],
       "@react-native-firebase/app",
       "@react-native-firebase/analytics",
+      "@react-native-firebase/auth",
       [
         "expo-build-properties",
         {
