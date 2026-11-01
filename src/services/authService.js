@@ -79,7 +79,7 @@ export const signInWithApple = async () => {
     const appleAuthRequestResponse = await appleAuth.performRequest({
       requestedOperation: appleAuth.Operation.LOGIN,
       requestedScopes: [appleAuth.Scope.EMAIL, appleAuth.Scope.FULL_NAME],
-      nonce: hashedNonce,
+      nonce: rawNonce,
     });
 
     const { identityToken, fullName } = appleAuthRequestResponse;
