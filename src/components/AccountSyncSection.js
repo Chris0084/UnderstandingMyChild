@@ -61,18 +61,22 @@ export default function AccountSyncSection({
         ) : (
           <View style={styles.buttonStack}>
             {/* Google Sign In */}
-            <TouchableOpacity
-              style={styles.googleButton}
-              onPress={handleGoogle}
-              activeOpacity={0.8}>
-              <Ionicons
-                name="logo-google"
-                size={18}
-                color="#EA4335"
-                style={styles.buttonIcon}
-              />
-              <Text style={styles.googleButtonText}>Continue with Google</Text>
-            </TouchableOpacity>
+            {Platform.OS === 'android' && (
+              <TouchableOpacity
+                style={styles.googleButton}
+                onPress={handleGoogle}
+                activeOpacity={0.8}>
+                <Ionicons
+                  name="logo-google"
+                  size={18}
+                  color="#EA4335"
+                  style={styles.buttonIcon}
+                />
+                <Text style={styles.googleButtonText}>
+                  Continue with Google
+                </Text>
+              </TouchableOpacity>
+            )}
 
             {/* Apple Sign In (iOS Only) */}
             {Platform.OS === 'ios' && (

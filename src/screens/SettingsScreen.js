@@ -138,6 +138,25 @@ export default function SettingsScreen({ navigation }) {
     setIsInviteModalVisible(true);
   };
 
+  /**
+   * Resolves a friendly display name from auth user or name overrides.
+   * Prevents relay emails from leaking as display names.
+   */
+  const getFriendlyDisplayName = (user, displayNameOverride = null) => {
+    // 1. Explicit display name passed from Apple/Google sign-in
+    if (displayNameOverride && displayNameOverride.trim()) {
+      return displayNameOverride.trim();
+    }
+
+    // 2. Firebase Auth user display name
+    if (user?.displayName && user.displayName.trim()) {
+      return user.displayName.trim();
+    }
+
+    // 3. Fallback to generic default if missing or if email is an Apple Relay address
+    return 'Primary User';
+  };
+
   // 1. SETUP AFTER PRIMARY GOOGLE/APPLE SIGN IN
   const handlePostAuthSetup = async (user, displayNameOverride = null) => {
     try {
@@ -145,8 +164,12 @@ export default function SettingsScreen({ navigation }) {
       const userDocRef = firestore().collection('users').doc(user.uid);
       // Determine the best available display name
       // (Firebase auth user.displayName, or Apple's first-time name, or fallback)
-      const resolvedDisplayName =
-        user.displayName || displayNameOverride || 'User';
+      // const resolvedDisplayName =
+      //   user.displayName || displayNameOverride || 'User';
+      const resolvedDisplayName = getFriendlyDisplayName(
+        user,
+        displayNameOverride,
+      );
 
       // A. Check user's Firestore document
       const userDoc = await firestore().collection('users').doc(user.uid).get();
