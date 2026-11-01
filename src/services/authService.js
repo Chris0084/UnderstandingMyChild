@@ -11,7 +11,7 @@ import {
   statusCodes,
 } from '@react-native-google-signin/google-signin';
 import { appleAuth } from '@invertase/react-native-apple-authentication';
-import * as Crypto from 'expo-crypto';
+import SHA256 from 'crypto-js/sha256';
 
 /**
  * Configure Google Sign-In on app launch.
@@ -74,10 +74,7 @@ export const signInWithApple = async () => {
 
   try {
     const rawNonce = Math.random().toString(36).substring(2, 10);
-    const hashedNonce = await Crypto.digestStringSync(
-      Crypto.CryptoDigestAlgorithm.SHA256,
-      rawNonce,
-    );
+    const hashedNonce = SHA256(rawNonce).toString();
 
     const appleAuthRequestResponse = await appleAuth.performRequest({
       requestedOperation: appleAuth.Operation.LOGIN,
@@ -94,7 +91,6 @@ export const signInWithApple = async () => {
     const credential = appleAuthProvider.credential(identityToken, rawNonce);
     const userCredential = await signInWithCredential(authInstance, credential);
 
-    // Format the full name if provided by Apple
     let appleDisplayName = null;
     if (fullName && (fullName.givenName || fullName.familyName)) {
       appleDisplayName = [fullName.givenName, fullName.familyName]
@@ -105,7 +101,7 @@ export const signInWithApple = async () => {
     return {
       success: true,
       user: userCredential.user,
-      displayName: appleDisplayName, // 👈 Send captured name to caller
+      displayName: appleDisplayName,
     };
   } catch (error) {
     if (error.code === appleAuth.Error.CANCELED) {
