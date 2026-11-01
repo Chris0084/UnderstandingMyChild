@@ -17,6 +17,7 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Clipboard from 'expo-clipboard';
 import {
   createNamedInvite,
   getHouseholdInvites,
@@ -39,6 +40,7 @@ export default function HouseholdInviteModal({
   const [invitesList, setInvitesList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [newlyGeneratedCode, setNewlyGeneratedCode] = useState(null);
+  const [copied, setCopied] = useState(false);
 
   // Sync state whenever modal opens
   useEffect(() => {
@@ -86,6 +88,13 @@ export default function HouseholdInviteModal({
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCopyCode = async () => {
+    if (!newlyGeneratedCode) return;
+    await Clipboard.setStringAsync(newlyGeneratedCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
   };
 
   const handleConfirmDelete = item => {
@@ -181,6 +190,8 @@ export default function HouseholdInviteModal({
                 </Text>
                 <Text style={styles.hint}>
                   Each code is single-use and assigned to one specific person.
+                  You can remove contributors at any time to free up a slot for
+                  a new one.
                 </Text>
 
                 {/* If 3 contributors already exist, show warning banner. Otherwise show input! */}
@@ -199,6 +210,7 @@ export default function HouseholdInviteModal({
                       value={contributorName}
                       onChangeText={setContributorName}
                       placeholderTextColor="#999"
+                      maxLength={20}
                     />
                     <TouchableOpacity
                       style={styles.generateBtn}
@@ -210,16 +222,34 @@ export default function HouseholdInviteModal({
                 )}
 
                 {newlyGeneratedCode && (
-                  <View style={styles.codeBanner}>
-                    <Text style={styles.codeBannerTitle}>
-                      Single-Use Code Created!
-                    </Text>
+                  <TouchableOpacity
+                    style={[
+                      styles.codeBanner,
+                      copied && styles.codeBannerCopied,
+                    ]}
+                    onPress={handleCopyCode}
+                    activeOpacity={0.7}>
+                    <View style={styles.codeBannerHeader}>
+                      <Text style={styles.codeBannerTitle}>
+                        {copied
+                          ? 'Copied to Clipboard!'
+                          : 'Single-Use Code Created!'}
+                      </Text>
+                      <Ionicons
+                        name={copied ? 'checkmark-circle' : 'copy-outline'}
+                        size={16}
+                        color={copied ? '#1B5E20' : '#2E7D32'}
+                      />
+                    </View>
+
                     <Text style={styles.codeText}>{newlyGeneratedCode}</Text>
+
                     <Text style={styles.codeBannerSubtitle}>
-                      Share this code. Once they sign in with it, it cannot be
-                      used again.
+                      {copied
+                        ? 'Code copied! You can now paste it into a message.'
+                        : 'Tap anywhere on this box to copy the code and share it. Once a contributor has used this code, it will no longer be valid.'}
                     </Text>
-                  </View>
+                  </TouchableOpacity>
                 )}
 
                 <Text style={[styles.label, { marginTop: 16 }]}>
@@ -414,6 +444,11 @@ const styles = StyleSheet.create({
     padding: 14,
     alignItems: 'center',
     marginBottom: 16,
+  },
+  codeBannerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   codeBannerTitle: {
     fontSize: 12,

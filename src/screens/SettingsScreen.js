@@ -585,9 +585,10 @@ export default function SettingsScreen({ navigation }) {
                   Share Anonymous Usage Data
                 </Text>
                 <Text style={styles.settingDescription}>
-                  Help us improve your app experience with anonymous analytics.
-                  Your journal entries, text logs, and personal inputs remain
-                  100% private and invisible to developers.
+                  We collect anonymous interaction data—like button
+                  clicks—solely to help us improve the app. Absolutely no
+                  personal logs, journal entries, or media are ever tracked or
+                  included in our analytics.
                 </Text>
               </View>
 
