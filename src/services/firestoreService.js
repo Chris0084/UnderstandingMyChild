@@ -399,12 +399,35 @@ export const saveOrUpdateLog = async (logData, householdId) => {
     // 2. If user is logged in and belongs to a household, push to Firestore
     const currentUser = getAuth().currentUser;
     if (currentUser && householdId) {
-      await firestore()
+      const logRef = firestore()
         .collection('households')
         .doc(householdId)
         .collection('logs')
-        .doc(logId)
-        .set(updatedLog, { merge: true });
+        .doc(logId);
+
+      const householdRef = firestore()
+        .collection('households')
+        .doc(householdId);
+
+      // Check if this is an edit or a brand-new log
+      const logSnapshot = await logRef.get();
+      const isNewLog = !logSnapshot.exists;
+
+      const batch = firestore().batch();
+
+      // Write/update the log document
+      batch.set(logRef, updatedLog, { merge: true });
+
+      // If it's a new log, increment logCount on the household document
+      if (isNewLog) {
+        batch.set(
+          householdRef,
+          { logCount: firestore.FieldValue.increment(1) },
+          { merge: true },
+        );
+      }
+
+      await batch.commit();
 
       console.log(`Log ${logId} synced to cloud household ${householdId}`);
     }
@@ -429,14 +452,33 @@ export const deleteLog = async (logId, householdId) => {
     // 2. Delete from Firestore if authenticated and householdId exists
     const currentUser = getAuth().currentUser;
     if (currentUser && householdId) {
-      await firestore()
+      const logRef = firestore()
         .collection('households')
         .doc(householdId)
         .collection('logs')
-        .doc(stringId)
-        .delete();
+        .doc(stringId);
 
-      console.log(`Log ${stringId} deleted from cloud.`);
+      const householdRef = firestore()
+        .collection('households')
+        .doc(householdId);
+
+      const batch = firestore().batch();
+
+      // Delete the log entry
+      batch.delete(logRef);
+
+      // Decrement logCount so deleted entries free up cap space
+      batch.set(
+        householdRef,
+        { logCount: firestore.FieldValue.increment(-1) },
+        { merge: true },
+      );
+
+      await batch.commit();
+
+      console.log(
+        `Log ${stringId} deleted from cloud and logCount decremented.`,
+      );
     }
   } catch (error) {
     console.error('Error deleting log:', error);
