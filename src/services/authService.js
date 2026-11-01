@@ -3,7 +3,7 @@ import {
   getAuth,
   signInWithCredential,
   GoogleAuthProvider,
-  appleAuthProvider,
+  AppleAuthProvider,
   signOut,
 } from '@react-native-firebase/auth';
 import {
@@ -88,7 +88,7 @@ export const signInWithApple = async () => {
     }
 
     const authInstance = getAuth();
-    const credential = appleAuthProvider.credential(identityToken, rawNonce);
+    const credential = AppleAuthProvider.credential(identityToken, rawNonce);
     const userCredential = await signInWithCredential(authInstance, credential);
 
     let appleDisplayName = null;
