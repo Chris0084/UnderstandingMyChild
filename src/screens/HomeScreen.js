@@ -119,9 +119,18 @@ export default function HomeScreen({ navigation }) {
 
         <TouchableOpacity
           style={styles.cogButton}
-          onPress={() => navigation.navigate('Settings')}
+          onPress={() =>
+            trackAnalyticsAndExecute(
+              'button_HomeScreen_information_header',
+              () => navigation.navigate('Information'),
+            )
+          }
           activeOpacity={0.7}>
-          <Ionicons name="settings-outline" size={30} color="#1A1A1A" />
+          <Ionicons
+            name="information-circle-outline"
+            size={30}
+            color="#1A1A1A"
+          />
         </TouchableOpacity>
       </View>
 
@@ -163,15 +172,15 @@ export default function HomeScreen({ navigation }) {
             {/* INFORMATION CARD */}
             <View style={styles.fullRow}>
               <NavCard
-                title="Information"
-                description="Learn how to use the app and explore definitions for common terminology."
-                iconName="information-circle-outline"
+                title="Family & Settings"
+                description="Manage child profiles, update app preferences, and invite family members to share logs—at no extra subscription cost."
+                iconName="settings-outline"
                 accentColor={Colors.info_theme || '#D4EAE2'}
                 onPress={() =>
                   trackAnalyticsAndExecute(
-                    'button_HomeScreen_information_card',
+                    'button_HomeScreen_settings_card',
                     () =>
-                      navigation.navigate('MainApp', { screen: 'Information' }),
+                      navigation.navigate('MainApp', { screen: 'Settings' }),
                   )
                 }
               />

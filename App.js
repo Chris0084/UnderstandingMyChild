@@ -55,10 +55,8 @@ function MainTabs() {
         },
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
-          if (route.name === 'Information')
-            iconName = focused
-              ? 'information-circle'
-              : 'information-circle-outline';
+          if (route.name === 'Settings')
+            iconName = focused ? 'settings' : 'settings-outline';
           else if (route.name === 'InputForm')
             iconName = focused ? 'add-circle' : 'add-circle-outline';
           else if (route.name === 'Reporting')
@@ -73,14 +71,14 @@ function MainTabs() {
       })}>
       {/* INFORMATION TAB */}
       <Tab.Screen
-        name="Information"
-        component={InformationScreen}
-        options={{ title: 'Info' }}
+        name="Settings"
+        component={SettingsScreen}
+        options={{ title: 'Settings' }}
         listeners={({ navigation }) => ({
           tabPress: e => {
             e.preventDefault();
-            trackAnalyticsAndExecute('tab_bar_information', () => {
-              navigation.navigate('Information');
+            trackAnalyticsAndExecute('tab_bar_settings', () => {
+              navigation.navigate('Settings');
             });
           },
         })}
@@ -205,9 +203,9 @@ export default function App() {
           <Stack.Screen name="MainApp" component={MainTabs} />
 
           <Stack.Screen
-            name="Settings"
-            component={SettingsScreen}
-            options={{ title: 'Settings' }}
+            name="Information"
+            component={InformationScreen}
+            options={{ title: 'Information' }}
           />
         </Stack.Navigator>
       </NavigationContainer>

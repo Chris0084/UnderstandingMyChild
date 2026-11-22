@@ -603,3 +603,83 @@ export const verifyHouseholdMembership = async onRevoked => {
     return true;
   }
 };
+
+/**
+ * Deletes all logs and child profiles from the cloud household,
+ * resets household logCount to 0, and re-seeds the default Child 1 profile.
+ *
+ * @param {string} householdId
+ */
+export const deleteAllCloudData = async householdId => {
+  if (!householdId) return;
+
+  try {
+    // 1. Delete all logs in the household
+    const logsSnapshot = await firestore()
+      .collection('households')
+      .doc(householdId)
+      .collection('logs')
+      .get();
+
+    if (!logsSnapshot.empty) {
+      const docs = logsSnapshot.docs;
+      for (let i = 0; i < docs.length; i += 400) {
+        const batch = firestore().batch();
+        const chunk = docs.slice(i, i + 400);
+        chunk.forEach(docSnap => {
+          batch.delete(docSnap.ref);
+        });
+        await batch.commit();
+      }
+      console.log(
+        `Deleted ${docs.length} log(s) from cloud household ${householdId}.`,
+      );
+    }
+
+    // 2. Delete all child profiles in the household
+    const childrenSnapshot = await firestore()
+      .collection('households')
+      .doc(householdId)
+      .collection('children')
+      .get();
+
+    if (!childrenSnapshot.empty) {
+      const docs = childrenSnapshot.docs;
+      for (let i = 0; i < docs.length; i += 400) {
+        const batch = firestore().batch();
+        const chunk = docs.slice(i, i + 400);
+        chunk.forEach(docSnap => {
+          batch.delete(docSnap.ref);
+        });
+        await batch.commit();
+      }
+      console.log(
+        `Deleted ${docs.length} child profile(s) from cloud household ${householdId}.`,
+      );
+    }
+
+    // 3. Reset logCount to 0 and re-seed default Child 1 in the cloud
+    const defaultChild = {
+      id: '1',
+      name: 'Child 1',
+      color: '#4A6159',
+      isActive: true,
+      updatedAt: new Date().toISOString(),
+    };
+
+    const householdRef = firestore().collection('households').doc(householdId);
+    const batch = firestore().batch();
+    batch.set(householdRef, { logCount: 0 }, { merge: true });
+
+    const childRef = householdRef.collection('children').doc('1');
+    batch.set(childRef, defaultChild);
+
+    await batch.commit();
+    console.log(
+      `Cloud household ${householdId} reset with default Child 1.`,
+    );
+  } catch (error) {
+    console.error('Error deleting all cloud data in household:', error);
+    throw error;
+  }
+};

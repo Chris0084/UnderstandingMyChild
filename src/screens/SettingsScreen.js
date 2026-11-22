@@ -31,6 +31,7 @@ import {
 } from '@react-native-firebase/auth';
 
 // Services
+import * as FileSystem from 'expo-file-system';
 import {
   createHousehold,
   claimNamedInviteCode,
@@ -38,6 +39,7 @@ import {
   saveOrUpdateChild,
   migrateLocalDataToCloud,
   verifyHouseholdMembership,
+  deleteAllCloudData,
 } from '../services/firestoreService';
 import {
   configureGoogleSignIn,
@@ -340,8 +342,59 @@ export default function SettingsScreen({ navigation }) {
     }
   };
 
-  // 2. CONTRIBUTOR JOINS HOUSEHOLD WITH SINGLE-USE CODE
+  // 2A. CHECK FOR LOCAL LOGS BEFORE JOINING HOUSEHOLD
   const handleJoinCodeSubmit = async enteredCode => {
+    try {
+      const rawLocalLogs = await AsyncStorage.getItem('@app_logs');
+      const localLogs = rawLocalLogs ? JSON.parse(rawLocalLogs) : [];
+
+      if (Array.isArray(localLogs) && localLogs.length > 0) {
+        // Close the invite modal first so iOS doesn't hide the Alert behind it
+        setIsInviteModalVisible(false);
+
+        const logCountText =
+          localLogs.length === 1
+            ? '1 existing log'
+            : `${localLogs.length} existing logs`;
+
+        // Short delay lets the modal finish dismissing before presenting the Alert
+        setTimeout(() => {
+          Alert.alert(
+            'Existing Logs Will Be Deleted',
+            `You currently have ${logCountText} saved on this phone. Joining a household as a contributor will permanently delete your local logs so you can log for the shared household.\n\nDo you want to continue?`,
+            [
+              {
+                text: 'Cancel',
+                style: 'cancel',
+                onPress: () => {
+                  // Re-open the modal if they change their mind
+                  setInviteModalTab('join');
+                  setIsInviteModalVisible(true);
+                },
+              },
+              {
+                text: 'Delete & Join',
+                style: 'destructive',
+                onPress: () => executeJoinCodeSubmit(enteredCode),
+              },
+            ],
+            { cancelable: false },
+          );
+        }, 300);
+
+        return;
+      }
+
+      // No local logs on the device—proceed straight away
+      await executeJoinCodeSubmit(enteredCode);
+    } catch (e) {
+      console.error('Error checking local logs before join:', e);
+      Alert.alert('Error', 'Could not check local logs. Please try again.');
+    }
+  };
+
+  // 2B. EXECUTE HOUSEHOLD JOIN & CLEAR LOCAL LOGS
+  const executeJoinCodeSubmit = async enteredCode => {
     let tempUserCreated = null;
     const authInstance = getAuth();
 
@@ -355,10 +408,12 @@ export default function SettingsScreen({ navigation }) {
         tempUserCreated = targetUser;
       }
 
-      // 👈 Use explicit claimResult object
       const claimResult = await claimNamedInviteCode(targetUser, enteredCode);
       const joinedHId = claimResult.householdId;
       const joinedName = claimResult.assignedToName || 'Contributor';
+
+      // Wipe existing local logs so old personal logs don't mix with the new household
+      await AsyncStorage.removeItem('@app_logs');
 
       setHouseholdId(joinedHId);
       setUserRole('contributor');
@@ -513,6 +568,126 @@ export default function SettingsScreen({ navigation }) {
     }
   };
 
+  const handlePromptDeleteAllData = () => {
+    Alert.alert(
+      'Delete All Data?',
+      'Are you sure you want to permanently delete all logs and child profiles? This will delete all recorded logs and child profiles on this phone as well as in the cloud. NOTE this will not delete any media you have attached to your logs as these (pics and videos) are not stored in the app or the cloud, they remain in your phones storage. \n\nThis action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete All Data',
+          style: 'destructive',
+          onPress: handlePromptDoubleCheckDeleteAllData,
+        },
+      ],
+      { cancelable: true },
+    );
+  };
+
+  const handlePromptDoubleCheckDeleteAllData = () => {
+    Alert.alert(
+      'ARE YOU SURE?',
+      'Continuing will delete all logs from your phone AND the cloud including child profiles.\n\nTHIS CANNOT BE UNDONE.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'YES!, DELETE ALL DATA',
+          style: 'destructive',
+          onPress: executeDeleteAllData,
+        },
+      ],
+      { cancelable: true },
+    );
+  };
+
+  const executeDeleteAllData = async () => {
+    try {
+      setLoading(true);
+
+      if (userRole === 'contributor') {
+        Alert.alert(
+          'Contributor Account',
+          'As a contributor, you cannot delete the shared household cloud data. Only the primary household owner can perform this action.',
+        );
+        return;
+      }
+
+      const defaultChildren = [
+        { id: '1', name: 'Child 1', color: '#4A6159', isActive: true },
+      ];
+
+      // 1. Wipe local logs & reset child profiles in AsyncStorage
+      await AsyncStorage.setItem('@app_logs', JSON.stringify([]));
+      await AsyncStorage.setItem(
+        '@app_children',
+        JSON.stringify(defaultChildren),
+      );
+      await AsyncStorage.setItem('@app_selected_child_id', '1');
+      await AsyncStorage.setItem('@active_child_id', '1');
+      await AsyncStorage.setItem(
+        '@children_profiles',
+        JSON.stringify([
+          { id: '1', name: 'Child 1', createdAt: new Date().toISOString() },
+        ]),
+      );
+
+      // Clean up any local saved journal media files
+      try {
+        if (FileSystem.documentDirectory) {
+          const dirFiles = await FileSystem.readDirectoryAsync(
+            FileSystem.documentDirectory,
+          );
+          for (const file of dirFiles) {
+            if (file.startsWith('journal_')) {
+              await FileSystem.deleteAsync(
+                FileSystem.documentDirectory + file,
+                { idempotent: true },
+              );
+            }
+          }
+        }
+      } catch (fileErr) {
+        console.warn('Could not clean local media files:', fileErr);
+      }
+
+      // 2. Wipe cloud data if household exists
+      let activeHouseholdId = householdId;
+      if (!activeHouseholdId) {
+        activeHouseholdId = await AsyncStorage.getItem('@user_household_id');
+      }
+      if (!activeHouseholdId && currentUser) {
+        const userDoc = await firestore()
+          .collection('users')
+          .doc(currentUser.uid)
+          .get();
+        if (userDoc.exists) {
+          activeHouseholdId = userDoc.data()?.householdId;
+        }
+      }
+
+      if (activeHouseholdId) {
+        await deleteAllCloudData(activeHouseholdId);
+      }
+
+      // 3. Update local screen state
+      setChildren(defaultChildren);
+
+      Alert.alert(
+        'Data Deleted',
+        'All logs and child profiles have been permanently deleted from your phone' +
+          (activeHouseholdId ? ' and the cloud.' : '.'),
+      );
+    } catch (e) {
+      console.error('Error deleting all data:', e);
+      Alert.alert(
+        'Error',
+        'Failed to delete data: ' + (e?.message || 'Unknown error'),
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleToggleSwitch = async newValue => {
     try {
       setIsOptedIn(newValue);
@@ -633,6 +808,33 @@ export default function SettingsScreen({ navigation }) {
                 )}
               </>
             )}
+
+            {/* Data Management Section */}
+            {userRole !== 'contributor' && (
+              <>
+                <Text style={[styles.sectionTitle, { marginTop: 28 }]}>
+                  Data Management
+                </Text>
+                <View style={styles.deleteSectionCard}>
+                  <View style={styles.deleteTextContainer}>
+                    <Text style={styles.deleteTitle}>Delete All Data</Text>
+                    <Text style={styles.deleteDescription}>
+                      Permanently delete all logs and child profiles stored on
+                      this phone and in the cloud. This action cannot be
+                      reversed.
+                    </Text>
+                  </View>
+
+                  <TouchableOpacity
+                    style={styles.deleteButton}
+                    onPress={handlePromptDeleteAllData}
+                    activeOpacity={0.7}>
+                    <Ionicons name="trash-outline" size={18} color="#FFFFFF" />
+                    <Text style={styles.deleteButtonText}>Delete All Data</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
           </ScrollView>
         </View>
       </TouchableWithoutFeedback>
@@ -749,5 +951,48 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#666666',
     lineHeight: 19,
+  },
+  deleteSectionCard: {
+    backgroundColor: '#FFFFFF',
+    padding: 20,
+    marginHorizontal: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#FEE2E2',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    marginBottom: 20,
+  },
+  deleteTextContainer: {
+    marginBottom: 16,
+  },
+  deleteTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#D32F2F',
+    marginBottom: 6,
+  },
+  deleteDescription: {
+    fontSize: 13,
+    color: '#666666',
+    lineHeight: 19,
+  },
+  deleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#D32F2F',
+    paddingVertical: 14,
+    borderRadius: 14,
+    elevation: 1,
+  },
+  deleteButtonText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginLeft: 8,
   },
 });
